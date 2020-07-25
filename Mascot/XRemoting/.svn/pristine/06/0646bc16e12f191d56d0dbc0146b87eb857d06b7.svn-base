@@ -1,5 +1,0 @@
-xcc -mode=ucc "-fe=-no_rtti" "-eas" "-qnx" "-tp=PPC,lcd,ld" "-v=G:\MWOSPPC/src/defs/spf/bsd" "-d=CPP" "-d=_OPT_PROTOS" "-d=_UCC" "-d=_OS9THREAD" "-o=0" "-mt=safelibs" "-eio=." "-fd=IPCInterface\stdafx_interface.i" "-eio=." "-fd=stdafx_interface.i" 
-G:\Projects\1.4.2.XCoreApi\Components\XRemoting\Release
-..\IPCInterface\stdafx_interface.cpp
-copy_backward__tm__227_PP108IXFunction__tm__90_CQ2_3std78basic_string__tm__58_cQ2_3std20char_traits__tm__2_cQ2_3std18allocator__tm__2_viPP108IXFunction__tm__90_CQ2_3std78basic_string__tm__58_cQ2_3std20char_traits__tm__2_cQ2_3std18allocator__tm__2_vi__3stdFZ1ZT1Z2Z_Z2Z
-insert_aux__Q2_3std269vector__tm__254_P108IXFunction__tm__90_CQ2_3std78basic_string__tm__58_cQ2_3std20char_traits__tm__2_cQ2_3std18allocator__tm__2_viQ2_3std131allocator__tm__113_P108IXFunction__tm__90_CQ2_3std78basic_string__tm__58_cQ2_3std20char_traits__tm__2_cQ2_3std18allocator__tm__2_viFQ4_Z2Z17rebind__tm__4_Z1Z5other7pointerRCZ1Z_v

@@ -1,3 +1,0 @@
-xcc -mode=ucc "-fe=-no_rtti" "-eas" "-qnx" "-g" "-tp=PPC,lcd,ld" "-v=G:\MWOSPPC/src/defs/spf/bsd" "-d=CPP" "-d=_OPT_PROTOS" "-d=_UCC" "-d=_OS9THREAD" "-o=0" "-mt=safelibs" "-eio=." "-fd=IPCGate\stdafx_gate.i" "-eio=." "-fd=stdafx_gate.i" 
-G:\Projects\1.4.2.XCoreApi\Components\XRemoting\Debug
-..\IPCGate\stdafx_gate.cpp

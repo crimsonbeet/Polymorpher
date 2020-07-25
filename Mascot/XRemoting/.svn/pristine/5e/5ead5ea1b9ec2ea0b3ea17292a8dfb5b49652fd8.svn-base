@@ -1,4 +1,0 @@
-xcc -mode=ucc "-fe=-no_rtti" "-eas" "-qnx" "-g" "-tp=PPC,lcd,ld" "-v=G:\MWOSPPC/src/defs/spf/bsd" "-d=CPP" "-d=_OPT_PROTOS" "-d=_UCC" "-d=_OS9THREAD" "-o=0" "-mt=safelibs" "-eio=." "-fd=IPCClassFactory\WSIObject.i" "-eio=." "-fd=WSIObject.i" 
-G:\Projects\1.4.2.XCoreApi\Components\XRemoting\Debug
-..\IPCClassFactory\WSIObject.cpp
-copy__tm__37_P15paired_capturesP15paired_captures__3stdFZ1ZT1Z2Z_Z2Z

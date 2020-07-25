@@ -1,9 +1,0 @@
->< $ KWSIMetaFile Name=KDrawing 
->< $ Box >< Point X=10 Y=10 >< Point X=95 Y=100 $ 
-$ 
-
->< $ RectExpl Id=A >< Point X=10 Y=10 >< Point X=95 Y=100 $ 
->< $ LineExpl Id=B >< Point X=2 Y=1 >< Point X=15 Y=21 $ 
->< $ LineImpl Id=C >< Point X=35 Y=11 $ 
-
->< $ Intersect Id=D Ref=B Ref=C $ 

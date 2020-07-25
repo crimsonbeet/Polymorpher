@@ -1,3 +1,0 @@
-xcc -mode=ucc "-fe=-no_rtti" "-eas" "-qnx" "-g" "-tp=PPC,lcd,ld" "-v=G:\MWOSPPC/src/defs/spf/bsd" "-d=CPP" "-d=_OPT_PROTOS" "-d=_UCC" "-d=_OS9THREAD" "-o=0" "-mt=safelibs" "-eio=." "-fd=IPCInterface\RedirectCout.i" "-eio=." "-fd=RedirectCout.i" 
-G:\Projects\1.4.2.XCoreApi\Components\XRemoting\Debug
-..\IPCInterface\RedirectCout.cpp

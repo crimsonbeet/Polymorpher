@@ -1,3 +1,0 @@
-
-#include "./../IPCGate/IPCGate.h"
-
