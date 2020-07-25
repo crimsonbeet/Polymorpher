@@ -9,7 +9,7 @@
 
 #pragma once
 
-
+#define WIN32_LEAN_AND_MEAN
 
 #ifdef max 
 #undef max 
@@ -22,6 +22,8 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <assert.h>
+
+#include <SYS\TIMEB.H>
 
 #include <math.h>
 #include <Rpc.h>

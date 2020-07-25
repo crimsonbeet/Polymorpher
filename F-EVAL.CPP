@@ -1,12 +1,6 @@
 /* Created by Alex Nikol Bourakov in 1989 */
-/* Adopted for RtlsTether project on 23/11/2011 by Alex Bourakov */
 
 #include "stdafx.h" 
-
-
-#include "KVectors.h"
-#include "FrameDrawing.h"
-
 
 #include <stdlib.h>
 #include <string.h>
@@ -18,6 +12,8 @@
 #include "scale.hpp"
 #include "GridModule.hpp"
 #include "mgsort.hpp"
+
+#include "OleDate.h"
 /**/
 #define Isalpha(S) (isalpha((S))||(S)=='$')
 /**/
@@ -25,6 +21,8 @@ const char*FUNAME[14]={"OVR", "ANDNOT", "AND", "XOR", "OR", "NOT", "AREA", "SIZE
 /**/
 #include<string.h>
 #include<ctype.h>
+
+#pragma warning(disable : 4996)
 
 std::string itostdstring(int x, int width) {
 	std::ostringstream ostr; 
@@ -56,31 +54,10 @@ std::string stringify_currentTime(bool file_mode) {
 	return ostr.str();
 }
 void FileLog(const std::string& msg, bool do_close) {
-	static wsi_gate gate;
-	static HANDLE handle_file = (HANDLE)-1;
-	gate.lock();
-	if(!do_close && handle_file == (HANDLE)-1) {
-		handle_file = OSWRONLYOpenFile("MASCOT" + stringify_currentTime(true) + ".csv");
-	}
-	if(handle_file != (HANDLE)-1) {
-		OSAppendStringToFile(handle_file, msg);
-	}
-	if(do_close && handle_file != (HANDLE)-1) {
-		OSCloseFile(handle_file);
-		handle_file = (HANDLE)-1;
-	}
-	gate.unlock();
 }
 
 
 void graph_wait_for_user_action() { 
-	std::string old_name = _g_pDrawing->_ctl.name; 
-
-	PostMessage(_g_drawing_frame->_hwnd, WM_USER, 1, 0); 
-	while(_g_drawing_frame && (_g_pDrawing == 0 || old_name == _g_pDrawing->_ctl.name)) { 
-		OSWait(); 
-	} 
-	OSSleep(500); 
 } 
 
 void graph_log_layer(char* layer_Name, int lb/*optional 0*/, int layer_index/*optional -1*/) { 
@@ -107,25 +84,6 @@ void graph_log_layer(char* layer_Name, int lb/*optional 0*/, int layer_index/*op
 		for(int j = lb - 1; j < lb_count; ++j) { 
 			MASLayerGetRTPolygon(layer_Name, j + (int)first_polygon_number, lb_x[j], lb_y[j]); 
 		} 
-
-		_g_pDrawing->_meta.lock(); 
-
-		for(int j = lb - 1; j < lb_count; ++j) { 
-			if(lb_x[j].Size()) { 
-				KWSIPointArray *ar = new KWSIPointArray(); 
-				ar->SetBrush(layer_index); 
-
-				ar->_points.resize(lb_x[j].Size()); 
-				for(size_t n = 0; n < lb_x[j].Size(); ++n) { 
-					ar->_points[n] = KWSIPoint(lb_x[j][n], lb_y[j][n]); 
-				} 
-				_g_pDrawing->_meta.AddPtr(ar); 
-			} 
-		} 
-
-		_g_pDrawing->_meta.unlock(); 
-
-		PostMessage(_g_drawing_frame->_hwnd, WM_USER, 0, 0); 
 
 		delete[] lb_x; 
 		delete[] lb_y; 
@@ -406,7 +364,7 @@ void SetNxtFrag(long Function)
 	C_Fragment = F;
 }
 
-int F_EVAL_JOB::ProcessArguments(short N, char*A[]) { 
+int F_EVAL_JOB::ProcessArguments(short N, const char*A[]) { 
 	long I, M, ERR, F, O, D, Q, NF=14;
 	long J, K, L;
 	long w=1, W, s=0, i=0, r=0;
@@ -426,7 +384,7 @@ int F_EVAL_JOB::ProcessArguments(short N, char*A[]) {
 	for(I = 1; I<N; ++I)
 	{
 		for(K = 0; A[I][K]; ++K)
-		if(islower(A[I][K])) A[I][K] = toupper(A[I][K]);
+		if(islower(A[I][K])) const_cast<char*>(A[I])[K] = toupper(A[I][K]);
 
 		M = A[I][1];
 		if(A[I][0]=='-') /*OPTIONAL-PARAMETER*/
@@ -574,7 +532,7 @@ void F_EVAL_JOB::PerformFunction(int log_graph) {
 } 
 
 
-F_EVAL_JOB::F_EVAL_JOB(short N, char*A[], int log_graph) { 
+F_EVAL_JOB::F_EVAL_JOB(short N, const char*A[], int log_graph) { 
 	if(ProcessArguments(N, A) == 0) { 
 		PerformFunction(log_graph); 
 	} 
@@ -590,7 +548,7 @@ F_EVAL_JOB::F_EVAL_JOB() {
 } 
 
 
-void DbWide_EliminateOverlaps(long N = 0, char *Names[] = 0) { 
+void DbWide_EliminateOverlaps(long N = 0, const char *Names[] = 0) { 
 	MaSCOT_IO.Setup();
 
 	std::vector<std::string> layers_todo; 
@@ -621,7 +579,7 @@ void DbWide_EliminateOverlaps(long N = 0, char *Names[] = 0) {
 
 
 	for(size_t x = 0; x < layers_todo.size(); ++x) {
-		char*a[3] = {"", (char*)layers_todo[x].c_str(), "-FOVR"}; 
+		const char*a[3] = {"", (char*)layers_todo[x].c_str(), "-FOVR"}; 
 //		F_EVAL_JOB JOB(3, a, 1);
 //		graph_wait_for_user_action(); 
 		F_EVAL_JOB JOB(3, a);
@@ -635,7 +593,7 @@ BOOL Load_Database() {
 	MaSCOT_IO.funlink_all(); 
 
 	WIN32_FIND_DATAA stFindData; 
-	char *strFileName = "M2*.xzq"; 
+	const char *strFileName = "M2*.xzq"; 
 	HANDLE hFind = FindFirstFileA(strFileName, &stFindData); 
 	BOOL fOk = (hFind != INVALID_HANDLE_VALUE); 
 	BOOL fRc = fOk; 
@@ -664,7 +622,7 @@ BOOL Load_Database() {
 } 
 
 
-void dosmain(short N, char*A[]) { 
+void dosmain(short N, const char*A[]) { 
 	Load_Database(); 
 
 	DbWide_EliminateOverlaps(N, A); 
@@ -685,7 +643,7 @@ void dosmain(short N, char*A[]) {
 
 DWORD WINAPI dosmain_inbatch(LPVOID pArgs) { 
 	SCommandLineArguments& args = *(SCommandLineArguments*)pArgs; 
-	dosmain(args.N, args.A); 
+	dosmain(args.N, (const char**)args.A); 
 	return 0; 
 } 
 
@@ -696,7 +654,7 @@ extern long int ZPTLim_threshold;
 extern long int ZVTLim_threshold; 
 
 
-bool MASPreload_StaticLayers(long N, char *Names[]) { 
+bool MASPreload_StaticLayers(long N, const char *Names[]) { 
 	if(Load_Database()) { 
 		DbWide_EliminateOverlaps(N, Names); 
 	} 
@@ -762,7 +720,7 @@ bool MASPreload_StaticLayers(long N, char *Names[]) {
 
 
 DWORD WINAPI test_preload(LPVOID pArgs) { 
-	char*a[2] = {"", "3"}; 
+	const char*a[2] = {"", "3"}; 
 	MASPreload_StaticLayers(2, a); 
 
 	unsigned short n = MaSCOT_IO.iLnames_hash.Exist("2"); 
