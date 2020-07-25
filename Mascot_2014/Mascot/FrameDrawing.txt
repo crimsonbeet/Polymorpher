@@ -1,0 +1,27 @@
+>< $ KFrame DataType=XFrameDrawing 
+
+>< $ Situation ClassName=XFrameDrawing Bottom=1000 Right=1000 >< BackColor Hex=D3D3D3 $ 
+
+
+>< $ Canvas DataType=XCanvas 
+>< $ Situation ClassName=XCanvas Left=0 Top=10 Bottom=910 Right=10 FontFace='Segoe UI' FontHeight=10 >< BackColor Hex=D3D3D3 $ 
+$
+
+
+>< $ Canvas DataType=KDrawing 
+>< $ Situation ClassName=MDICLIENT MaxMdiChilds=1 Left=10 Top=10 Bottom=900 Right=990 FontFace='Segoe UI' FontHeight=10 >< BackColor Hex=D3D3D3 $ 
+$
+
+
+
+
+
+>< $ LogWindow 
+>< $ Situation Left=0 Top=910 Bottom=1000 Right=1000 FontFace='Segoe UI' FontHeight=9 >< BackColor Hex=D3D3D3 $ 
+$
+
+
+
+
+
+$ 

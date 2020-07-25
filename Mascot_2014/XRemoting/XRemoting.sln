@@ -1,0 +1,59 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SimpleProtocol", "SimpleProtocol\SimpleProtocol.vcxproj", "{4EFA6CF0-4687-4A14-9CE3-396D251140CA}"
+	ProjectSection(ProjectDependencies) = postProject
+		{5BBFDC4D-4A9D-445C-9326-4E43D9BEF51E} = {5BBFDC4D-4A9D-445C-9326-4E43D9BEF51E}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IPCClassFactory", "IPCClassFactory\IPCClassFactory.vcxproj", "{0841E9DA-C7B8-4B94-A74B-774C6A132118}"
+	ProjectSection(ProjectDependencies) = postProject
+		{A8A1F248-7351-4B3E-9765-5A0430670017} = {A8A1F248-7351-4B3E-9765-5A0430670017}
+		{EC888190-8886-4C2B-AE02-02999EDCDA37} = {EC888190-8886-4C2B-AE02-02999EDCDA37}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IPCGate", "IPCGate\IPCGate.vcxproj", "{EC888190-8886-4C2B-AE02-02999EDCDA37}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IPCInterface", "IPCInterface\IPCInterface.vcxproj", "{A8A1F248-7351-4B3E-9765-5A0430670017}"
+	ProjectSection(ProjectDependencies) = postProject
+		{EC888190-8886-4C2B-AE02-02999EDCDA37} = {EC888190-8886-4C2B-AE02-02999EDCDA37}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IPCObject", "IPCObject\IPCObject.vcxproj", "{5BBFDC4D-4A9D-445C-9326-4E43D9BEF51E}"
+	ProjectSection(ProjectDependencies) = postProject
+		{A8A1F248-7351-4B3E-9765-5A0430670017} = {A8A1F248-7351-4B3E-9765-5A0430670017}
+		{EC888190-8886-4C2B-AE02-02999EDCDA37} = {EC888190-8886-4C2B-AE02-02999EDCDA37}
+		{0841E9DA-C7B8-4B94-A74B-774C6A132118} = {0841E9DA-C7B8-4B94-A74B-774C6A132118}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4EFA6CF0-4687-4A14-9CE3-396D251140CA}.Debug|Win32.ActiveCfg = Debug|Win32
+		{4EFA6CF0-4687-4A14-9CE3-396D251140CA}.Debug|Win32.Build.0 = Debug|Win32
+		{4EFA6CF0-4687-4A14-9CE3-396D251140CA}.Release|Win32.ActiveCfg = Release|Win32
+		{4EFA6CF0-4687-4A14-9CE3-396D251140CA}.Release|Win32.Build.0 = Release|Win32
+		{0841E9DA-C7B8-4B94-A74B-774C6A132118}.Debug|Win32.ActiveCfg = Debug|Win32
+		{0841E9DA-C7B8-4B94-A74B-774C6A132118}.Debug|Win32.Build.0 = Debug|Win32
+		{0841E9DA-C7B8-4B94-A74B-774C6A132118}.Release|Win32.ActiveCfg = Release|Win32
+		{0841E9DA-C7B8-4B94-A74B-774C6A132118}.Release|Win32.Build.0 = Release|Win32
+		{EC888190-8886-4C2B-AE02-02999EDCDA37}.Debug|Win32.ActiveCfg = Debug|Win32
+		{EC888190-8886-4C2B-AE02-02999EDCDA37}.Debug|Win32.Build.0 = Debug|Win32
+		{EC888190-8886-4C2B-AE02-02999EDCDA37}.Release|Win32.ActiveCfg = Release|Win32
+		{EC888190-8886-4C2B-AE02-02999EDCDA37}.Release|Win32.Build.0 = Release|Win32
+		{A8A1F248-7351-4B3E-9765-5A0430670017}.Debug|Win32.ActiveCfg = Debug|Win32
+		{A8A1F248-7351-4B3E-9765-5A0430670017}.Debug|Win32.Build.0 = Debug|Win32
+		{A8A1F248-7351-4B3E-9765-5A0430670017}.Release|Win32.ActiveCfg = Release|Win32
+		{A8A1F248-7351-4B3E-9765-5A0430670017}.Release|Win32.Build.0 = Release|Win32
+		{5BBFDC4D-4A9D-445C-9326-4E43D9BEF51E}.Debug|Win32.ActiveCfg = Debug|Win32
+		{5BBFDC4D-4A9D-445C-9326-4E43D9BEF51E}.Debug|Win32.Build.0 = Debug|Win32
+		{5BBFDC4D-4A9D-445C-9326-4E43D9BEF51E}.Release|Win32.ActiveCfg = Release|Win32
+		{5BBFDC4D-4A9D-445C-9326-4E43D9BEF51E}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

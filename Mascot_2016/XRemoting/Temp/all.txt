@@ -1,0 +1,32 @@
+xcc -pl=filink -l=mt_sys_clib.l -l=mt_os_lib.l -l=mt_unix.l -l=mt_clib.l -l=mt_cplib.l -ldbglog.l -cd -cs=mt_cstart.r -tp=PPC,lcd,ld -b -cw -olmtq -olM=512 -olp=777 -olgu=1.0 -qp -fd=SimpleProtocol 
+SimpleProtocol\stdafx_simpleprotocol.i SimpleProtocol\SimpleProtocol.i 
+IPCObject\stdafx_ipcobject.i IPCObject\PollClient.i IPCObject\OSSpecific\OSDependent_ipcobject.i IPCObject\IPCSockObject.i IPCObject\IPCObjectInterface.i IPCObject\IPCObject.i IPCObject\ClassesXRemoting.i IPCObject\ClassesXMedia.i 
+IPCInterface\stdafx_interface.i IPCInterface\RedirectCout.i IPCInterface\OSSpecific\OSDependent_interface.i IPCInterface\IPCInterface.i 
+IPCGate\stdafx_gate.i IPCGate\WSIGate.i IPCGate\ThreadPool.i IPCGate\OSSpecific\OSDependent_gate.i IPCGate\IPCGate.i 
+IPCClassFactory\stdafx_classfactory.i IPCClassFactory\WSIWriter.i IPCClassFactory\WSISerializableStruct.i IPCClassFactory\WSIParser.i IPCClassFactory\WSIObject.i IPCClassFactory\WSIMaterializer.i IPCClassFactory\WSIMarshaller.i IPCClassFactory\WSIClassFactory.i IPCClassFactory\SimpleWriter.i IPCClassFactory\SimpleParser.i IPCClassFactory\OSSpecific\OSDependent_classfactory.i IPCClassFactory\IPCClassFactory.i IPCClassFactory\WSIClassFactoryInterfaces.i 
+
+
+xcc -pl=filink -l=mt_sys_clib.l -l=mt_os_lib.l -l=mt_unix.l -l=mt_clib.l -l=mt_cplib.l -ldbglog.l -cd -cs=mt_cstart.r
+
+
+
+E:\MWOSPPC\DOS\BIN\xcc -pl="filink lXRemoting.il" -il=lXRemoting.il -l=mt_sys_clib.l -l=mt_os_lib.l -l=mt_unix.l -l=mt_clib.l -l=mt_cplib.l -l=XRemoting.l -ldbglog.l -cd -cs=mt_cstart.r -tp=PPC,lcd,ld -b -cw -olmtq -olM=512 -olp=777 -olgu=1.0 -qp -fd=SimpleProtocol stdafx_simpleprotocol.i SimpleProtocol.i 
+
+
+
+
+E:\MWOSPPC\DOS\BIN\xcc -l=mt_sys_clib.l -l=mt_os_lib.l -l=mt_unix.l -l=mt_clib.l -l=mt_cplib.l -ldbglog.l -cd -cs=mt_cstart.r -epl -tp=PPC,lcd,ld -b -cw -qp -fd=XRemoting.x mt_cplib.l stdafx_ipcobject.i PollClient.i OSDependent_ipcobject.i IPCSockObject.i IPCObjectInterface.i IPCObject.i ClassesXRemoting.i ClassesXMedia.i stdafx_classfactory.i WSIWriter.i WSISerializableStruct.i WSIParser.i WSIObject.i WSIMaterializer.i WSIMarshaller.i WSIClassFactory.i SimpleWriter.i SimpleParser.i IPCClassFactory.i WSIClassFactoryInterfaces.i OSDependent_classfactory.i stdafx_gate.i WSIGate.i ThreadPool.i OSDependent_gate.i IPCGate.i stdafx_interface.i RedirectCout.i OSDependent_interface.i IPCInterface.i
+libgen -co=XRemoting.l XRemoting.x
+
+
+
+
+
+
+
+linker -t=os9k_ppc e:\MWOSPPC\OS9000\PPC\LIB\mt_cstart.r -O=SimpleProtocol.exe -f=orowoe -x=8 -b=8 -l=e:\MWOSPPC\OS9000\PPC\LIB\d_mt_sys_clib.l -l=e:\MWOSPPC\OS9000\PPC\LIB\d_mt_unix.l -l=e:\MWOSPPC\OS9000\PPC\LIB\mt_socket.l -l=e:\MWOSPPC\OS9000\PPC\LIB\mt_cplibnx.l -l=e:\MWOSPPC\OS9000\PPC\LIB\d_mt_clib.l -l=e:\MWOSPPC\OS9000\PPC\LIB\d_mt_os_lib.l -l=e:\MWOSPPC\OS9000\PPC\LIB\dbglog.l -mtq -M=512 -p=777 -gu=1.0 ucc_94801.r ucc_94800.r
+
+
+xcc -pl=filink -l=xi_csl.l -l=mt_sys_clib.l -l=mt_os_lib.l -l=mt_unix.l -l=mt_clib.l -l=mt_cplib.l -ldbglog.l -cd -cs=mt_cstart.r -tp=PPC,lcd,ld -g -b -cw -sl=D:\SvnWork\mProSW\Components\XiBase -l=D:\SvnWork\mProSW\Components\ArcMan\lib\arcmanif.r -olmtq -olM=512 -olp=777 -olgu=1.0 -qp -fd=CTCCBoxTest stdafx.i WSIGate.i ThreadPool.i SerialPort.i RotatingBuf.i Parser.i OSDependent_stdafx.i Helpers.i CTTests.i CTCCBOXTest.i
+
+linker -t=os9k_ppc e:\MWOSPPC\OS9000\PPC\LIB\mt_cstart.r -O=CTCCBoxTest -f=orowoe -x=8 -b=8 -g -l=D:\SvnWork\mProSW\Components\XiBase\xi_csl.l -l=e:\MWOSPPC\OS9000\PPC\LIB\d_mt_sys_clib.l -l=e:\MWOSPPC\OS9000\PPC\LIB\d_mt_os_lib.l -l=e:\MWOSPPC\OS9000\PPC\LIB\d_mt_unix.l -l=e:\MWOSPPC\OS9000\PPC\LIB\d_mt_clib.l -l=e:\MWOSPPC\OS9000\PPC\LIB\mt_cplib.l -l=e:\MWOSPPC\OS9000\PPC\LIB\dbglog.l -l=D:\SvnWork\mProSW\Components\ArcMan\lib\arcmanif.r -l=e:\MWOSPPC\OS9000\PPC\LIB\cplib.l -l=e:\MWOSPPC\OS9000\PPC\LIB\d_clib.l -l=e:\MWOSPPC\OS9000\PPC\LIB\d_os_lib.l -l=e:\MWOSPPC\OS9000\PPC\LIB\dbglog.l -u=ucc_4000.c -mtq -M=512 -p=777 -gu=1.0 ucc_4000.r

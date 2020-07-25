@@ -1,0 +1,13 @@
+@set __oinc=%include%
+@set include=d:\borlandc\include
+@set __olib=%lib%
+@set __opath__=%path%
+@set path=d:\borlandc\bin
+@set lib=d:\borlandc\lib
+@d:\borlandc\bin\make.exe -f%1
+@set include=%__oinc%
+@set lib=%__olib%
+@set path=%__opath__%
+@set __oinc=
+@set __olib=
+@set __opath__=

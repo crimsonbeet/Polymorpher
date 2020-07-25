@@ -1,0 +1,57 @@
+Builders: 
+CDT Builder
+Scanner Configuration Builder
+
+
+Environment: 
+
+CWD D:\SvnWork\mProSW\Workspaces\S168813\CTCCBoxTest\Debug
+MPROSW D:\SvnWork\mProSW
+PWD D:\SvnWork\mProSW\Workspaces\S168813\CTCCBoxTest\Debug
+
+
+Settings: 
+
+Ultra C/C++ Compiler: 
+xcc -fe=-no_rtti
+
+
+Directories: 
+
+"${MPROSW}\Components"
+"${MPROSW}\Source"
+"${MPROSW}\Workspaces\S168813\CTCCBoxTest\Include"
+
+Pre-Processor
+PPC823
+DEBUG
+_OPT_PROTOS
+_UCC
+_OS9THREAD
+
+
+Optimizations: 
+None. Assembly and I-Code optimization passes eliminated
+I-Code Compile
+
+Source: 
+Multi-Threading options: Thread-safe libraries w/fallback
+Conformance: Microware Extensions
+
+
+OS9-Linker: 
+xcc -pl=filink -l=xi_csl.l -l=mt_sys_clib.l -l=mt_os_lib.l -l=mt_unix.l -l=mt_clib.l -l=mt_cplib.l -ldbglog.l -cd -cs=mt_cstart.r
+
+
+General: Additional memory: 512
+
+Customization: 
+Set module header permission: 777
+
+OS-9 assembler:
+xcc -eas
+
+
+Tool chain editor: 
+OS-9 CPP App Toolchain - Debug 
+CDT Internal Builder

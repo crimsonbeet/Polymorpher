@@ -1,0 +1,1132 @@
+void zabort(void);
+#include<stdio.h>
+#include<string.h>
+#include<stdlib.h>
+#include <IO.H>
+#ifdef __BORLANDC__
+#include<dir.h>
+#else
+#include<dos.h>
+#endif
+#include<math.h>
+
+#include "fqeval.hpp"
+
+#define l_abs(a) ((a)<0? -(a): (a))
+char*fxeval="fxeval";
+char*OvrlpMstPrf="\n!!! NOTE! OVERLAP ELIMINATION MUST BE PERFORMED.";
+
+struct Obj_Line
+{
+	long x1;
+	long y1;
+	long x2;
+	long y2;
+	char status;
+}	;
+Obj_Line Obj_LInfinite={LONG_MAX-1,LONG_MAX-1,LONG_MAX,LONG_MAX};
+char __INTOPLD__;
+char SetUp_Min_Max;
+char __inTOPlt__;
+char
+FindxFile(char*Name)
+{
+#ifdef __ZTC__
+	if(findfirst(Name, 0)==0)
+	{
+		return(0);
+	}
+#else
+#ifdef __BORLANDC__
+	struct ffblk ffblk;
+	if(findfirst(Name, &ffblk, 0)!=0)
+	{
+		return(0);
+	}
+#else
+	struct find_t find_t;
+	if(_dos_findfirst(Name, 0, &find_t)!=0)
+	{
+		return(0);
+	}
+#endif
+#endif
+	return(1);
+}
+void Delete_File(char*Name)
+{
+	if(FindxFile(Name))unlink(Name);
+}
+void
+Ferror(FILE*File, char*Name)
+{
+	if(!File)return;
+
+	if(ferror(File))
+	{
+		fprintf(stderr, "\n\n!!! ERROR ON FILE '%s' !!!\n", Name);
+		zabort();
+	}
+}
+FILE*Fopen(char*Name, char*Mode)
+{
+	FILE*File;
+	File = fopen(Name, Mode);
+	if(File==NULL)
+	{
+		fprintf(stderr, "\n\n!!! FILE '%s' OPEN ERROR !!!\n", Name);
+		zabort();
+	}
+	return(File);
+}
+char __Tail_follow__;
+char __Head_follow__;
+
+long __ZLDFI__;
+long __ZLDLA__;
+
+char __aLlAng__;
+/**/
+long UN001;
+long UN002;
+long EMSIZ;
+long LVCNT;
+long BLCNT;
+long UBSIZ;
+long XBSIZ;
+long YBSIZ;
+long XBCNT; /*TOTAL-BLOCKS-IN-X-DIRECTION*/
+long YBCNT; /*TOTAL-BLOCKS-IN-Y-DIRECTION*/
+long CXMIN; /*MIN-X-COORD-ON-CHIP*/
+long CXMAX; /*MAX-X-COORD*/
+long CYMIN; /*MIN-Y-COORD-ON-CHIP*/
+long CYMAX; /*MAX-Y-COORD*/
+/**/
+double STSIZ;
+double OutDeltaX;
+double OutDeltaY;
+/**/
+long CFragment;
+long XFragment;
+unsigned short ILayer_Cnt;
+/**/
+extern char M_CONV_MODULE;
+extern char F_EVAL_MODULE;
+extern char F_INIT_MODULE;
+/**/
+struct LZ_Struct
+{
+        long EMSIZ; /*In PAGES BY 1K*/
+        long UN001; /*Units_Per_Micron*/
+        long UN003; /*Delta Window In Units*/
+        long CXMIN; /*In Units*/
+        long CXMAX; /*In Units*/
+        long CYMIN; /*In Units*/
+        long CYMAX; /*In Units*/
+        long XBSIZ; /*In Units*/
+        long YBSIZ; /*In Units*/
+        long XBCNT;
+        long YBCNT;
+        long LVCNT; /*Vectors Count on Block*/
+        long FiLID;
+	char FileP[4];
+        char Err1P[4];
+        char PlotP[4];
+        char TempP[4];
+}       ;
+struct LX_Struct
+{
+        long STATUS;
+
+        long CXMIN;
+        long CXMAX;
+        long CYMIN;
+        long CYMAX;
+
+        long XBCNT;
+        long YBCNT;
+	long XBSIZ;
+        long YBSIZ;
+
+        long ER1I;
+	long PLTI;
+        long BDBI;
+        long PDBI;
+}       ;
+struct LF_Struct
+{
+        FILE*Fil;
+	char*Buf;
+	long Buf_Len;
+	long Buf_Pos;
+	char Buf_Eof;
+}       ;
+struct FX_Struct
+{
+	long Fragment;
+
+	LX_Struct LX_S;
+	LF_Struct File;
+
+	char Name[20];
+	char PdbN[20];
+	char BdbN[20];
+	char Er1N[20];
+	char PltN[20];
+
+	long Delta_X;
+	long Delta_Y;
+
+	long Lcode;
+	long Lmask;
+
+	char Exist;
+
+	FILE*ER1;
+	FILE*ER2;
+}       ;
+class MASCOT_IO
+{
+	public:
+	long ZZ_RP_KB;
+	/**/
+	long DIX_OpenS;
+	char DIX_LineS;
+	long DIX_Layer;
+	long Dix_Layer;
+
+	char*Dix_Out_Buf;
+	long Dix_Out_Pos;
+	long Dix_Out_Len;
+	long Dix_Out_Cnt;
+
+	FILE*Dix_File;
+	char*Dix_Name;
+	/**/
+	char Rewrite_FP_S; /*for F_SIZE_MODULE only.*/
+	/**/
+	char*DFile_Buf;
+	long DFile_Ptr;
+	long DFile_Eof;
+	long DFile_Lim;
+
+	FILE*DFile;
+	long*DFragment;
+	long*DLayer;
+
+	long DDelta_X;
+	long DDelta_Y;
+	/**/
+        struct FP_Struct
+	{
+		char Id_String[32];
+
+		long Delta_X; /*In Units*/
+		long Delta_Y; /*In Units*/
+	}	;
+	LZ_Struct LZ_S;
+	LX_Struct LX_S;
+
+	FP_Struct FP_S;
+
+	long FPOS_1;
+	long FPOS_2;
+	long FPOS_3;
+
+	char LZ_S_Changed;
+
+	FILE*LZ_S_FILE;
+	FILE*LX_S_FILE;
+	char*LZ_S_NAME;
+	char*LX_S_NAME;
+	/**/
+	long S_BPOS;
+	long S_BLEN;
+	char*S_BTOP;
+	/**/
+	struct MM_layer
+	{
+		char*N;
+		char X;
+	}	;
+	MM_layer*MM_Layer;
+	/**/
+	long MM_Layer_Old;
+	long MM_Layer_Lim;
+	long MM_Layer_Max;
+	unsigned char*MM_Hash;
+	/**/
+	~MASCOT_IO(){};
+	MASCOT_IO();
+	void Dix_write(void*Buf, long Count);
+	void Dix_close(void);
+	void(*Dix_special)(void);
+	void Dix_output_line(void);
+	void Dix_output(void);
+	char ZDNEXT(void);
+	void ZDREAD(char*B, char L);
+	void ZDREAD_X(long*D, char Z);
+	char ZDREAD_L(Obj_Line&Obj);
+	void ZDREAD_P(void);
+	char*SS_Fetch(char*Name); /*puts to buffer and returns pointer.*/
+	char ZZ_Hash(char*s); /*evaluates hash number.*/
+	long MM_Fetch(char*Name);
+	long MM_Insert(char*N);
+	void SetMinMax(void);
+	void Setup(void);
+	void Make_File_Name(char*Sd, long Id);
+	void Make_File_Name_Main(char*Sd, long Id);
+	void Make_PLT_File_Name(char*Sd, long Id);
+	void Make_BDB_File_Name(char*Sd, long Id);
+	void SetAbsDelta(long);
+	void Find_ILayer(void);
+	void Init_ILayer_File(FX_Struct*L);
+	void INIT_OLayer(void);
+	void Close_ILayer(long n);
+	void INIT_ILayer(long n);
+	void renameoutput(void);
+	void D_Link(long n);
+	void D_BACKLink(long n);
+	void CloseLzLx(void);
+	void FCloseAll(void);
+}	;
+
+MASCOT_IO MaSCOT_IO;
+FX_Struct I_Layer[4], O_Layer;
+
+void MASCOT_IO::Dix_write(void*Buf, long Count)
+{
+	if((Dix_Out_Pos+Count)>=Dix_Out_Len)
+	{
+		fwrite(Dix_Out_Buf, 1, Dix_Out_Pos, Dix_File);
+		Dix_Out_Pos = 0;
+	}
+	memcpy(Dix_Out_Buf+Dix_Out_Pos, Buf, Count);
+	Dix_Out_Pos += Count;
+}
+void MASCOT_IO::Dix_close(void)
+{
+	if(Dix_Out_Buf!=0)
+	{
+		if(Dix_Out_Pos>0)
+		fwrite(Dix_Out_Buf, 1, Dix_Out_Pos, Dix_File);
+		fflush(Dix_File);
+		Dix_Out_Pos = 0;
+	}
+	if(Rewrite_FP_S)
+	{
+		long P = 0;
+		fsetpos(Dix_File, &P);
+		fwrite(&FP_S, sizeof(FP_S), 1, Dix_File);
+		fflush(Dix_File);
+	}
+	fclose(Dix_File);
+	Ferror(Dix_File, Dix_Name);
+	Dix_File = 0;
+	Dix_Name = 0;
+
+	delete O_Layer.File.Buf;
+	O_Layer.File.Buf = 0;
+}
+void MASCOT_IO::Dix_output_line(void)
+{
+	long LD;
+	long dx;
+	long dy;
+	long fi;
+	long la;
+	long ic;
+	long cn;
+	long ZX;
+	long ZY;
+	char add_dl;
+	static long OX;
+	static long OY;
+	dx = floor(OutDeltaX+0.5);
+	dy = floor(OutDeltaY+0.5);
+	if(dx||dy)
+	{
+		add_dl = 1;
+	}
+	else	add_dl = 0;
+	cn = 0;
+	if(!__ZLDLA__)
+	{
+		la = ZLDLIM;
+		if(STATUS>0)
+		{
+			fi = 0l;
+			ic = +1;
+		}
+		else
+		{
+			fi = ZLDLIM-1;
+			ic = -1;
+		}
+	}
+	else
+	{
+		ic = +1;
+		cn = __ZLDFI__;
+		fi = __ZLDFI__;
+		la = __ZLDLA__;
+	}
+	if(!__Tail_follow__)
+	{
+		++cn;
+		OX = ZLDCO0[fi];
+		OY = ZLDCO1[fi];
+		fi += ic;
+	}
+	for(LD = fi; cn<la; LD += ic, ++cn)
+	{
+		Obj_Line Obj;
+		ZX = ZLDCO0[LD];
+		ZY = ZLDCO1[LD];
+		Obj.x1 = OX;
+		Obj.y1 = OY;
+		Obj.x2 = ZX;
+		Obj.y2 = ZY;
+		Obj.status = STATUS>0;
+		if(OY>ZY||(OY==ZY&&OX>ZX))
+		{
+			l_swap(Obj.y1,Obj.y2);
+			l_swap(Obj.x1,Obj.x2);
+			Obj.status = STATUS>0? 0: 1;
+		}
+		if(add_dl)
+		{
+			Obj.x1 += dx;
+			Obj.y1 += dy;
+			Obj.x2 += dx;
+			Obj.y2 += dy;
+		}
+		OX = ZX;
+		OY = ZY;
+		Dix_write(&Obj, sizeof(Obj_Line));
+	}
+	Ferror(Dix_File, Dix_Name);
+}
+void MASCOT_IO::Dix_output(void)
+{
+	long LD;
+	long dx;
+	long dy;
+	long DX;
+	long DY;
+	long XL;
+	long YL;
+	long ZX;
+	long ZY;
+	long JJ;
+	long fi;
+	long la;
+	long ic;
+	long cn;
+	char DS;
+	char add_dl;
+	static long OX;
+	static long OY;
+	if(Dix_special)
+	{
+		Dix_special();
+		return;
+	}
+	if(__inTOPlt__)
+	{
+		Dix_output_line();
+		return;
+	}
+	if(DIX_OpenS!=Open_Shape)
+	{
+		long D = 0;
+		Dix_write(&D, 1);
+		D = (Open_Shape!=0? 2: 1)<<4;
+		Dix_write(&D, 1);
+		DIX_OpenS = Open_Shape;
+	}
+	if(DIX_Layer!=Dix_Layer)
+	{
+		long D = 0;
+		Dix_write(&D, 1);
+		D = 128;
+		Dix_write(&D, 1);
+		Dix_write(&Dix_Layer, 2);
+		DIX_Layer = Dix_Layer;
+	}
+	if(XFragment!=CFragment)
+	{
+		long D = 0;
+		Dix_write(&D, 1);
+
+		if(CFragment<(0XFFL+1))          D = 1;
+		else if(CFragment<(0XFFFFL+1))   D = 2;
+		else if(CFragment<(0XFFFFFFL+1)) D = 3;
+		else                             D = 4;
+
+		Dix_write(&D, 1);
+
+		Dix_write(&CFragment, D);
+		XFragment = CFragment;
+	}
+	dx = floor(OutDeltaX+0.5);
+	dy = floor(OutDeltaY+0.5);
+	if(dx||dy)
+	{
+		add_dl = 1;
+	}
+	else	add_dl = 0;
+	if(!__Tail_follow__)
+	{
+		++Dix_Out_Cnt;
+		OX = 0;
+		OY = 0;
+	}
+	cn = 0;
+	if(!__ZLDLA__)
+	{
+	/*
+	output all points.
+	*/
+		la = ZLDLIM-1;
+		if(STATUS>0)
+		{
+			fi = 0l;
+			ic = +1;
+		}
+		else
+		{
+			fi = ZLDLIM-1;
+			ic = -1;
+		}
+	}
+	else
+	{
+		ic = +1;
+		cn = __ZLDFI__;
+		fi = __ZLDFI__;
+		la = __ZLDLA__;
+	}
+	for(LD = fi; cn<la; LD += ic, ++cn)
+	{
+		ZX = ZLDCO0[LD];
+		ZY = ZLDCO1[LD];
+
+		if(Rewrite_FP_S)
+		{
+			if(ZX<CXMIN)CXMIN = ZX;
+			if(ZX>CXMAX)CXMAX = ZX;
+			if(ZY<CYMIN)CYMIN = ZY;
+			if(ZY>CYMAX)CYMAX = ZY;
+		}
+		if(add_dl)
+		{
+			ZX += dx;
+			ZY += dy;
+		}
+		if(M_CONV_MODULE)
+		{
+			if(ZX<CXMIN)CXMIN = ZX;
+			if(ZX>CXMAX)CXMAX = ZX;
+			if(ZY<CYMIN)CYMIN = ZY;
+			if(ZY>CYMAX)CYMAX = ZY;
+		}
+		DX = ZX - OX;
+		DY = ZY - OY;
+
+		OX = ZX;
+		OY = ZY;
+
+		ZX = ZY = 0;
+
+		if(DX<=0) DX = -DX, ZX |= 0200;
+		if(DY<=0) DY = -DY, ZY |= 0200;
+
+		JJ = 0;
+
+		if(DX)while(!(DX%10)&&JJ<7) ++JJ, DX/= 10;
+		ZX |= JJ<<3;
+
+		JJ = 0;
+
+		if(DY)while(!(DY%10)&&JJ<7) ++JJ, DY/= 10;
+		ZY |= JJ<<3;
+
+		if(DX==0) XL = 0;
+		else if(DX < (0XFFL+1)) XL = 1;
+		else if(DX < (0XFFFFL+1)) XL = 2;
+		else if(DX < (0XFFFFFFL+1)) XL = 3;
+		else XL = 4;
+
+		if(DY==0) YL = 0;
+		else if(DY < (0XFFL+1)) YL = 1;
+		else if(DY < (0XFFFFL+1)) YL = 2;
+		else if(DY < (0XFFFFFFL+1)) YL = 3;
+		else YL = 4;
+
+		ZX |= XL;
+		ZY |= YL;
+
+		Dix_write(&ZX, 1L);
+		if(XL)
+		Dix_write(&DX, XL);
+
+		Dix_write(&ZY, 1L);
+		if(YL)
+		Dix_write(&DY, YL);
+	}
+	if(la&&!__Head_follow__)
+	{
+		DS = 0, Dix_write(&DS, 1);
+	}
+	Ferror(Dix_File, Dix_Name);
+}
+char MASCOT_IO::ZDNEXT(void)
+{
+	if(DFile_Ptr>=DFile_Lim)
+	{
+		DFile_Buf[0] = 0;
+		DFile_Lim = fread(DFile_Buf, 1, DFile_Lim, DFile);
+		ZZ_RP_KB += DFile_Lim;
+		DFile_Eof = (DFile_Lim == 0);
+		DFile_Ptr = 0;
+	}
+	return DFile_Buf[DFile_Ptr++];
+}
+void MASCOT_IO::ZDREAD(char*B, char L)
+{
+	register char i;
+	if(DFile_Ptr+L>=DFile_Lim)
+	{
+		for(i = 0; i<L; ++i)
+		B[i] = ZDNEXT();
+		return;
+	}
+	memcpy(B, &DFile_Buf[DFile_Ptr], L);
+	DFile_Ptr += L;
+}
+#define Z_LEN(Z) ((Z)&7)
+#define Z_REV(Z) ((Z)&128)
+#define Z_TEN(Z) (((Z)&56)>>3)
+void MASCOT_IO::ZDREAD_X(long*D, char Z)
+{
+	(*D) = 0;
+	ZDREAD((char*)D, Z_LEN(Z));
+
+	if(Z_REV(Z))(*D) *=-1L;
+	for(Z = Z_TEN(Z); Z; --Z)(*D)*= 10;
+}
+char MASCOT_IO::ZDREAD_L(Obj_Line&Obj)
+{
+	ZDREAD((char*)&Obj, sizeof(Obj_Line));
+	if(DFile_Eof)
+	{
+		Obj = Obj_LInfinite;
+		return 0;
+	}
+	return 1;
+}
+void MASCOT_IO::ZDREAD_P(void)
+{
+	char Z;
+	long L;
+	long X;
+	long Y;
+	long Px;
+	long Py;
+	long D[2];
+	char adddl;
+	ZLDLIM = 0;
+	ZDREAD(&Z, 1);
+	if(!Z)
+	{
+		ZDREAD(&Z, 1), L = (Z&(7<<4))>>4;
+		if(L)
+		{
+			if(L==8)
+			{
+				(*DLayer) = 0;
+				ZDREAD((char*)DLayer, 2);
+			}
+			else
+			if(L<=2)
+			{
+				Open_Shape = L-1;
+			}
+			else
+			{
+				zAbort(fxeval, __LINE__);
+			}
+			return;
+		}
+		(*DFragment) = 0;
+		ZDREAD((char*)DFragment, Z);
+		if(DFile_Eof)
+		(*DFragment) = LONG_MAX;
+		return;
+	}
+	X = Y = 0;
+	if(SetUp_Min_Max)
+	{
+		PXMIN = PYMIN = LONG_MAX;
+		PXMAX = PYMAX =-LONG_MAX;
+	}
+	adddl = DDelta_X||DDelta_Y? 1: 0;
+	do
+	{
+		ZDREAD_X(&D[0], Z);
+		ZDREAD(&Z, 1);
+		ZDREAD_X(&D[1], Z);
+		X += D[0];
+		Y += D[1];
+		if(adddl)
+		{
+			Px = X-DDelta_X;
+			Py = Y-DDelta_Y;
+		}
+		else	Px = X, Py = Y;
+		if(!__aLlAng__)
+		if(D[0]&&D[1])
+		if(l_abs(D[0])!=l_abs(D[1]))
+		{
+			__aLlAng__ = ZLDLIM!=0;
+		}
+		L = (ZLDLIM++);
+		if(__INTOPLD__)
+		{
+			++L;
+			ZLDCO4[L] = Px;
+			ZLDCO5[L] = Py;
+		}
+		else
+		{
+			ZLDCO0[L] = Px;
+			ZLDCO1[L] = Py;
+		}
+		if(SetUp_Min_Max)
+		{
+			if(PXMIN>Px)PXMIN = Px;
+			if(PXMAX<Px)PXMAX = Px;
+			if(PYMIN>Py)PYMIN = Py;
+			if(PYMAX<Py)PYMAX = Py;
+		}
+		ZDREAD(&Z, 1);
+	}
+	while(Z);
+}
+char*MASCOT_IO::SS_Fetch(char*Name)
+{
+	long i;
+	char*n;
+	i = strlen(Name)+1;
+	if((S_BLEN-S_BPOS)<=i)zAbort(fxeval,__LINE__);
+
+	memcpy(&S_BTOP[S_BPOS], Name, i);
+	n = &S_BTOP[S_BPOS];
+	S_BPOS+= i;
+
+	return(n);
+}
+char MASCOT_IO::ZZ_Hash(char*s)
+{
+	char i = 0;
+	while(*s) i = (i + (*s++))&63;
+	return(i);
+}
+long MASCOT_IO::MM_Fetch(char*Name)
+{
+	long i;
+	long I;
+	i = ZZ_Hash(Name);
+
+	I = MM_Hash[i];
+	while(I)
+	{
+		if(memicmp(Name, MM_Layer[I].N, strlen(MM_Layer[I].N))==0)
+		{
+			break;
+		}
+		I = MM_Layer[I].X;
+	}
+	return(I);
+}
+long MASCOT_IO::MM_Insert(char*N)
+{
+	long i;
+	long I;
+	I = MM_Layer_Lim++;
+	if(MM_Layer_Lim>=MM_Layer_Max)zAbort(fxeval,__LINE__);
+
+	MM_Layer[I].N = N;
+
+	i = ZZ_Hash(N);
+
+	MM_Layer[I].X = MM_Hash[i];
+	MM_Hash[i] = I;
+
+	return(I);
+}
+void MASCOT_IO::Make_File_Name_Main(char*Sd, long Id)
+{
+	long Ij;
+	static char*Sp = "abcxzjps";
+
+	sprintf(Sd, "%08ld", Id);
+
+	for(Ij = 0; Sp[Ij]!=0; ++Ij)
+	{
+		if(Sd[Ij]== 0 )continue;
+		if(Sd[Ij]=='0')Sd[Ij] = Sp[Ij];
+		if(Sd[Ij]=='1')Sd[Ij] = 'e';
+	}
+	memcpy(Sd, LZ_S.FileP, 3);
+}
+void MASCOT_IO::Make_PLT_File_Name(char*Sd, long Id)
+{
+	Make_File_Name_Main(Sd, Id);
+	strncat(Sd, ".xzp", 5);
+}
+void MASCOT_IO::Make_BDB_File_Name(char*Sd, long Id)
+{
+	Make_File_Name_Main(Sd, Id);
+	strncat(Sd, ".xzb", 5);
+}
+void MASCOT_IO::Make_File_Name(char*Sd, long Id)
+{
+	Make_File_Name_Main(Sd, Id);
+	strncat(Sd, ".xzq", 5);
+}
+void MASCOT_IO::Find_ILayer(void)
+{
+	long I;
+	long n;
+	long i;
+	I = ILayer_Cnt;
+	for(i = n = 0; i<I; ++i)
+	{
+		I_Layer[i].Exist = MM_Fetch(I_Layer[i].Name);
+		if(I_Layer[i].Exist)++n;
+	}
+	if(n<I)
+	{
+		for(i = 0; i<I; ++i)
+		{
+			if(!I_Layer[i].Exist)
+	fprintf(stderr, "\n!!! LAYER '%s' IS NOT VALID !!!", I_Layer[i].Name);
+		}
+		zAbort(fxeval,__LINE__);
+	}
+	for(i = 0; i<I; ++i)
+	{
+		n = FPOS_2 + (I_Layer[i].Exist-1)*sizeof(LX_S);
+		fsetpos(LX_S_FILE, &n);
+		n = fread(&I_Layer[i].LX_S, sizeof(LX_S), 1, LX_S_FILE);
+		if(n!=1)zAbort(fxeval,__LINE__);
+	}
+}
+void MASCOT_IO::Init_ILayer_File(FX_Struct*L)
+{
+	L->File.Fil = Fopen(L->PdbN, "rb");
+	fread(&FP_S, sizeof(FP_S), 1, L->File.Fil);
+
+	L->Delta_X = FP_S.Delta_X;
+	L->Delta_Y = FP_S.Delta_Y;
+
+	L->File.Buf = new char[1024];
+
+	L->File.Buf_Len = 1024;
+	L->File.Buf_Pos = 1024;
+
+	L->File.Buf_Eof = 0;
+}
+void MASCOT_IO::INIT_OLayer(void)
+{
+	FX_Struct*L = &O_Layer;
+	tmpnam(L->PdbN);
+
+	L->File.Fil = Fopen(L->PdbN, "w+b");
+
+	FP_S.Delta_X = 0;
+	FP_S.Delta_Y = 0;
+
+	fwrite(&FP_S, sizeof(FP_S), 1, L->File.Fil);
+
+	L->LX_S.CXMIN = LZ_S.CXMIN;
+	L->LX_S.CXMAX = LZ_S.CXMAX;
+	L->LX_S.CYMIN = LZ_S.CYMIN;
+	L->LX_S.CYMAX = LZ_S.CYMAX;
+
+	L->LX_S.XBCNT = LZ_S.XBCNT;
+	L->LX_S.YBCNT = LZ_S.YBCNT;
+	L->LX_S.XBSIZ = LZ_S.XBSIZ;
+	L->LX_S.YBSIZ = LZ_S.YBSIZ;
+
+	L->File.Buf = new char[1024];
+
+	L->File.Buf_Len = 1024;
+	L->File.Buf_Pos = 0;
+
+	Dix_Out_Cnt = 0;
+	Dix_Out_Buf = L->File.Buf;
+
+	Dix_Out_Pos = L->File.Buf_Pos;
+	Dix_Out_Len = L->File.Buf_Len;
+
+	Dix_File = L->File.Fil;
+	Dix_Name = L->PdbN;
+}
+void MASCOT_IO::Close_ILayer(long n)
+{
+	FX_Struct*L = &I_Layer[n];
+	fclose(L->File.Fil);
+	Ferror(L->File.Fil, L->PdbN);
+	L->File.Fil = 0;
+
+	delete L->File.Buf;
+	L->File.Buf = 0;
+}
+void MASCOT_IO::INIT_ILayer(long n)
+{
+	FX_Struct*L = &I_Layer[n];
+	Make_File_Name(L->PdbN, L->LX_S.PDBI);
+
+	Init_ILayer_File(L);
+
+	L->Lcode = 1<<(2*n);
+	L->Lmask = (L->Lcode<<1)|L->Lcode;
+
+	LYCODE[n] = L->Lcode;
+	LYMASK[n] = L->Lmask;
+
+	L->Fragment = 0;
+}
+void MASCOT_IO::renameoutput(void)
+{
+	long i;
+	long I;
+	char Name[20];
+	char BNam[20];
+	O_Layer.LX_S.ER1I = 0;
+	O_Layer.LX_S.BDBI = 0;
+	O_Layer.LX_S.PLTI = 0;
+
+	i = MM_Fetch(O_Layer.Name);
+	if(i!=0)
+	{
+		I = FPOS_2 + sizeof(LX_S)*(i-1);
+		fsetpos(LX_S_FILE, &I);
+		I = fread(&LX_S, sizeof(LX_S), 1, LX_S_FILE);
+		if(I!=1)zAbort(fxeval,__LINE__);
+
+		if(LX_S.PDBI)
+		Make_File_Name(Name, LX_S.PDBI);
+		else
+		{
+			LZ_S_Changed = 1;
+			LX_S.PDBI = LZ_S.FiLID++;
+			Make_File_Name(Name, LX_S.PDBI);
+		}
+		O_Layer.LX_S.PDBI = LX_S.PDBI;
+		Make_BDB_File_Name(BNam, LX_S.PDBI);
+		Delete_File(BNam);
+	}
+	else
+	{
+		O_Layer.LX_S.PDBI = LZ_S.FiLID;
+		LZ_S_Changed = 1;
+		Make_File_Name(Name, LZ_S.FiLID++);
+		i = MM_Insert(SS_Fetch(O_Layer.Name));
+	}
+	Delete_File(Name);
+	rename(O_Layer.PdbN, Name);
+	I = FPOS_2 + sizeof(LX_S)*(i-1);
+	fsetpos(LX_S_FILE, &I);
+	I = fwrite(&O_Layer.LX_S, sizeof(LX_S), 1, LX_S_FILE);
+	if(I!=1)zAbort(fxeval,__LINE__);
+	fflush(LX_S_FILE);
+}
+void MASCOT_IO::CloseLzLx(void)
+{
+	long i;
+	long I;
+	long L;
+	if(LZ_S_Changed)
+	{
+		fsetpos(LZ_S_FILE, &FPOS_2);
+		fwrite(&LZ_S, sizeof(LZ_S), 1, LZ_S_FILE);
+		fflush(LZ_S_FILE);
+	}
+	L = FPOS_3;
+	fsetpos(LZ_S_FILE, &FPOS_3);
+	i = MM_Layer_Old;
+	while(i<MM_Layer_Lim)
+	{
+		I = strlen(MM_Layer[i].N)+1;
+		fwrite(MM_Layer[i].N, 1, I, LZ_S_FILE);
+		L += I;
+		++i;
+	}
+	delete MM_Layer;
+	fflush(LZ_S_FILE);
+	chsize(fileno(LZ_S_FILE), L);
+	fclose(LZ_S_FILE);
+	fclose(LX_S_FILE);
+}
+MASCOT_IO::MASCOT_IO()
+{
+	Dix_special = 0;
+
+	S_BPOS = 1;
+	S_BLEN = 4096;
+	S_BTOP = new char[4096];
+	memset(S_BTOP, 0, 4096);
+
+	S_BLEN-= 20;
+	LZ_S_NAME = &S_BTOP[S_BLEN];
+	S_BLEN-= 20;
+	LX_S_NAME = &S_BTOP[S_BLEN];
+
+	S_BLEN-= 64;
+	MM_Hash = (unsigned char*)(&S_BTOP[S_BLEN]);
+
+	memcpy(LZ_S.FileP, "M2$\n", 4);
+	memcpy(LZ_S.Err1P, "E1$\n", 4);
+	memcpy(LZ_S.PlotP, "PT$\n", 4);
+	memcpy(LZ_S.TempP, "TM$\n", 4);
+
+	Make_File_Name(LZ_S_NAME, 0);
+	Make_File_Name(LX_S_NAME, 1);
+	LZ_S.FiLID = 2;
+
+	DFragment = &XFragment;
+	DLayer = &Dix_Layer;
+	memcpy(FP_S.Id_String, "Mascot V2.1 Internal Storage\n", 29);
+	FP_S.Delta_X = 0;
+	FP_S.Delta_Y = 0;
+
+	FPOS_1 = sizeof(LZ_S)+sizeof(FP_S);
+	FPOS_2 = sizeof(FP_S);
+}
+void MASCOT_IO::SetMinMax(void)
+{
+	CXMIN = LZ_S.CXMIN;
+	CXMAX = LZ_S.CXMAX;
+	CYMIN = LZ_S.CYMIN;
+	CYMAX = LZ_S.CYMAX;
+
+	XBSIZ = LZ_S.XBSIZ;
+	YBSIZ = LZ_S.YBSIZ;
+	XBCNT = LZ_S.XBCNT;
+	YBCNT = LZ_S.YBCNT;
+	LVCNT = LZ_S.LVCNT;
+
+	EMSIZ = 0; /*unused parameter.*/
+
+	BLCNT = XBCNT*YBCNT;
+}
+void MASCOT_IO::Setup(void)
+{
+	char*b;
+	long i;
+	long m;
+	long n;
+
+	LZ_S_FILE = Fopen(LZ_S_NAME, "r+b");
+	LX_S_FILE = Fopen(LX_S_NAME, "r+b");
+
+	i = fread(&FP_S, sizeof(FP_S), 1, LZ_S_FILE);
+	m = fread(&FP_S, sizeof(FP_S), 1, LX_S_FILE);
+	n = fread(&LZ_S, sizeof(LZ_S), 1, LZ_S_FILE);
+	if(i!=1||m!=1||n!=1)zAbort(fxeval,__LINE__);
+
+	UN001 = LZ_S.UN001;
+	UN002*= UN001;
+	STSIZ = 1.0/(double)UN001;
+
+	SetMinMax();
+
+	MM_Layer = new MM_layer[64];
+	memset(MM_Layer, 0, sizeof(MM_layer)*64);
+	MM_Layer_Lim = 1;
+	MM_Layer_Max = 64;
+
+	b = &S_BTOP[S_BLEN-200];
+
+	fsetpos(LZ_S_FILE, &FPOS_1);
+	b[0] = 1;
+	while(!feof(LZ_S_FILE))
+	{
+		i = 0;
+		do
+		{
+		if(!fread(&b[i], 1, 1, LZ_S_FILE))b[i] = 0;
+		}
+		while(b[i++]);
+		if(!b[0])break;
+		i = MM_Insert(SS_Fetch(b));
+	}
+	MM_Layer_Old = MM_Layer_Lim;
+	fgetpos(LZ_S_FILE, &FPOS_3);
+	Ferror(LZ_S_FILE, LZ_S_NAME);
+}
+void
+MASCOT_IO::D_Link(long n)
+{
+	DFile = I_Layer[n].File.Fil;
+
+	DFile_Buf = I_Layer[n].File.Buf;
+	DFile_Ptr = I_Layer[n].File.Buf_Pos;
+	DFile_Eof = I_Layer[n].File.Buf_Eof;
+	DFile_Lim = I_Layer[n].File.Buf_Len;
+
+	DDelta_X = I_Layer[n].Delta_X;
+	DDelta_Y = I_Layer[n].Delta_Y;
+
+	DFragment = &I_Layer[n].Fragment;
+}
+#define I_XBCNT(n) (I_Layer[(n)].LX_S.XBCNT)
+#define I_YBCNT(n) (I_Layer[(n)].LX_S.YBCNT)
+#define I_XBSIZ(n) (I_Layer[(n)].LX_S.XBSIZ)
+#define I_YBSIZ(n) (I_Layer[(n)].LX_S.YBSIZ)
+#define I_CXMIN(n) (I_Layer[(n)].LX_S.CXMIN)
+#define I_CXMAX(n) (I_Layer[(n)].LX_S.CXMAX)
+#define I_CYMIN(n) (I_Layer[(n)].LX_S.CYMIN)
+#define I_CYMAX(n) (I_Layer[(n)].LX_S.CYMAX)
+void
+MASCOT_IO::SetAbsDelta(long n)
+{
+	long XB;
+	long YB;
+	CFragment =*DFragment;
+	if(CFragment!=LONG_MAX)
+	{
+		DDelta_X = I_Layer[n].Delta_X-CXMIN;
+		DDelta_Y = I_Layer[n].Delta_Y-CYMIN;
+
+		XB = CFragment/I_YBCNT(n);
+		YB = CFragment-(XB*I_YBCNT(n));
+
+		DDelta_X -= XB*I_XBSIZ(n);
+		DDelta_Y -= YB*I_YBSIZ(n);
+	}
+}
+void
+MASCOT_IO::D_BACKLink(long n)
+{
+	I_Layer[n].File.Buf_Pos = DFile_Ptr;
+	I_Layer[n].File.Buf_Eof = DFile_Eof;
+	I_Layer[n].File.Buf_Len = DFile_Lim;
+	Ferror(I_Layer[n].File.Fil, I_Layer[n].PdbN);
+}
+void
+MASCOT_IO::FCloseAll(void)
+{
+	unsigned short I;
+	for(I = 0; I<ILayer_Cnt; ++I)
+	{
+		fclose(I_Layer[I].File.Fil);
+	}
+	Dix_close();
+	renameoutput();
+	CloseLzLx();
+}

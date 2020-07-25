@@ -1,0 +1,194 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{E36C67E0-EB51-40C5-82FE-879376E27920}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(Configuration)\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</LinkIncremental>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(Configuration)\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>.\..\XRemoting\Include;.\..\KWindows</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>false</StringPooling>
+      <MinimalRebuild>false</MinimalRebuild>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <CompileAsManaged>false</CompileAsManaged>
+      <SDLCheck>true</SDLCheck>
+      <MultiProcessorCompilation>false</MultiProcessorCompilation>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>
+    </ClCompile>
+    <Link>
+      <OutputFile>$(OutDir)TESTVectors.exe</OutputFile>
+      <AdditionalLibraryDirectories>.\..\$(Configuration)</AdditionalLibraryDirectories>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>$(OutDir)TESTVectors.pdb</ProgramDatabaseFile>
+      <SubSystem>Windows</SubSystem>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
+      <AdditionalIncludeDirectories>.\..\XRemoting\Include;.\..\KWindows</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <OutputFile>$(OutDir)TESTVectors.exe</OutputFile>
+      <AdditionalLibraryDirectories>.\..\$(Configuration)</AdditionalLibraryDirectories>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <GenerateMapFile>true</GenerateMapFile>
+      <SubSystem>Windows</SubSystem>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="Compression.cpp" />
+    <ClCompile Include="FrameMain.cpp" />
+    <ClCompile Include="FrameOther.cpp" />
+    <ClCompile Include="KVectors.cpp" />
+    <ClCompile Include="stdafx.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="TESTVectors.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="classesToplevel.h" />
+    <ClInclude Include="FrameMain.h" />
+    <ClInclude Include="FrameOther.h" />
+    <ClInclude Include="KVectors.h" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="stdafx.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="TESTVectors.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Bitmaps\arrow_left_24.bmp">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="Bitmaps\arrow_left_24_d.bmp">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="Bitmaps\arrow_left_24_h.bmp">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="Bitmaps\arrow_right_24.bmp">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="Bitmaps\arrow_right_24_d.bmp">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="Bitmaps\arrow_right_24_h.bmp">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="Bitmaps\delete_24.bmp">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="Bitmaps\delete_24_d.bmp">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="Bitmaps\delete_24_h.bmp">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="Bitmaps\finish_document_24.bmp">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="Bitmaps\finish_document_24_d.bmp">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="Bitmaps\finish_document_24_h.bmp">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="Bitmaps\Frame.bmp" />
+    <None Include="Bitmaps\new_document_lined_24.bmp">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="Bitmaps\new_document_lined_24_d.bmp">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="Bitmaps\new_document_lined_24_h.bmp">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="Bitmaps\save_24.bmp">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="Bitmaps\save_24_d.bmp">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="Bitmaps\save_24_h.bmp">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="Bitmaps\stop_24.bmp">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="Bitmaps\stop_24_d.bmp">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="Bitmaps\stop_24_h.bmp">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="TESTVectorsFrameMain.txt" />
+    <None Include="TESTVectorsFrameOther.txt" />
+    <None Include="KDrawing.txt" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

@@ -1,0 +1,20 @@
+
+
+><$XRemoting 
+
+
+><$Connector 
+>< Listener Name=SimpleProtocol Address='0.0.0.0:18121' Parser=CWSIParser 
+Datatype={RPCRequest_StartCommunication RPCRequest_EnableDisableTool} 
+
+>< Subscriber Name=TMA Address='127.0.0.1:18120' Persistent=1 Parser=CWSIParser Datatype={p} Returns={i} 
+$2 
+
+
+><$Connector Name=TMASimulator 
+>< Listener Name=TMA Address='0.0.0.0:18120' Parser=CWSIParser Datatype={p}
+>< Subscriber Name=SimpleProtocol Address='127.0.0.1:18121' Parser=CWSIParser Datatype={i} Returns={p} 
+$2 
+
+
+$2 

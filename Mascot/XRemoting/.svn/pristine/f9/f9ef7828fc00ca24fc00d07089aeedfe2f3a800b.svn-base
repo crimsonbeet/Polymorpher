@@ -1,0 +1,37 @@
+{ST_XCORE_GET_CURRENT_SELECTION:
+	{
+		RDIndex:{X:"52D47E0000000001"},
+		SL:[{GR:"4",CT:"140116170531"},{GR:"5",CT:"140116140107",M:"1"},{GR:"6",UI:"3",NP:"1",VIN:"NONE",CT:"140116140119"}]
+	}
+}
+
+
+{ST_XCORE_SPINDLE_GET_BASIC_APPLICATIONS:
+	{AP:[
+		{SP:"4",AP:"470",TS:"140113134413",SQ:"1",TT:"1",SN:"1",SD:"?",SC:"4E",A2:"9999",
+			PS:{TH2:"19.5",TT2:"15",TL2:"10.5",TRS:"8.63924",TT1:"8.63924",TR:"4.31962",AL:"5",AH:"9999",SP1:"150",SP2:"20",BSP:"80"},
+			FC:{K:["1","1","","",""],N:["01.02.01::TRIM","LH RH INNER RAIL FENDER BOLTS","01.02.01","","W712103-S439"]}
+		},
+		{SP:"4",AP:"471",TS:"140113134413",SQ:"1",TT:"1",SN:"2",SD:"?",SC:"4E",A2:"9999",
+			PS:{TH2:"19.5",TT2:"15",TL2:"10.5",TRS:"8.63924",TT1:"8.63924",TR:"4.31962",AL:"5",AH:"9999",SP1:"150",SP2:"20",BSP:"80"},
+			FC:{K:["1","1","","",""],N:["01.02.01::TRIM","LH RH INNER RAIL FENDER BOLTS","01.02.01","","W712103-S439"]}
+		},
+		{SP:"4",AP:"472",TS:"140113134413",SQ:"1",TT:"1",SN:"3",SD:"?",SC:"4E",A2:"9999",
+			PS:{TH2:"19.5",TT2:"15",TL2:"10.5",TRS:"8.63924",TT1:"8.63924",TR:"4.31962",AL:"5",AH:"9999",SP1:"150",SP2:"20",BSP:"80"},
+			FC:{K:["1","1","","",""],N:["01.02.01::TRIM","LH RH INNER RAIL FENDER BOLTS","01.02.01","","W712103-S439"]}
+		},
+		{SP:"4",AP:"473",TS:"140113134413",SQ:"1",TT:"1",SN:"4",SD:"?",SC:"4E",A2:"9999",
+			PS:{TH2:"19.5",TT2:"15",TL2:"10.5",TRS:"8.63924",TT1:"8.63924",TR:"4.31962",AL:"5",AH:"9999",SP1:"150",SP2:"20",BSP:"80"},
+			FC:{K:["1","1","","",""],N:["01.02.01::TRIM","LH RH INNER RAIL FENDER BOLTS","01.02.01","","W712103-S439"]}
+		}
+	],
+	FC:{K:["","","","",""],N:["01.02.01::TRIM","LH RH INNER RAIL FENDER BOLTS","","",""],V:"1"}
+	}
+}
+
+
+#define YYDEBUG 1
+FILE *yytracelog = fopen("yytracelog.txt", "w"); 
+#define stderr yytracelog
+
+

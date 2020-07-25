@@ -1,0 +1,53 @@
+DEBUG=
+DEBUGLINK=
+MODEL=x
+OPTIMIZE=-o+space
+#OPTIMIZE=
+FLAGS=-cpp -bx -c -a1 -3
+LIBRX=d:\zortech\libdos\cx
+
+.cpp.obj :
+        ztc -m$(MODEL) $(OPTIMIZE) $(DEBUG) $(FLAGS) $*.cpp
+
+all: mascot.exe
+
+clean:
+     del *.obj
+     del *.bak
+     del *.map
+     del mascot.exe
+
+f-eval.obj:	f-eval.cpp
+    ztc f-eval.cpp $(OPTIMIZE) $(DEBUG) $(FLAGS) -m$(MODEL)
+fxeval.obj:	fxeval.cpp
+    ztc fxeval.cpp $(OPTIMIZE) $(DEBUG) $(FLAGS) -m$(MODEL)
+fqeval.obj:	fqeval.cpp
+    ztc fqeval.cpp $(OPTIMIZE) $(DEBUG) $(FLAGS) -m$(MODEL)
+_scale.obj:	_scale.cpp
+    ztc _scale.cpp $(OPTIMIZE) $(DEBUG) $(FLAGS) -m$(MODEL)
+dxbout.obj:	dxbout.cpp
+    ztc dxbout.cpp $(OPTIMIZE) $(DEBUG) $(FLAGS) -m$(MODEL)
+tom_aray.obj:	tom_aray.cpp
+    ztc tom_aray.cpp $(OPTIMIZE) $(DEBUG) $(FLAGS) -m$(MODEL)
+fzinit.obj:	fzinit.cpp
+    ztc fzinit.cpp $(OPTIMIZE) $(DEBUG) $(FLAGS) -m$(MODEL)
+mgsort.obj:	mgsort.cpp
+    ztc mgsort.cpp $(OPTIMIZE) $(DEBUG) $(FLAGS) -m$(MODEL)
+m_alcr.obj:	m_alcr.cpp
+    ztc m_alcr.cpp $(OPTIMIZE) $(DEBUG) $(FLAGS) -m$(MODEL)
+sou5089.obj:	sou5089.cpp
+    ztc sou5089.cpp $(OPTIMIZE) $(DEBUG) $(FLAGS) -m$(MODEL)
+
+mascot.exe:  f-eval.obj tom_aray.obj fqeval.obj fxeval.obj dxbout.obj _scale.obj fzinit.obj mgsort.obj m_alcr.obj sou5089.obj
+	blinkx $(LIBRX)+f-eval+tom_aray+fqeval+fxeval+dxbout+_scale+fzinit+mgsort+m_alcr+sou5089,mascot/noi
+
+f-eval.obj:	f-eval.cpp
+tom_aray.obj:	tom_aray.cpp
+fqeval.obj:	fqeval.cpp
+fxeval.obj:	fxeval.cpp
+dxbout.obj:	dxbout.cpp
+_scale.obj:	_scale.cpp
+fzinit.obj:	fzinit.cpp
+mgsort.obj:	mgsort.cpp
+m_alcr.obj:	m_alcr.cpp
+sou5089.obj:	sou5089.cpp

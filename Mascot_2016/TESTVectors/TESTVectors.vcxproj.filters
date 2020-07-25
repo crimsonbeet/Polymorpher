@@ -1,0 +1,136 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx</Extensions>
+    </Filter>
+    <Filter Include="Bitmaps">
+      <UniqueIdentifier>{dc799d13-0167-426e-a8d6-a08a4912255e}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="FrameMain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FrameOther.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="KVectors.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TESTVectors.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Compression.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="classesToplevel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FrameMain.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FrameOther.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="KVectors.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="TESTVectors.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Bitmaps\arrow_left_24.bmp">
+      <Filter>Bitmaps</Filter>
+    </None>
+    <None Include="Bitmaps\arrow_left_24_d.bmp">
+      <Filter>Bitmaps</Filter>
+    </None>
+    <None Include="Bitmaps\arrow_left_24_h.bmp">
+      <Filter>Bitmaps</Filter>
+    </None>
+    <None Include="Bitmaps\arrow_right_24.bmp">
+      <Filter>Bitmaps</Filter>
+    </None>
+    <None Include="Bitmaps\arrow_right_24_d.bmp">
+      <Filter>Bitmaps</Filter>
+    </None>
+    <None Include="Bitmaps\arrow_right_24_h.bmp">
+      <Filter>Bitmaps</Filter>
+    </None>
+    <None Include="Bitmaps\delete_24.bmp">
+      <Filter>Bitmaps</Filter>
+    </None>
+    <None Include="Bitmaps\delete_24_d.bmp">
+      <Filter>Bitmaps</Filter>
+    </None>
+    <None Include="Bitmaps\delete_24_h.bmp">
+      <Filter>Bitmaps</Filter>
+    </None>
+    <None Include="Bitmaps\finish_document_24.bmp">
+      <Filter>Bitmaps</Filter>
+    </None>
+    <None Include="Bitmaps\finish_document_24_d.bmp">
+      <Filter>Bitmaps</Filter>
+    </None>
+    <None Include="Bitmaps\finish_document_24_h.bmp">
+      <Filter>Bitmaps</Filter>
+    </None>
+    <None Include="Bitmaps\Frame.bmp">
+      <Filter>Bitmaps</Filter>
+    </None>
+    <None Include="Bitmaps\new_document_lined_24.bmp">
+      <Filter>Bitmaps</Filter>
+    </None>
+    <None Include="Bitmaps\new_document_lined_24_d.bmp">
+      <Filter>Bitmaps</Filter>
+    </None>
+    <None Include="Bitmaps\new_document_lined_24_h.bmp">
+      <Filter>Bitmaps</Filter>
+    </None>
+    <None Include="Bitmaps\save_24.bmp">
+      <Filter>Bitmaps</Filter>
+    </None>
+    <None Include="Bitmaps\save_24_d.bmp">
+      <Filter>Bitmaps</Filter>
+    </None>
+    <None Include="Bitmaps\save_24_h.bmp">
+      <Filter>Bitmaps</Filter>
+    </None>
+    <None Include="Bitmaps\stop_24.bmp">
+      <Filter>Bitmaps</Filter>
+    </None>
+    <None Include="Bitmaps\stop_24_d.bmp">
+      <Filter>Bitmaps</Filter>
+    </None>
+    <None Include="Bitmaps\stop_24_h.bmp">
+      <Filter>Bitmaps</Filter>
+    </None>
+    <None Include="KDrawing.txt" />
+    <None Include="TESTVectorsFrameMain.txt" />
+    <None Include="TESTVectorsFrameOther.txt" />
+  </ItemGroup>
+</Project>
