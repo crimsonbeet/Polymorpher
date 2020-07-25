@@ -30,7 +30,7 @@ public:
 
 		if(block_num >= (size_t)_blocks_lim) { 
 			size_t new_blocks_lim = block_num << 1; 
-			char **new_blocks = new char*[new_blocks_lim]; 
+			char **new_blocks = (char**)new long long**[new_blocks_lim]; 
 			memset(new_blocks, 0, new_blocks_lim * sizeof(*_blocks)); 
 			memcpy(new_blocks, _blocks, _blocks_lim * sizeof(*_blocks)); 
 			delete _blocks; 
@@ -44,7 +44,7 @@ public:
 			memset(_blocks[block_num], 0, _element_size << 10); 
 		} 
 		if(_elements_lim < (int)i) { 
-			_elements_lim = i; 
+			_elements_lim = (int)i;
 		} 
 		return _blocks[block_num][_element_size * (i&0x3FF)];
 	}

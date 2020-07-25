@@ -407,8 +407,8 @@ void SetNxtFrag(long Function)
 }
 
 int F_EVAL_JOB::ProcessArguments(short N, const char*A[]) { 
-	long I, M, ERR, F, O, D, Q, NF=14;
-	long J, K, L;
+	size_t I, M, ERR, F, O, D, Q, NF=14;
+	size_t J, K, L;
 	long w=1, W, s=0, i=0, r=0;
 	char S[100];
 
@@ -545,7 +545,7 @@ int F_EVAL_JOB::ProcessArguments(short N, const char*A[]) {
 		MASLog("\n5009 is not implemented\n"), zabort();
 	}
 
-	return ERR; 
+	return (int)ERR; 
 } 
 void F_EVAL_JOB::PerformFunction(int log_graph) { 
 	MaSCOT_IO.Setup();

@@ -124,7 +124,7 @@ _IEvaluater::_IEvaluater()
 	memset(ZPTHASH_Static, 0, (ZPBLIM+1)*sizeof(PtBead*));
 
 	LF_LIM = 128;
-	Lf_Haschildrens = new char[LF_LIM*40];
+	Lf_Haschildrens = (char*)new long long*[LF_LIM*10*sizeof(long long*)];
 	Lf_VtChainFirst = (VtBead**)(Lf_Haschildrens+LF_LIM);
 	Lf_VtChainLast = Lf_VtChainFirst+LF_LIM;
 	Lf_First = Lf_VtChainLast+LF_LIM;

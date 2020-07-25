@@ -1240,6 +1240,9 @@ bool MASCOT_IO::MASLayerAddRTPolygon(const char* name) { // This can work only w
 	if(n == 0) { 
 		return false; 
 	} 
+	if (ZLDLIM == 0) {
+		return false;
+	}
 
 	n = Find_ILayer(name); 
 	if(n == -1 && ILayer_Cnt < ARRAY_NUM_ELEMENTS(I_Layer)) { 
