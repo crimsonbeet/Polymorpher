@@ -21,7 +21,7 @@
 /**/
 #define Isalpha(S) (isalpha((S))||(S)=='$')
 /**/
-char*FUNAME[14]={"OVR", "ANDNOT", "AND", "XOR", "OR", "NOT", "AREA", "SIZE", "5009", "NOTHING"};
+const char*FUNAME[14]={"OVR", "ANDNOT", "AND", "XOR", "OR", "NOT", "AREA", "SIZE", "5009", "NOTHING"};
 /**/
 #include<string.h>
 #include<ctype.h>
