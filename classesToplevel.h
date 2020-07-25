@@ -4,9 +4,6 @@
 
 #include "OleDate.h" 
 
-#include "IPCInterface.h"
-#include "WSIParser.h" 
-
 extern std::string _g_program_files; 
 extern std::string _g_boot_drive; 
 

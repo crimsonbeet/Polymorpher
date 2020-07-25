@@ -338,3 +338,30 @@ ASALocalRun/
 
 # BeatPulse healthcheck temp database
 healthchecksdb
+/MAS-V-3
+/Mascot
+/Mascot_2014
+/Mascot_2016/Archive
+/Mascot_2016/KWindows
+/Mascot_2016/TESTVectors
+/Mascot_2016/XRemoting
+/Mascot_2016/Cross-Reference.docx
+/Mascot_2016/Mascot.sln
+/Mascot_2016/Mascot/Bitmaps
+/Mascot_2016/Mascot/Notes
+/Mascot_2016/Mascot/targetver.h
+/Mascot_2016/Mascot/stdafx.h
+/Mascot_2016/Mascot/stdafx.cpp
+/Mascot_2016/Mascot/Mascot.vcxproj.filters
+/Mascot_2016/Mascot/Mascot.vcxproj
+/Mascot_2016/Mascot/Mascot.cpp
+/Mascot_2016/Mascot/KVectors.h
+/Mascot_2016/Mascot/KVectors.cpp
+/Mascot_2016/Mascot/KDrawing.txt
+/Mascot_2016/Mascot/FrameMain.txt
+/Mascot_2016/Mascot/FrameMain.h
+/Mascot_2016/Mascot/FrameMain.cpp
+/Mascot_2016/Mascot/FrameDrawing.txt
+/Mascot_2016/Mascot/FrameDrawing.h
+/Mascot_2016/Mascot/FrameDrawing.cpp
+/Mascot_2016/Mascot/classesToplevel.h
