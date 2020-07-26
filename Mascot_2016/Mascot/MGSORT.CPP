@@ -975,9 +975,9 @@ mg_sort(char*fnam)
 		fq[i].fil = NULL;
 		fq[i].Obj = &Obj[i+1];
 	}
-	zAbort_proc = __mgAdel__;
+	zabort_proc = __mgAdel__;
 	k = polysort(zSnum-1);
 MASLog("\n!!! SORT FINISHED NORMALLY !!!\n");
-	zAbort_proc = 0;
+	zabort_proc = 0;
 	return(fq[k].nam);
 }

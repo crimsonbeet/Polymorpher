@@ -175,10 +175,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="F-EVAL.CPP" />
+    <ClCompile Include="F2SIZE.CPP" />
+    <ClCompile Include="F3SIZE.CPP" />
     <ClCompile Include="Mascot_2016\Mascot\F1AREA.CPP" />
     <ClCompile Include="Mascot_2016\Mascot\FQEVAL.CPP" />
     <ClCompile Include="Mascot_2016\Mascot\FXEVAL.CPP" />
     <ClCompile Include="Mascot_2016\Mascot\GridModule.CPP" />
+    <ClCompile Include="Mascot_2016\Mascot\Intersection.cpp" />
     <ClCompile Include="Mascot_2016\Mascot\MGSORT.CPP" />
     <ClCompile Include="Mascot_2016\Mascot\QuickSort.cpp" />
     <ClCompile Include="Mascot_2016\Mascot\SCALE.CPP" />

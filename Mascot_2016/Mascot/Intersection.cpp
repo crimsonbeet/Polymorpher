@@ -83,6 +83,11 @@ LbBead*__LB0__;
 _IEvaluater IEvaluater;
 
 
+
+extern long Delta_X;
+extern long Delta_Y;
+
+
 void _IEvaluater::_ReleaseStorage(void)
 {
 	ZVtTBl._Release();
@@ -314,7 +319,7 @@ char Find_Intersections(unsigned short Lf) // returns 1, if coincidence was foun
 	char DF43;
 	char Cond;
 
-	PtBead*Int_P;
+	PtBead*Int_P = 0;
 	long Int_Y;
 	long Int_X;
 
@@ -585,7 +590,7 @@ IntCoincidentVectors:
 				VtBead*Vt_S[3];
 				long Vt_L = 0;
 
-				S3 = (Lv_Ymax-Lv_Ymin) > (Lv_Xmax-Lv_Xmin);
+				S3 = (Delta_Y = Lv_Ymax-Lv_Ymin) > (Delta_X = Lv_Xmax-Lv_Xmin);
 
 				S1 = S3? Y4 < Y3: X4 < X3;
 				S2 = S3? _Y2_<_Y1_: _X2_<_X1_;

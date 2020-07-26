@@ -695,7 +695,7 @@ void REMOVE_GRID_POINT(long i)
 	{
 		p = p->ZPTNxt;
 	}
-	if(!p)zAbort(fzinit,__LINE__);
+	if(!p)zabort(fzinit,__LINE__);
 	p->ZPTNxt = P->ZPTNxt;
 }
 void
@@ -802,7 +802,7 @@ Reverse_Lv_Chain(LbBead*Lb)
 	while(Lo&&Lv!=Lp);
 	if(!Lo)
 	{
-		zAbort(fzinit,__LINE__);
+		zabort(fzinit,__LINE__);
 	}
 	Lb->ZLBStatus*=-1;
 }

@@ -2,7 +2,9 @@
 #pragma once
 
 
-#include "OleDate.h" 
+//#include "OleDate.h" 
+
+#include <string>
 
 extern std::string _g_program_files; 
 extern std::string _g_boot_drive; 

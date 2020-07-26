@@ -13,7 +13,7 @@
 #include "GridModule.hpp"
 #include "mgsort.hpp"
 
-#include "OleDate.h"
+//#include "OleDate.h"
 /**/
 #define Isalpha(S) (isalpha((S))||(S)=='$')
 /**/
@@ -102,6 +102,19 @@ void zabort(void)
 	//exit(1);
 	throw "\nFATAL ERROR."; 
 }
+
+
+
+void __sizemain__(char Name[20], long Size, char Sign)
+{
+	F_SIZE_JOB JOB;
+	memcpy(JOB.Name, Name, 20);
+	JOB.Size = Size;
+	JOB.Sign = Sign;
+	F_SIZE_SHAPES(JOB);
+	F_SIZE_COLLARS(JOB);
+}
+
 
 void LFuInitialize_S_Factor() {
 	PYMIN = 0;

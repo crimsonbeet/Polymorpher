@@ -89,5 +89,14 @@
     <ClCompile Include="F-EVAL.CPP">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="F2SIZE.CPP">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F3SIZE.CPP">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Mascot_2016\Mascot\Intersection.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

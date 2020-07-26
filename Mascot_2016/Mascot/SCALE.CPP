@@ -9,6 +9,7 @@
 /**/
 long __xSx__;
 long __pAm__;
+long __bSb__;
 /**/
 void
 ScalePoints(void)
@@ -111,6 +112,27 @@ Back_Scale_2(void)
 	IPOINT = IPOINT4;
 	__xSx__ = f;
 }
+
+void
+Back_Scale_5(void)
+{
+	register long lv;
+	LvBead* Lv;
+	PtBead* Pt;
+	for (lv = 1; lv < ZLVLIM; lv++)
+	{
+		Lv = GetLvBead(lv);
+		PtBead*& P1 = Lv->ZLVPoint1;
+		PtBead*& P2 = Lv->ZLVPoint2;
+
+		Pt = (PtBead*)P1->ZPTAux;
+		if (Pt)P1 = Pt;
+
+		Pt = (PtBead*)P2->ZPTAux;
+		if (Pt)P2 = Pt;
+	}
+}
+
 void
 Back_Scale_3(void)
 {
@@ -121,6 +143,12 @@ Back_Scale_3(void)
 	PtBead*P2;
 	register char FA, FB, fg=0;
 
+	if (__bSb__)
+	{
+		Back_Scale_5();
+		__xSx__ = 0;
+		return;
+	}
 	long vt;
 	for(vt = 2; vt<ZVTLIM; vt+=2)
 	{
@@ -232,7 +260,7 @@ CleanPvBead(void)
 	long p;
 	for(p = 1; p<ZPTLIM; ++p) GetPtBead(p)->ZPTAux = 0;
 }
-void
+long
 Back_ScalePoints(void)
 {
 	CleanPvBead();
@@ -245,4 +273,6 @@ Back_ScalePoints(void)
 	if(__xSx__)Back_Scale_4();
 
 	CleanPvBead();
+
+	return __xSx__; 
 }

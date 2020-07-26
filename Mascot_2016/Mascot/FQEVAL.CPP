@@ -15,7 +15,7 @@
 /**/
 extern void zabort(void);
 const char*fqeval = "fqeval";
-void(*zAbort_proc)(void);
+void(*zabort_proc)(void);
 /**/
 long S_FACTOR;
 /**/
@@ -87,10 +87,10 @@ compsplitlv*COMPSPLITLV = COMPSPLITLV_M;
 splitlv*SPLITLV = SPLITLV_M;
 /**/
 void
-zAbort(const char*ids, long lin)
+zabort(const char*ids, long lin)
 {
 	MASLog("\nModule %s: %ld", ids, lin);
-	if(zAbort_proc)zAbort_proc();
+	if(zabort_proc)zabort_proc();
 	zabort();
 }
 void
@@ -155,7 +155,7 @@ long _sAlong::fetch_max_min(long G_lim, long&XM, long&xm, char return_min)
 }
 void Out_Of_Storage(void)
 {
-	MASLog("\n!!! STORAGE RESOURCE EXHAUSTED !!!");
+	MASLog("\n!!! OUT OF STORAGE !!!");
 	zabort();
 }
 
@@ -1139,7 +1139,7 @@ TRAVERSE(VtBead*VT, char F_EVAL_INPROGRESS)
 //		graph_wait_for_user_action();
 
 //		if(F_EVAL_INPROGRESS) {
-//			MASLog("\n!!! ATTEMPTING TO GENERATE COUNTER CLOCKWISE POLYGON !!!"); zAbort(fqeval,__LINE__);
+//			MASLog("\n!!! ATTEMPTING TO GENERATE COUNTER CLOCKWISE POLYGON !!!"); zabort(fqeval,__LINE__);
 //		}
 		LB->ZLBFirstLvBead = 0;
 		LV = LE;
@@ -1277,11 +1277,15 @@ LbGrp_Init(void)
 		Lb->ZLBGrp = Lb;
 	}
 }
+
+extern char __GrpNONE__;
+
 void
 LbGrp_Mdfy(LbBead*Lb, LbBead*TopLb)
 {
 	LbBead*LbGrp = Lb->ZLBGrp;
 	LbBead*LbNxt;
+	if (__GrpNONE__)return;
 	if(Si_LbGrp==LbGrp)return;
 	if(Si_LbNxt) 
 	{ 
@@ -1552,7 +1556,10 @@ POINT_VECTOR_CLASS_2(LbBead*LB, long LayerCode, long MaskCode) /*After DUMMYJUNC
 LbBead*Loadmaster(char check_closure, char open_shape)
 // Loads points from ZLDCO0 and ZLDCO1 into the Polygon (LB) and Vector (LV) objects. 
 {
-	if(check_closure != 0) { 
+	if(ZLDLIM == 0) {
+		return 0;
+	}
+	if(check_closure != 0) {
 		LDMake_ClosedPolygon();
 	} 
 
@@ -1642,7 +1649,7 @@ isVtPointUp(VtBead*Vt)
 {
 	PtBead*i_1;
 	PtBead*i_2;
-	if(!Vt)zAbort(fqeval,__LINE__);
+	if(!Vt)zabort(fqeval,__LINE__);
 	i_1 = Vt->ZVTCO1;
 	i_2 = Vt->ZVTCO2;
 	if(i_1->ZPTCO2>i_2->ZPTCO2)
@@ -1816,7 +1823,7 @@ Find_Ix_Intsect(LbBead*Lb, Find_Ix_Intsect_Summary*rval, long S_Factor = 0)
 		rval->Au = au;
 		if(XO>=XM)
 		{
-			zAbort("Find_Ix_Intsect",__LINE__);
+			zabort("Find_Ix_Intsect",__LINE__);
 		}
 	}
 	rval->Vt = VT;
@@ -2032,3 +2039,7 @@ Set_Rstat(LbBead*Lb, char call_flavor)
 	}
 	while(K!=Start);
 }
+
+
+
+

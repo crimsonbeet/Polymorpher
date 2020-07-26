@@ -212,6 +212,15 @@ void MASCOT_IO::Dix_close(char do_save_identity)
 	Ferror(O_File, O_FileName);
 	O_File = 0;
 }
+
+
+extern char __Head_follow__;
+extern char __Tail_follow__;
+
+extern long __ZLDFI__;
+extern long __ZLDLA__;
+
+
 void MASCOT_IO::Dix_output(char do_change_chip_dimensions, LayerIdentity_Struct*lDim, char open_shape)
 {
 	long LD;
@@ -271,20 +280,39 @@ void MASCOT_IO::Dix_output(char do_change_chip_dimensions, LayerIdentity_Struct*
 		add_dl = 1;
 	}
 	else	add_dl = 0;
-	OX = 0;
-	OY = 0;
-	cn = 0;
-	la = ZLDLIM-1;
-	if(STATUS>0)
+
+	if (!__Tail_follow__)
 	{
-		fi = 0l;
-		ic = +1;
+		OX = 0;
+		OY = 0;
+	}
+
+	cn = 0;
+
+	if(!__ZLDLA__)
+	{
+		// output all points.
+
+		la = ZLDLIM-1;
+		if(STATUS>0)
+		{
+			fi = 0l;
+			ic = +1;
+		}
+		else
+		{
+			fi = ZLDLIM-1;
+			ic = -1;
+		}
 	}
 	else
 	{
-		fi = ZLDLIM-1;
-		ic = -1;
+		ic = +1;
+		cn = __ZLDFI__;
+		fi = __ZLDFI__;
+		la = __ZLDLA__;
 	}
+
 	for(LD = fi; cn<la; LD += ic, ++cn)
 	{
 		ZX = ZLDCO0[LD];
@@ -351,7 +379,7 @@ void MASCOT_IO::Dix_output(char do_change_chip_dimensions, LayerIdentity_Struct*
 		Dix_write(&ZY, 1L);
 		if(YL)Dix_write(&DY, YL);
 	}
-	if(la)
+	if (la && !__Head_follow__)
 	{
 		DS = 0, Dix_write(&DS, 1);
 	}
@@ -424,7 +452,7 @@ char MASCOT_IO::I_READ_P(char UseSecondaryLDSet, char SetUp_Min_Max)
 			}
 			else
 			{
-				zAbort(fxeval, __LINE__);
+				zabort(fxeval, __LINE__);
 			}
 			return open_shape;
 		}
@@ -514,7 +542,7 @@ char*MASCOTStringBuffer::Fetch(char*str) {
 	long i;
 	char*n;
 	i = strlen(str)+1;
-	if((S_BLEN-S_BPOS)<=i)zAbort(fxeval,__LINE__);
+	if((S_BLEN-S_BPOS)<=i)zabort(fxeval,__LINE__);
 
 	memcpy(&S_BTOP[S_BPOS], str, i);
 	n = &S_BTOP[S_BPOS];
@@ -523,7 +551,7 @@ char*MASCOTStringBuffer::Fetch(char*str) {
 	return(n);
 }
 char*MASCOTStringBuffer::Get(size_t len) {
-	if((size_t)(S_BLEN-S_BPOS)<=len)zAbort(fxeval,__LINE__);
+	if((size_t)(S_BLEN-S_BPOS)<=len)zabort(fxeval,__LINE__);
 
 	char*n = &S_BTOP[S_BPOS];
 	S_BPOS+= (long)len;
@@ -551,7 +579,7 @@ unsigned char MASCOTStringHash::Exist(const char*str) {
 unsigned char MASCOTStringHash::Insert(const char*str) {
 	unsigned char i = NHash(str);
 	unsigned char I = Strings_Lim++;
-	if(Strings_Lim>=Strings_Max)zAbort(fxeval,__LINE__);
+	if(Strings_Lim>=Strings_Max)zabort(fxeval,__LINE__);
 
 	Strings[I].N = str;
 	Strings[I].X = Hash[i];
@@ -624,12 +652,12 @@ void MASCOT_IO::Load_ILayer_Identity(int i) {
 		fsetpos(_dbLayers_FILE, &n);
 		n = fread(&I_Layer[i]._lIdentity, sizeof(LayerIdentity_Struct), 1, _dbLayers_FILE);
 		if(n!=1) { 
-			zAbort(fxeval,__LINE__);
+			zabort(fxeval,__LINE__);
 		} 
 	} 
 	else { 
 		MASLog("\n!!! LAYER '%s' IS NOT VALID !!!", I_Layer[i].Name);
-		zAbort(fxeval,__LINE__);
+		zabort(fxeval,__LINE__);
 	} 
 } 
 void MASCOT_IO::Activate_ILayers(void) {
@@ -644,7 +672,7 @@ void MASCOT_IO::Init_ILayer_File(LayerDBHeader_Struct*L)
 		fread(&_fileIdentity, sizeof(_fileIdentity), 1, L->File);
 	} 
 	else { 
-		zAbort(fxeval,__LINE__);
+		zabort(fxeval,__LINE__);
 	} 
 	if(_fileIdentity.Delta_X == LONG_MAX || _fileIdentity.Delta_Y == LONG_MAX) { 
 		_fileIdentity.Delta_X = _header.CXMIN; 
@@ -720,7 +748,7 @@ void MASCOT_IO::renameoutput(void)
 
 		LayerIdentity_Struct lx_s; 
 		I = fread(&lx_s, sizeof(LayerIdentity_Struct), 1, _dbLayers_FILE);
-		if(I!=1)zAbort(fxeval,__LINE__);
+		if(I!=1)zabort(fxeval,__LINE__);
 
 		if(lx_s.PDBI)Make_File_Name(Name, lx_s.PDBI);
 		else
@@ -750,7 +778,7 @@ void MASCOT_IO::renameoutput(void)
 	fsetpos(_dbLayers_FILE, &I);
 
 	I = fwrite(&O_Layer._lIdentity, sizeof(LayerIdentity_Struct), 1, _dbLayers_FILE);
-	if(I!=1)zAbort(fxeval,__LINE__);
+	if(I!=1)zabort(fxeval,__LINE__);
 
 	fflush(_dbLayers_FILE);
 }
@@ -859,7 +887,7 @@ void MASCOT_IO::Setup(void)
 	m = fread(&_fileIdentity, sizeof(_fileIdentity), 1, _dbLayers_FILE);
 	n = fread(&_header, sizeof(_header), 1, _dbHeader_FILE);
 
-	if(i!=1||m!=1||n!=1)zAbort(fxeval,__LINE__);
+	if(i!=1||m!=1||n!=1)zabort(fxeval,__LINE__);
 
 	SetMinMax();
 

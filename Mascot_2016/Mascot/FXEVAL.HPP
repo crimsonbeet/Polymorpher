@@ -1,7 +1,9 @@
 /* Created by Alex Nikol Bourakov in 1989 */
 /* Adopted for RtlsTether project on 23/11/2011 by Alex Bourakov */
 
-#ifndef ipcgateH
+#ifndef fxevalH
+
+#include <string>
 
 template <int N> struct array_size_struct {
 	unsigned char c[N];

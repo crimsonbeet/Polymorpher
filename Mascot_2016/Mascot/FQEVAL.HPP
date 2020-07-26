@@ -174,8 +174,8 @@ extern compsplitlv*COMPSPLITLV;
 typedef LvBead*splitlv(LvBead*, PtBead*);
 extern splitlv*SPLITLV;
 /**/
-extern void(*zAbort_proc)(void);
-void zAbort(const char*ids, long lin);
+extern void(*zabort_proc)(void);
+void zabort(const char*ids, long lin);
 void zabort(void);
 void MASLog(const char * format, ...); 
 void FinishedNormally(void);
@@ -235,5 +235,12 @@ void LFuInitialize(const char*outLayer_name);
 void LFuEvaluater(long Function, char classifyType/*0 - main, 1 - quick*/, int log_graph = 0);
 void LFuEvaluaterLoop(long Function, char classifyType = 0, int log_graph = 0);
 void SetNxtFrag(long Function);
+
+LvBead* FETCHREVERSE(LbBead* LB, LvBead* LV);
+
+void F_SIZE_SHAPES(F_SIZE_JOB& JOB);
+void F_SIZE_COLLARS(F_SIZE_JOB& JOB);
+
+
 
 #endif

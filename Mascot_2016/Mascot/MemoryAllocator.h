@@ -3,6 +3,7 @@
 #ifndef XMemoryAllocator_H
 #define XMemoryAllocator_H
 
+extern void zabort(const char* ids, long lin);
 
 #define incr_far(z,s) (z+s)
 
@@ -13,13 +14,15 @@ class _XmemoryAllocator {
 	size_t _blocks_lim; 
 
 protected: 
-	int _elements_lim; 
+	int _last_block_num;
+	int _elements_lim;
 
 public: 
 	_XmemoryAllocator(size_t element_size): _element_size((short)element_size) { 
-		_blocks = new char*[_blocks_lim = 128]; 
+		_blocks = (char**)new long long*[_blocks_lim = 128]; 
 		_elements_lim = -1; 
-		memset(_blocks, 0, _blocks_lim * sizeof(*_blocks)); 
+		_last_block_num = -1;
+		memset(_blocks, 0, _blocks_lim * sizeof(*_blocks));
 	} 
 	~_XmemoryAllocator() { 
 		_Release();  
@@ -27,22 +30,25 @@ public:
 	} 
 	char& operator[](size_t i) { 
 		size_t block_num = i >> 10; 
+		if (_last_block_num != block_num) {
+			if (block_num >= (size_t)_blocks_lim) {
+				size_t new_blocks_lim = block_num << 1;
+				char** new_blocks = (char**)new long long** [new_blocks_lim];
+				memset(new_blocks, 0, new_blocks_lim * sizeof(*_blocks));
+				memcpy(new_blocks, _blocks, _blocks_lim * sizeof(*_blocks));
+				delete _blocks;
 
-		if(block_num >= (size_t)_blocks_lim) { 
-			size_t new_blocks_lim = block_num << 1; 
-			char **new_blocks = (char**)new long long**[new_blocks_lim]; 
-			memset(new_blocks, 0, new_blocks_lim * sizeof(*_blocks)); 
-			memcpy(new_blocks, _blocks, _blocks_lim * sizeof(*_blocks)); 
-			delete _blocks; 
+				_blocks = new_blocks;
+				_blocks_lim = new_blocks_lim;
+			}
 
-			_blocks = new_blocks; 
-			_blocks_lim = new_blocks_lim; 
-		} 
+			if (_blocks[block_num] == 0) {
+				_blocks[block_num] = (char*)new long long[((size_t)_element_size << 10) / sizeof(long long)];
+				memset(_blocks[block_num], 0, (size_t)_element_size << 10);
+			}
 
-		if(_blocks[block_num] == 0) { 
-			_blocks[block_num] = new char[_element_size << 10]; 
-			memset(_blocks[block_num], 0, _element_size << 10); 
-		} 
+			_last_block_num = block_num;
+		}
 		if(_elements_lim < (int)i) { 
 			_elements_lim = (int)i;
 		} 
@@ -53,12 +59,23 @@ public:
 		if(_elements_lim < 0) { 
 			return 0;
 		} 
-		return (size_t)(_elements_lim + 1); 
+		return (size_t)_elements_lim + 1; 
 	} 
 
-	void Resize(size_t lim){ 
+	void swap(_XmemoryAllocator& other) {
+		if (other._element_size != this->_element_size) {
+			zabort("_XmemoryAllocator::swap()", __LINE__);
+		}
+		std::swap(other._blocks, this->_blocks);
+		std::swap(other._blocks_lim, this->_blocks_lim);
+		std::swap(other._elements_lim, this->_elements_lim);
+		std::swap(other._last_block_num, this->_last_block_num);
+	}
+
+	void Resize(size_t lim){
 		_elements_lim = ((int)lim) - 1; 
-	} 
+		_last_block_num = -1;
+	}
 
 	void _Release() {
 		for(size_t j = 0; j < (size_t)_blocks_lim; ++j) { 
@@ -67,6 +84,7 @@ public:
 			} 
 			_blocks[j] = 0; 
 		} 
+		_last_block_num = -1;
 	}
 
 	void fmemcpy(const char*Src, long Cnt/*in bytes*/) { 
@@ -131,6 +149,7 @@ class XMemoryFile {
 	void Reset() { 
 		_pos = 0; 
 		_eof = 0; 
+		_content.Resize(0);
 	} 
 
 	void Init() { 
@@ -217,6 +236,9 @@ public:
 	bool eof() { 
 		return _eof; 
 	} 
+	fpos_t getlength() {
+		return _length; 
+	}
 }; 
 
 
