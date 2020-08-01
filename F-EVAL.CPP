@@ -34,7 +34,7 @@ std::string itostdstring(int x, int width) {
 	} 
 	return ostr.str();
 }
-std::string stringify_currentTime(bool file_mode) {
+static std::string stringify_currentTime(bool file_mode) {
 	struct _timeb t;
 	_ftime(&t);
 	std::istringstream istrTime(ctime(&t.time));
@@ -111,8 +111,23 @@ void __sizemain__(char Name[20], long Size, char Sign)
 	memcpy(JOB.Name, Name, 20);
 	JOB.Size = Size;
 	JOB.Sign = Sign;
+
+	std::string O_name(MaSCOT_IO.O_Layer.Name, 20);
+	std::string I_name(Name, 20);
+
 	F_SIZE_SHAPES(JOB);
 	F_SIZE_COLLARS(JOB);
+
+	memcpy(MaSCOT_IO.I_Layer[0].Name, MaSCOT_IO.O_Layer.Name, 20);
+	LFuInitialize(MaSCOT_IO.O_Layer.Name);
+	LFuEvaluaterLoop(MAS_Or);
+
+	MaSCOT_IO.Setup();
+
+	memcpy(MaSCOT_IO.I_Layer[0].Name, I_name.c_str(), 20);
+	memcpy(MaSCOT_IO.I_Layer[1].Name, MaSCOT_IO.O_Layer.Name, 20);
+	LFuInitialize(O_name.c_str());
+	LFuEvaluaterLoop(Sign > 0 ? (long)MAS_Or : (long)MAS_And);
 }
 
 
@@ -136,7 +151,11 @@ void LFuInitialize_S_Factor() {
 }
 void LFuInitialize_OutLayer(const char*outLayer_name = 0) {
 	if(outLayer_name) { 
-		memcpy(MaSCOT_IO.O_Layer.Name, outLayer_name, 20);
+		if (MaSCOT_IO.O_Layer.Name != outLayer_name) {
+			memset(MaSCOT_IO.O_Layer.Name, 0, 20);
+#pragma warning(suppress : 4996)
+			strncpy(MaSCOT_IO.O_Layer.Name, outLayer_name, 20);
+		}
 		MaSCOT_IO.INIT_OLayer();
 		MaSCOT_IO.O_Layer._lIdentity.layer_STATUS = 1;
 

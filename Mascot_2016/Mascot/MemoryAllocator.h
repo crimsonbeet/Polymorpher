@@ -9,9 +9,9 @@ extern void zabort(const char* ids, long lin);
 
 
 class _XmemoryAllocator { 
-	const short _element_size; 
-	char **_blocks; 
-	size_t _blocks_lim; 
+	const short _element_size = 0; 
+	char **_blocks = 0; 
+	size_t _blocks_lim = 0; 
 
 protected: 
 	int _last_block_num;
@@ -155,7 +155,7 @@ class XMemoryFile {
 	void Init() { 
 		_length = 0; 
 		_initialized = 0; 
-		_name[0] = 0; 
+		memset(_name, 0, sizeof(_name)); 
 		Reset(); 
 	} 
 

@@ -16,7 +16,7 @@
 
 long Total_Shapes;
 const char*f3size="f3size";
-extern char*OvrlpMstPrf;
+extern const char*OvrlpMstPrf;
 extern void zabort(void);
 extern void INSERT_VECTORS(LbBead*Lb);
 /*CORES FOR LEAD-IN AND TAIL VECTORS*/
@@ -1244,11 +1244,6 @@ fprintf(stderr, "\nTotal Fragments = %ld (X=%ld, Y=%ld)\n", XgCnt*YgCnt, XgCnt, 
 	MaSCOT_IO.O_Layer._lIdentity.PDBI = MaSCOT_IO.I_Layer[0]._lIdentity.PDBI;
 
 	__inTOPlt__= JOB.Size==0;
-	if(__inTOPlt__)
-		MaSCOT_IO.Make_PLT_File_Name(MaSCOT_IO.O_Layer.BdbN, MaSCOT_IO.O_Layer._lIdentity.PDBI);
-	else
-		MaSCOT_IO.Make_BDB_File_Name(MaSCOT_IO.O_Layer.BdbN, MaSCOT_IO.O_Layer._lIdentity.PDBI);
-
 
 	MaSCOT_IO.INIT_OLayer();
 	IEvaluater.__SetVT0LB0__();
@@ -1271,15 +1266,12 @@ fprintf(stderr, "\nTotal Fragments = %ld (X=%ld, Y=%ld)\n", XgCnt*YgCnt, XgCnt, 
 		Shapes_Generation();
 	}
 	MaSCOT_IO.Dix_close();
-	rename(MaSCOT_IO.O_Layer.PdbN, MaSCOT_IO.O_Layer.BdbN);
 
 end_shapes_job:
 	MaSCOT_IO.SetMinMax();
 	__inTOPlt__= 0;
-	for(I=0; I<4; ++I)
-	{
-		MaSCOT_IO.Close_ILayer(I);
-	}
+	MaSCOT_IO.FCloseAll(); 
 	IEvaluater._ReleaseStorage();
+	memcpy(JOB.Name, MaSCOT_IO.O_Layer.Name, 20); 
 __FINISHEDNORMALLY__();
 }

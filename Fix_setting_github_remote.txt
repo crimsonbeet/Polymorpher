@@ -1,0 +1,13 @@
+
+Create a new repository on GitHub: crimsonbeet/Polymorpher.git
+
+open command prompt in Polymorpher directory
+git for Polymorpher was already initialized and commited. 
+
+git remote add origin https://github.com/crimsonbeet/Polymorpher.git
+
+got an error fatal: remote origin already exists.
+
+git remote set-url origin https://github.com/crimsonbeet/Polymorpher.git
+git push origin master
+

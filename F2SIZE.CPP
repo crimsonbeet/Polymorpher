@@ -618,7 +618,7 @@ double IX, IY, X1[9], X2[3], Y1[9], Y2[3], CAN, MAN;
 	NO_CONT_2 = NO_CONT_1;
 }
 void
-Shapes_Collar_Generater(void)
+Shapes_Collar_Generator(void)
 {
 	long S;
 	long K;
@@ -672,14 +672,14 @@ Shapes_Collar_Generater(void)
 	/*SCALE POINTS*/
 	J = PYMAX>PXMAX? PYMAX: PXMAX;
 	S_FACTOR = 0;
-	do
-	{
-		++S_FACTOR;
-	}
-	while(((J<<S_FACTOR)>>S_FACTOR)==J);
-	S_FACTOR--;
-	if(S_FACTOR<0)S_FACTOR = 0;
-	if(S_FACTOR>9)S_FACTOR = 9;
+	//do
+	//{
+	//	++S_FACTOR;
+	//}
+	//while(((J<<S_FACTOR)>>S_FACTOR)==J);
+	//S_FACTOR--;
+	//if(S_FACTOR<0)S_FACTOR = 0;
+	//if(S_FACTOR>9)S_FACTOR = 9;
 
 	PXMAX <<= S_FACTOR;
 	PYMAX <<= S_FACTOR;
@@ -774,10 +774,13 @@ fprintf(stderr, "\n!!! Collars Data Base Generater Started on %s !!!\n",JOB.Name
 	memcpy(MaSCOT_IO.I_Layer[0].Name, JOB.Name, 20);
 	MaSCOT_IO.ILayer_Cnt = 1;
 	MaSCOT_IO.Activate_ILayers();
+
 	OutDeltaX = 0;
 	OutDeltaY = 0;
-	MaSCOT_IO.Make_BDB_File_Name(MaSCOT_IO.I_Layer[0].PdbN, MaSCOT_IO.I_Layer[0]._lIdentity.PDBI);
-	MaSCOT_IO.Init_ILayer_File(MaSCOT_IO.I_Layer);
+
+	MaSCOT_IO.INIT_ILayer(0);
+
+
 	memset(MaSCOT_IO.O_Layer.Name, 0, 20);
 	memcpy(MaSCOT_IO.O_Layer.Name, MaSCOT_IO._header.TempP, 3);
 
@@ -802,7 +805,7 @@ fprintf(stderr, "\n!!! Collars Data Base Generater Started on %s !!!\n",JOB.Name
 		if(PLDLIM<2) {
 			continue;
 		}
-		Shapes_Collar_Generater();
+		Shapes_Collar_Generator();
 	}
 
 	ZPBLIM = 8191;

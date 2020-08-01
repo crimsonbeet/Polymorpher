@@ -23,7 +23,11 @@ const char*fxeval="fxeval";
 const char*OvrlpMstPrf="\n!!! NOTE! OVERLAP ELIMINATION MUST BE PERFORMED.";
 
 
-size_t fread(void*desc, size_t elemsize, size_t count, XMemoryFile*xfile) { 
+void __sizemain__(char Name[20], long Size, char Sign);
+
+
+
+size_t fread(void*desc, size_t elemsize, size_t count, XMemoryFile*xfile) {
 	return xfile->read((char*)desc, elemsize, count); 
 } 
 size_t fwrite(const void*src, size_t elemsize, size_t count, XMemoryFile*xfile) { 
@@ -539,7 +543,7 @@ MASCOTStringBuffer::~MASCOTStringBuffer() {
 	MASLogbuffer = 0; 
 } 
 char*MASCOTStringBuffer::Fetch(char*str) {
-	long i;
+	size_t i;
 	char*n;
 	i = strlen(str)+1;
 	if((S_BLEN-S_BPOS)<=i)zabort(fxeval,__LINE__);
@@ -640,7 +644,7 @@ void MASCOT_IO::Make_File_Name(char*Sd, long Id)
 long MASCOT_IO::Find_ILayer(const char*name) { 
 	for(size_t i = 0; i < ILayer_Cnt; ++i) {
 		if(strcmp(I_Layer[i].Name, name) == 0) { 
-			return i + 1; 
+			return (long)i + 1; 
 		} 
 	} 
 	return -1; 
@@ -692,10 +696,8 @@ void MASCOT_IO::INIT_OLayer(void)
 
 	O_Layer._lIdentity << _header;
 
-	//tmpnam(O_Layer.PdbN);O_Layer.PdbN[0] = 'o'; 
 	Make_OUT_File_Name(O_Layer.PdbN, 0); 
 
-	//O_Layer.File = Fopen(O_Layer.PdbN, "w+b");
 	O_Layer.File = fopen(O_Layer.PdbN);
 
 	_fileIdentity.Delta_X = 0;
@@ -758,7 +760,6 @@ void MASCOT_IO::renameoutput(void)
 		}
 
 		Make_BDB_File_Name(BNam, O_Layer._lIdentity.PDBI = lx_s.PDBI);
-		//unlink(BNam);
 		funlink(BNam);
 	}
 	else
@@ -769,8 +770,6 @@ void MASCOT_IO::renameoutput(void)
 		Make_File_Name(Name, O_Layer._lIdentity.PDBI = _header.FiLID++);
 	}
 
-	//unlink(Name);
-	//rename(O_Layer.PdbN, Name);
 	funlink(Name);
 	frename(O_Layer.PdbN, Name);
 
@@ -883,9 +882,9 @@ void MASCOT_IO::Setup(void)
 	_dbHeader_FILE = fopen(_dbHeader_NAME);
 	_dbLayers_FILE = fopen(_dbLayers_NAME);
 
-	i = fread(&_fileIdentity, sizeof(_fileIdentity), 1, _dbHeader_FILE);
-	m = fread(&_fileIdentity, sizeof(_fileIdentity), 1, _dbLayers_FILE);
-	n = fread(&_header, sizeof(_header), 1, _dbHeader_FILE);
+	i = (long)fread(&_fileIdentity, sizeof(_fileIdentity), 1, _dbHeader_FILE);
+	m = (long)fread(&_fileIdentity, sizeof(_fileIdentity), 1, _dbLayers_FILE);
+	n = (long)fread(&_header, sizeof(_header), 1, _dbHeader_FILE);
 
 	if(i!=1||m!=1||n!=1)zabort(fxeval,__LINE__);
 
@@ -985,6 +984,11 @@ bool MASEvaluate1(MAS_Function action, const char* inpLayer_name, const char* ou
 bool MASEvaluate2(MAS_Function action, const char** inpLayers, long inpLayers_count, const char* outLayer_name) { 
 	return MaSCOT_IO.MASEvaluate2(action, inpLayers, inpLayers_count, outLayer_name);
 } 
+bool MASSize(const char* inpLayer_name, const char* outLayer_name, int width) {
+	const char* in_layers[2] = { inpLayer_name, 0 };
+	return MaSCOT_IO.MASEvaluate2(MAS_Size, in_layers, 1, outLayer_name, width);
+}
+
 long MASLayerCountRTPolygons(const char* outLayer_name, size_t* first_polygon_number) { 
 	return MaSCOT_IO.MASLayerCountRTPolygons(outLayer_name, first_polygon_number);
 } 
@@ -1014,6 +1018,8 @@ bool MASCOT_IO::MASInitialize(long blocks_count_x, long blocks_count_y) {
 
 	ILayer_Cnt = 0; 
 	memset(I_Layer, 0, sizeof(I_Layer)); 
+	memset(&O_Layer, 0, sizeof(O_Layer));
+	memset(&P_Layer, 0, sizeof(P_Layer));
 
 	iLnames_hash.Strings_Lim = 1;
 	strbuf.S_BPOS = 1;
@@ -1341,7 +1347,7 @@ bool MASCOT_IO::MASLayerAddRTPolygon(const char* inpLayer_name, _sAlong& points_
 
 
 
-bool MASCOT_IO::MASEvaluateMain(long Function, const char* outLayer_name) { 
+bool MASCOT_IO::MASEvaluateMain(long Function, const char* outLayer_name, int w) {
 	bool rc  = true; 
 	try {
 		if(_dbHeader_Changed) {
@@ -1365,7 +1371,13 @@ bool MASCOT_IO::MASEvaluateMain(long Function, const char* outLayer_name) {
 		switch(Function) { 
 		case MFunction_Nothing: 
 			break; 
-		case MFunction_Area: 
+		case MFunction_OverlapElim:
+			LFuEvaluaterLoop(Function, 1/*classifyType is simple*/);
+			break;
+		case MFunction_Size:
+			__sizemain__(I_Layer[0].Name, w < 0 ? -w : w, w < 0 ? -1 : 1);
+			break;
+		case MFunction_Area:
 			F_AREA_MAIN(I_Layer[0].Name);
 			break; 
 		default: 
@@ -1395,7 +1407,7 @@ bool MASCOT_IO::MASEvaluate1(MAS_Function action, const char* inpLayer_name, con
 	return MASEvaluate2(action, in_layers, 1, outLayer_name); 
 } 
 
-bool MASCOT_IO::MASEvaluate2(MAS_Function action, const char** inpLayers, long inpLayers_count, const char* outLayer_name) { 
+bool MASCOT_IO::MASEvaluate2(MAS_Function action, const char** inpLayers, long inpLayers_count, const char* outLayer_name, int size_param) {
 	int Function = action; 
 
 	if(inpLayers == 0 || inpLayers_count <= 0) {
@@ -1406,9 +1418,8 @@ bool MASCOT_IO::MASEvaluate2(MAS_Function action, const char** inpLayers, long i
 		MASLog("\nEVAL:Too many input Layers\n");
 		return false;
 	} 
-	if(Function==MFunction_Size)
-	{
-		MASLog("\nEVAL:Size is not implemented\n"); 
+	if (inpLayers_count > 1 && Function==MFunction_OverlapElim) {
+		MASLog("\nEVAL:Overlap elimination is only for one layer at a time\n");
 		return false;
 	}
 	if(Function==MFunction_5009)
@@ -1437,12 +1448,15 @@ bool MASCOT_IO::MASEvaluate2(MAS_Function action, const char** inpLayers, long i
 			MASLog("\nEVAL:Bad layer name\n");
 			return false;
 		} 
-		#pragma warning(suppress : 4996)
+		memset(I_Layer[j].Name, 0, 20);
+#pragma warning(suppress : 4996)
 		strncpy(I_Layer[j].Name, inpLayers[j], sizeof(I_Layer[j].Name));
 	} 
 	ILayer_Cnt = (unsigned short)inpLayers_count;
 
-	return MASEvaluateMain(Function, outLayer_name); 
+
+
+	return MASEvaluateMain(Function, outLayer_name, size_param);
 } 
 
 

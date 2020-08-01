@@ -12,13 +12,14 @@ typedef enum {
 	MAS_Xor,
 	MAS_Or,
 	MAS_Not,
-	MAS_Area
+	MAS_Area,
+	MAS_Size 
 
 } MAS_Function; 
 
 
 
-bool MASPreload_StaticLayers(long N, const char *Names[]); 
+bool MASPreload_StaticLayers(long N, const char *Names[]); // N is the number of entries in Names; first entry in Names[] is empty and means nothing, so N is always > 1 if Names is not empty.
 
 bool MASInitialize(long blocks_count_x, long blocks_count_y); 
 bool MASGrid(long blocks_count_x, long blocks_count_y); 
@@ -27,11 +28,13 @@ bool MASLayerCreateDBStorage(const char* inpLayer_name);
 
 bool MASLayerAddPolygon2DBStorage(const char* inpLayer_name, long* points_x, long* points_y, long points_count); 
 
-bool MASEvaluate1(MAS_Function action, const char* inpLayer_name, const char* outLayer_name); /*if outLayer_name==0 then input layer becomes output*/ 
+bool MASEvaluate1(MAS_Function action, const char* inpLayer_name, const char* outLayer_name = 0); /*if outLayer_name==0 then input layer becomes output*/
 
 bool MASEvaluate2(MAS_Function action, const char** inpLayers, long inpLayers_count, const char* outLayer_name); 
 
-void MASReleaseRTStorage(); 
+bool MASSize(const char* inpLayer_name, const char* outLayer_name, int width); /*if outLayer_name==0 then input layer becomes output*/
+
+void MASReleaseRTStorage();
 
 long MASLayerCountRTPolygons(const char* outLayer_name, size_t* first_polygon_number = 0); 
 

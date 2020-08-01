@@ -5,6 +5,7 @@
 
 #include <string>
 
+#ifndef ipcgateH
 template <int N> struct array_size_struct {
 	unsigned char c[N];
 };
@@ -13,7 +14,6 @@ template <class T, int N>
 	array_size_struct<N> const& static_array_size(T (&)[N]);
 
 #define ARRAY_NUM_ELEMENTS(ar) sizeof(static_array_size(ar).c)
-
 #endif
 
 	
@@ -277,7 +277,7 @@ public:
 	void Close_ILayer(long n);
 	void FCloseAll(void);
 
-	bool MASEvaluateMain(long Function, const char* outLayer_name); 
+	bool MASEvaluateMain(long Function, const char* outLayer_name, int size_param = 0);
 	bool MASLayerAddPolygon2DBStorage(const char* inpLayer_name); 
 	bool MASLayerAddRTPolygon(const char* inpLayer_name); 
 
@@ -288,8 +288,8 @@ public:
 	bool MASLayerAddPolygon2DBStorage(const char* inpLayer_name, long* points_x, long* points_y, long points_count); 
 	bool MASLayerAddPolygon2DBStorage(const char* inpLayer_name, _sAlong& points_x, _sAlong& points_y); 
 	bool MASEvaluate1(MAS_Function action, const char* inpLayer_name, const char* outLayer_name); 
-	bool MASEvaluate2(MAS_Function action, const char** inpLayers, long inpLayers_count, const char* outLayer_name); 
-	void MASReleaseRTStorage(); 
+	bool MASEvaluate2(MAS_Function action, const char** inpLayers, long inpLayers_count, const char* outLayer_name, int size_param = 0);
+	void MASReleaseRTStorage();
 	long MASLayerCountRTPolygons(const char* outLayer_name, size_t* first_polygon_number = 0); 
 	long MASLayerGetRTPolygon(const char* outLayer_name, long polygon_number, long* points_x, long* points_y, long points_count); 
 	long MASLayerGetRTPolygon(const char* outLayer_name, long polygon_number, _sAlong& points_x, _sAlong& points_y); 
@@ -340,3 +340,5 @@ void graph_log_layer(char* layer_Name, int lb = 0, int layer = -1);
 
 std::string itostdstring(int x, int width = 0); 
 void FileLog(const std::string& msg, bool do_close = false); 
+
+#endif
