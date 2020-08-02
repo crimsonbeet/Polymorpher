@@ -106,8 +106,8 @@ void
 LinkToMasInp(long F)
 {
 	MaSCOT_IO.D_Link(F);
-	MaSCOT_IO.DDelta_X = -Delta_X;
-	MaSCOT_IO.DDelta_Y = -Delta_Y;
+	//MaSCOT_IO.DDelta_X = -Delta_X; // ANB: July
+	//MaSCOT_IO.DDelta_Y = -Delta_Y;
 }
 void
 Load_Insert_Master(char open_shape = 0)

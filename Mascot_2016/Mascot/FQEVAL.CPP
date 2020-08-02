@@ -64,6 +64,12 @@ long PYMAX;
 long PXMIN;
 long PYMIN;
 /**/
+
+inline LvBead* FetchReverseLv(LvBead* LV) {
+	auto vt = (LV)->ZLVMyVector->ZVTMeInreverse;
+	return vt ? vt->ZVTFirstCoincident : 0;
+}
+
 struct Find_Ix_Intsect_Summary { 
 	long Xdir;
 	long Ydir;
@@ -191,6 +197,7 @@ COMBINE(LbBead*LB)
 	if(B3&&(L0==L1))return(2);
 	L0 = L1;
 	B3 = LB;
+	int c = ZLVLIM; 
 	do /*FIND-L3-L2-(L0-IS-SECOND-FOR-LB)*/
 	{
 		L2 = L0;
@@ -198,9 +205,9 @@ COMBINE(LbBead*LB)
 		L3 = FetchReverseLv(L0);
 		if(L3)B3 = L3->ZLVMyLbBead;
 	}
-	while((B3==LB)&&(L1!=L0));
+	while((B3==LB)&&(L1!=L0)&&c--); 
 	/*NON-COINCIDENT?*/
-	if(L1==L0)return(0);
+	if(L1==L0||c<0)return(0); // ANB: july: error condition
 	do /*FIND-LAST-COINCIDENT-WITH-B3(L6)*/
 	{
 		L6 = L0;
@@ -217,12 +224,14 @@ COMBINE(LbBead*LB)
 	L4 = L3->ZLVNextLvBead;
 	L0 = L4;
 	L5 = L0;
-	while(L0!=L7)
+	c = ZLVLIM; 
+	while(L0!=L7 && c--)
 	{
 		L5 = L0;
 		L0->ZLVMyLbBead = LB;
 		L0 = L0->ZLVNextLvBead;
 	}
+	if(c<0)return(0); // ANB: july: error condition
 	if(L4==L7) L2->ZLVNextLvBead = L9;
 	else
 	{
@@ -616,7 +625,8 @@ PVTable_REPLACE_PVBead(VtBead*ptrOld, VtBead*ptrNew, char inherit_tail)
 		}
 		return;
 	}
-	for(VT = PT->ZPTFirstSortedVtBead; VT; VT = VT->ZVTNextSortedVtBead)
+	int c = ZVTLIM; 
+	for(VT = PT->ZPTFirstSortedVtBead; VT&&c--; VT = VT->ZVTNextSortedVtBead) // ANB: july: error condition
 	{
 		if(VT->ZVTNextSortedVtBead!=ptrOld)
 		{
@@ -647,34 +657,38 @@ PVTable_ERASE_RedundantVTBead(VtBead*VT/*to be erased, must not be in PVTable*/,
 		PV->ZVTMeInreverse = Vt;
 		Vt->ZVTMeInreverse = PV;
 
-		if(Pv->ZVTPos < VT->ZVTPos) { // this is odd: reverse vector of PV has also been inserted into PVTable. 
-			PVTable_REPLACE_PVBead(Vt, Vt->ZVTNextSortedVtBead, 0); // just remove any reference to vt from PVTable. 
+		if (Pv) { // ANB: july: error condition
+			if (Pv->ZVTPos < VT->ZVTPos) { // this is odd: reverse vector of PV has also been inserted into PVTable. 
+				PVTable_REPLACE_PVBead(Vt, Vt->ZVTNextSortedVtBead, 0); // just remove any reference to vt from PVTable. 
+			}
+			PVTable_REPLACE_PVBead(Pv, Vt, 1); // redirect PVTable-references from Pv to Vt. 
 		}
-		PVTable_REPLACE_PVBead(Pv, Vt, 1); // redirect PVTable-references from Pv to Vt. 
 
 		VtBead*Tm=Vt;Vt=Pv;Pv=Tm;
 	}
 
 	PVTable_MERGE_LVChain(VT, PV);
-	PVTable_MERGE_LVChain(Vt, Pv);
+	if (Vt && Pv) { // ANB: july: error condition
+		PVTable_MERGE_LVChain(Vt, Pv);
+	}
 
 	if(F_FULLANALYSIS_INPROGRESS)
 	{
 		PV->ZVTStatus |= VT->ZVTStatus;
-		Pv->ZVTStatus |= Vt->ZVTStatus;
+		Pv && Vt? Pv->ZVTStatus |= Vt->ZVTStatus: 0;
 	}
 	else
 	if(!F_EVAL_INPROGRESS)
 	{
 		PV->ZVTStatus = 0;
-		Pv->ZVTStatus = 0;
+		Pv? Pv->ZVTStatus = 0: 0;
 	}
 	/*
 	memset(VT, 0, sizeof(VtBead));
 	memset(Vt, 0, sizeof(VtBead));
 	*/
 	VT->ZVTMeInreverse = 0;
-	Vt->ZVTMeInreverse = 0;
+	Vt? Vt->ZVTMeInreverse = 0: 0;
 }
 void
 split_vt_pv
@@ -730,6 +744,9 @@ POINT_VECTOR_ANALYSIS(long first, char F_EVAL_INPROGRESS, char F_FULLANALYSIS_IN
 		P4 = 0; 
 		for(char DONext = 1; PV!=0 && DONext; ++POINT_VECTOR_ANALYSIS_Pass_Count)
 		{
+			if(POINT_VECTOR_ANALYSIS_Pass_Count > (ZPTLIM << 2)) { // ANB: july: error condition
+				break; 
+			}
 			P4 = PV->ZVTCO2;
 			X4 = P4->ZPTCO1-PT->ZPTCO1;
 			Y4 = P4->ZPTCO2-PT->ZPTCO2;
@@ -870,12 +887,16 @@ LvBead*FETCHREVERSE(LbBead*LB, LvBead*LV)
 	LR = 0;
 	VR = (LV->ZLVMyVector)->ZVTMeInreverse;
 	LS = VR->ZVTFirstCoincident;
-	while(LS)
+	int c = ZLVLIM; 
+	while(LS && c--)
 	{
+		if(!LS->ZLVMyLbBead) {
+			return 0;
+		}
 		if(LS->ZLVMyLbBead==LB)LR = LS, ++EC;
 		LS = LS->ZLVNextConcident;
 	}
-	if(EC<=1)return LR;
+	if(EC<=1||c<0)return LR; // ANB: july: error condition
 
 	/*
 		Get direct successor. Walk down the chain until VR is found. 
@@ -899,7 +920,8 @@ REMOVE_FROM_VT_CHAIN(LvBead*LV)
 		VT->ZVTFirstCoincident = LV->ZLVNextConcident;
 		return;
 	}
-	while(Lv)
+	int c = ZLVLIM; 
+	while(Lv&&c--) // ANB: july: error condition
 	{
 		if(Lv->ZLVNextConcident==LV)
 		{
@@ -1102,7 +1124,6 @@ TRAVERSE(VtBead*VT, char F_EVAL_INPROGRESS)
 	LvBead*LE;
 	LvBead*LV;
 	VtBead*V3;
-	VtBead*V4;
 	long Lim_1=ZLBLIM;
 	long Lim_2=ZLVLIM;
 	char DJ=0;
@@ -1124,11 +1145,17 @@ TRAVERSE(VtBead*VT, char F_EVAL_INPROGRESS)
 		LV->ZLVPoint2 = V3->ZVTCO2;
 		LE->ZLVNextLvBead = V3->ZVTFirstCoincident = LV;
 		LE = LV;
-		V4 = V3;
-		V3 = FETCHSUCCESSOR(V3->ZVTMeInreverse);
-		if(V4->ZVTMeInreverse==V3)DJ = 1;
+		if(V3->ZVTMeInreverse) { // ANB: july: error condition
+			VtBead* V4 = V3;
+			V3 = FETCHSUCCESSOR(V3->ZVTMeInreverse);
+			if(V4->ZVTMeInreverse == V3)
+				DJ = 1;
+		}
+		else {
+			break; 
+		}
 	}
-	while(V3!=VT);
+	while(V3!=VT && !V3->ZVTAux);
 	LE = LV->ZLVNextLvBead = LB->ZLBFirstLvBead;
 	if(DJ)
 	{
@@ -1201,15 +1228,20 @@ LbBead_Unload2InputXY(LbBead*LB)
 	LN = LV->ZLVNextLvBead;
 	V1 = LV->ZLVMyVector->ZVTMeInreverse;
 	V2 = LN->ZLVMyVector->ZVTMeInreverse;
+	if(!V1||!V2) { // ANB: july: error condition
+		return 0; 
+	}
 	if(CheckItSelf(LB, V1)||CheckItSelf(LB, V2))
 	{
 		LV = SET_INITIAL_VECTOR(LB);
-		if(!LV)return(0);
+		if(!LV)
+			return 0;
 	}
 	LE = LV;
 	LN = LV->ZLVNextLvBead;
 	A1 = 361.0;
 	ZLDLIM = 0;
+	int c = ZLVLIM; 
 	do
 	{
 		LV_First = LN->ZLVNextLvBead;
@@ -1254,7 +1286,11 @@ LbBead_Unload2InputXY(LbBead*LB)
 		}
 	/*End Of Broken Junction*/
 	}
-	while(LV!=LE);
+	while(LV!=LE&&c--); // ANB: july: error condition
+
+	if(c<0) {
+		return 0; 
+	}
 
 	LD = (ZLDLIM++);
 	ZLDCO0[LD] = ZLDCO0[0];

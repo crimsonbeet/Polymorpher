@@ -118,16 +118,20 @@ void __sizemain__(char Name[20], long Size, char Sign)
 	F_SIZE_SHAPES(JOB);
 	F_SIZE_COLLARS(JOB);
 
+	MaSCOT_IO.ILayer_Cnt = 1;
 	memcpy(MaSCOT_IO.I_Layer[0].Name, MaSCOT_IO.O_Layer.Name, 20);
+	MaSCOT_IO.Activate_ILayers();
 	LFuInitialize(MaSCOT_IO.O_Layer.Name);
-	LFuEvaluaterLoop(MAS_Or);
+	LFuEvaluaterLoop(MAS_OverlapElim);
 
 	MaSCOT_IO.Setup();
 
+	MaSCOT_IO.ILayer_Cnt = 2;
 	memcpy(MaSCOT_IO.I_Layer[0].Name, I_name.c_str(), 20);
 	memcpy(MaSCOT_IO.I_Layer[1].Name, MaSCOT_IO.O_Layer.Name, 20);
+	MaSCOT_IO.Activate_ILayers();
 	LFuInitialize(O_name.c_str());
-	LFuEvaluaterLoop(Sign > 0 ? (long)MAS_Or : (long)MAS_And);
+	LFuEvaluaterLoop(Sign > 0 ? (long)MAS_Or : (long)MAS_AndNot);
 }
 
 
@@ -364,17 +368,17 @@ PrintOk();
 PrintOk();
 	if(!__aLlAng__||!__xSx__)goto w_c_p_only;
 
-	ZVTLIM = 2;
-	STATUS =+1;
-	INTERSECTION_ANALYSIS();
-	POINT_VECTOR_ANALYSIS(2);
-PrintOk();
-	Classify_Polygons(1/*quickclassify*/); 
-	if(Function != MFunction_Intersect) { 
-		True_Stat = O_R;
-		FORCE_C_POLYGONS();
-	} 
-PrintOk();
+//	ZVTLIM = 2;
+//	STATUS =+1;
+//	INTERSECTION_ANALYSIS();
+//	POINT_VECTOR_ANALYSIS(2);
+//PrintOk();
+//	Classify_Polygons(1/*quickclassify*/); 
+//	if(Function != MFunction_Intersect) { 
+//		True_Stat = O_R;
+//		FORCE_C_POLYGONS();
+//	} 
+//PrintOk();
 
 w_c_p_only:
 	WRITE_C_POLYGONS();

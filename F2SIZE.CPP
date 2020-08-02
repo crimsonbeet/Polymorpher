@@ -45,13 +45,10 @@ double X_C[9];
 double Y_C[9];
 
 char F_C;
-char F_C_OLD;
-char S_C_F_S;
+char F_C_Prev;
 
 char __iEx__;
 
-char NO_CONT_1;
-char NO_CONT_2;
 
 
 extern long Delta_X;
@@ -251,8 +248,8 @@ __INI_LvVt__(void)
 double
 DEFINE_CSLOPE(long K, long I, long J)
 {
-	double X;
-	double Y;
+	long X;
+	long Y;
 	double A;
 	X = ZLDCO4[J]-ZLDCO4[I];
 	Y = ZLDCO5[J]-ZLDCO5[I];
@@ -287,8 +284,8 @@ DEFINE_DISPLACE(long I, long K, double*X, double*Y)
 void DEFINE_NORMALFROM(long I, long K)
 {
 	double SZ;
-	double DX;
-	double DY;
+	long DX;
+	long DY;
 	double NX;
 	double NY;
 	DX = ZLDCO4[K]-ZLDCO4[I];
@@ -321,11 +318,14 @@ DEFINE_INTERSECTION
 	C2 = X2[0]*Y2[1]-X2[1]*Y2[0];
 
 	DL = A1*B2 - B1*A2;
-	if(_EQ_(DL, 0, 1E-7))return(0);
+	if(_EQ_(DL, 0, 1E-7))
+		return(0);
 
 	X[0] = (B1*C2-B2*C1)/DL;
 	Y[0] = (A2*C1-A1*C2)/DL;
-	if(X[0]>LONG_MAX||Y[0]>LONG_MAX)return(0);
+
+	if(X[0]>LONG_MAX||Y[0]>LONG_MAX)
+		return(0);
 	return(1);
 }
 void
@@ -375,7 +375,7 @@ __UNLINTSTD__(void)
 	Loadmaster(check_closure);
 }
 void
-UNL_TOINTLAYSTANDART(double*X, double*Y)
+UNL_TOINTLAYSTANDART(char NO_CONT_2, double*X, double*Y)
 {
 	long J;
 	long I;
@@ -419,15 +419,16 @@ UNL_TOINTLAYSTANDART(double*X, double*Y)
 	if(ZLDLIM!=0)
 	{
 		I = ZLDLIM-1;
-		J = 0;
-		if((*X0)[I]!=x[0])J=1;
-		else
-		if((*X1)[I]!=x[3])J=1;
-		else
-		if((*Y0)[I]!=y[0])J=1;
-		else
-		if((*Y1)[I]!=y[3])J=1;
-		if(J||NO_CONT_2)
+		if (!NO_CONT_2) {
+			if((*X0)[I]!=x[0])NO_CONT_2 =1;
+			else
+			if((*X1)[I]!=x[3])NO_CONT_2 =1;
+			else
+			if((*Y0)[I]!=y[0])NO_CONT_2 =1;
+			else
+			if((*Y1)[I]!=y[3])NO_CONT_2 =1;
+		}
+		if(NO_CONT_2)
 		{
 			__UNLINTSTD__();
 			ZLDLIM = 0;
@@ -456,15 +457,21 @@ double T = *A; *A = *B, *B = T;
 void
 DEFINE_SEGMENT(char S, long J, long I, long K)
 {
-double IX, IY, X1[9], X2[3], Y1[9], Y2[3], CAN, MAN;
-/*[0]-FIRST-DISPLACE-POINT!*/
-/*[1]-SECOND-DISP-POINT!*/
-/*[2]-NORMAL*/
-	static double CAN_OLD;
-	long SW0, SW1, SW2, SW3, SPT;/*SPECIAL-FLAGS*/
-	static long SW4;
-	NO_CONT_1 = 0;
-	if(S==0)CAN_OLD = 0;
+	/*[0]-FIRST-DISPLACE-POINT!*/
+	/*[1]-SECOND-DISP-POINT!*/
+	/*[2]-NORMAL*/
+
+	double IX = 0, IY = 0;
+	double CAN = 0, MAN = 0;
+
+	double X1[9] = { 0 }, X2[3] = { 0 }, Y1[9] = { 0 }, Y2[3] = { 0 };
+
+	static double CAN_Prev = 0;
+	long CANLess180 = 0, SW1 = 0, SW2 = 0, SW3 = 0, SPT = 0;/*SPECIAL-FLAGS*/
+	static long CANLess180Prev = 0;
+
+	if(S==0)
+		CAN_Prev = 0;
 	X1[2] = NXFROM;
 	Y1[2] = NYFROM;
 	DEFINE_NORMALFROM(I, K);
@@ -478,23 +485,25 @@ double IX, IY, X1[9], X2[3], Y1[9], Y2[3], CAN, MAN;
 		XELBOW =-XELBOW;
 		YELBOW =-YELBOW;
 		MAN = 360-CAN;
-		SW0 = 1;
-	}
-	else MAN = CAN, SW0 = 0;
 
-	SPT = 0;
+		CANLess180 = 1;
+	}
+	else 
+		MAN = CAN, CANLess180 = 0;
+
 	F_C = 0;
-	if(!SPT)SPT = SPLINE_TYPE(MAN);
 
 	DEFINE_DISPLACE(J, I, X1, Y1);
 	DEFINE_DISPLACE(I, K, X2, Y2);
 
+	SPT = SPLINE_TYPE(MAN);
+
 	if(SPT>0)
 	{
-		SW3 = DEFINE_INTERSECTION(X1, Y1, X2, Y2, &IX, &IY);
-		if(!SW3)SPT = 0;
+		if (!DEFINE_INTERSECTION(X1, Y1, X2, Y2, &IX, &IY))
+			SPT = 0;
 		else
-		IX -= ZLDCO4[I],IY -= ZLDCO5[I];
+			IX -= ZLDCO4[I], IY -= ZLDCO5[I];
 	}
 	X1[4] = XELBOW +ZLDCO4[J];
 	Y1[4] = YELBOW +ZLDCO5[J];
@@ -504,17 +513,16 @@ double IX, IY, X1[9], X2[3], Y1[9], Y2[3], CAN, MAN;
 	Y1[5] = Y1[1];
 	long Xi = ZLDCO4[I];
 	long Yi = ZLDCO5[I];
-	X1[6] = (Xi<<1)-X1[1];
-	Y1[6] = (Yi<<1)-Y1[1];
+	X1[6] = ((size_t)Xi<<1)-X1[1];
+	Y1[6] = ((size_t)Yi<<1)-Y1[1];
 	switch(SPT)
 	{
 		case 0: /*GORIZONTAL!NEEDED-BOX-GENERATING*/
-		SW1 = SW2 = 1;
 		XELBOW = X1[2]*__SIZWID__;
 		YELBOW = Y1[2]*__SIZWID__;
-		if(SW0)
-		XELBOW =-XELBOW, YELBOW =-YELBOW;
-		if(SW4)
+		if (CANLess180)
+			XELBOW = -XELBOW, YELBOW = -YELBOW;
+		if(CANLess180Prev)
 		{
 			d_swap(X1+4, X1+7);
 			d_swap(Y1+4, Y1+7);
@@ -523,23 +531,24 @@ double IX, IY, X1[9], X2[3], Y1[9], Y2[3], CAN, MAN;
 		}
 		break;
 		case 1: /*NOT-ACUTE-ANGLE*/
-		SW1 =-1, SW2 =+1;
 		XELBOW = IX;
 		YELBOW = IY;
 		DEFINE_ELBOW(X1, Y1, I);
-		if(SW0)
-		XELBOW =-XELBOW, YELBOW =-YELBOW;
-		if(SW4&&!SW0)CAN_OLD -= 360;
-		if(!SW4&&SW0)CAN_OLD *=-1.0;
+		if (CANLess180)
+			XELBOW = -XELBOW, YELBOW = -YELBOW;
+		if (CANLess180Prev && !CANLess180)
+			CAN_Prev -= 360;
+		if (!CANLess180Prev && CANLess180)
+			CAN_Prev *= -1.0;
 
-		if(!F_C_OLD)
-		if((MAN+CAN_OLD)<0)
-		{
-			d_swap(X1+4, X1+7);
-			d_swap(Y1+4, Y1+7);
-			d_swap(X1+5, X1+6);
-			d_swap(Y1+5, Y1+6);
-		}
+		if(F_C_Prev == 0)
+			if ((MAN + CAN_Prev) < 0)
+			{
+				d_swap(X1 + 4, X1 + 7);
+				d_swap(Y1 + 4, Y1 + 7);
+				d_swap(X1 + 5, X1 + 6);
+				d_swap(Y1 + 5, Y1 + 6);
+			}
 		break;
 		case 2: /*ACUTE-ANGLE*/
 		case 3:
@@ -549,37 +558,36 @@ double IX, IY, X1[9], X2[3], Y1[9], Y2[3], CAN, MAN;
 		X2[2] =-X2[2];
 		Y2[2] =-Y2[2];
 
-		/*Insisde Edges*/
+		/*Inside Edges*/
 		DEFINE_DISPLACE(J, I, X1, Y1);
 		DEFINE_DISPLACE(I, K, X2, Y2);
 
-		/*Check For Cover Making*/
-		SW3 = DEFINE_INTERSECTION(X1, Y1, X2, Y2, X1+3, Y1+3);
-		if(!SW3)zabort(f2size,__LINE__);
+		/*Check For Cover Make up*/
+		if(!DEFINE_INTERSECTION(X1, Y1, X2, Y2, X1 + 3, Y1 + 3))
+			zabort(f2size,__LINE__);
 		SW1 = POINTONSEGMENT(X1, Y1, X1[3], Y1[3]);
 		SW2 = POINTONSEGMENT(X2, Y2, X1[3], Y1[3]);
-		if(SW1&&SW2&&SPT!=2)
+		if(SPT == 3 && SW1&&SW2)
 		{
 			XELBOW = IX;
 			YELBOW = IY;
 			DEFINE_ELBOW(X1, Y1, I);
-			if(SW0)
-			XELBOW =-XELBOW, YELBOW =-YELBOW;
+			if (CANLess180)
+				XELBOW = -XELBOW, YELBOW = -YELBOW;
 
-			if(SW4&&!SW0)CAN_OLD -= 360;
-			if(!SW4&&SW0)CAN_OLD *=-1.0;
+			if(CANLess180Prev&&!CANLess180)CAN_Prev -= 360;
+			if(!CANLess180Prev&& CANLess180)CAN_Prev *=-1.0;
 
-			if(!F_C_OLD)
-			if((MAN+CAN_OLD)<0)
-			{
-				d_swap(X1+4, X1+7);
-				d_swap(Y1+4, Y1+7);
-				d_swap(X1+5, X1+6);
-				d_swap(Y1+5, Y1+6);
-			}
+			if (F_C_Prev == 0)
+				if ((MAN + CAN_Prev) < 0)
+				{
+					d_swap(X1 + 4, X1 + 7);
+					d_swap(Y1 + 4, Y1 + 7);
+					d_swap(X1 + 5, X1 + 6);
+					d_swap(Y1 + 5, Y1 + 6);
+				}
 			break;
 		}
-		NO_CONT_1 = 1;
 		X2[2] =-X2[2];
 		Y2[2] =-Y2[2];
 		XELBOW = X2[2]*__SIZWID__;
@@ -594,9 +602,9 @@ double IX, IY, X1[9], X2[3], Y1[9], Y2[3], CAN, MAN;
 		X_C[8] = X_C[4] = X1[5];
 		Y_C[8] = Y_C[4] = Y1[5];
 
-		if(SW0)
-		XELBOW =-XELBOW, YELBOW =-YELBOW;
-		if(SW4!=SW0)
+		if (CANLess180)
+			XELBOW = -XELBOW, YELBOW = -YELBOW;
+		if(CANLess180Prev!= CANLess180)
 		{
 			d_swap(X1+4, X1+7);
 			d_swap(Y1+4, Y1+7);
@@ -609,13 +617,13 @@ double IX, IY, X1[9], X2[3], Y1[9], Y2[3], CAN, MAN;
 	}
 	X1[8] = X1[4];
 	Y1[8] = Y1[4];
-	if(S)
-	UNL_TOINTLAYSTANDART(X1, Y1);
+	if (S)
+		UNL_TOINTLAYSTANDART(F_C, X1, Y1);
 
-	SW4 = SW0;
-	F_C_OLD = F_C;
-	CAN_OLD = CAN;
-	NO_CONT_2 = NO_CONT_1;
+	CANLess180Prev = CANLess180;
+
+	F_C_Prev = F_C;
+	CAN_Prev = CAN;
 }
 void
 Shapes_Collar_Generator(void)
@@ -672,14 +680,16 @@ Shapes_Collar_Generator(void)
 	/*SCALE POINTS*/
 	J = PYMAX>PXMAX? PYMAX: PXMAX;
 	S_FACTOR = 0;
-	//do
-	//{
-	//	++S_FACTOR;
-	//}
-	//while(((J<<S_FACTOR)>>S_FACTOR)==J);
-	//S_FACTOR--;
-	//if(S_FACTOR<0)S_FACTOR = 0;
-	//if(S_FACTOR>9)S_FACTOR = 9;
+	do
+	{
+		++S_FACTOR;
+	}
+	while(((J<<S_FACTOR)>>S_FACTOR)==J);
+	S_FACTOR--;
+	if(S_FACTOR<0)S_FACTOR = 0;
+	if(S_FACTOR>7)S_FACTOR = 7;
+
+	//S_FACTOR = 0;
 
 	PXMAX <<= S_FACTOR;
 	PYMAX <<= S_FACTOR;
@@ -698,24 +708,24 @@ Shapes_Collar_Generator(void)
 	ZLDLIM = 0;
 	__iEx__= 0;
 
-	J = Open_Shape!=0;
+	J = Open_Shape? 1: 0;
 
-	S_C_F_S = J; /*First Segment*/
 	C_Layer = J;
 	DEFINE_SEGMENT(J, S-1, S, T);
 
-	NO_CONT_2 = 1;
-	if(S_C_F_S)
+	if(J)
 	{
-		if(ZLDLIM)__iEx__ = 1;
+		if(ZLDLIM)
+			__iEx__ = 1;
+
 		__UNLINTSTD__();
+
 		ZLDLIM = 0;
-		if(F_C)
-		UNL_TOINTLAYSTANDART(X_C, Y_C);
+		if (F_C)
+			UNL_TOINTLAYSTANDART(1, X_C, Y_C);
 	}
 	C_Layer = 0;
-	S_C_F_S = 0; /*Not First Segment*/
-	F_C_OLD = 0;
+	F_C_Prev = 0;
 
 	K = S, S = T++;
 
@@ -723,10 +733,8 @@ Shapes_Collar_Generator(void)
 	{
 		DEFINE_SEGMENT(1, K, S, T);
 		if(F_C)
-		{
-			NO_CONT_2 = 1;
-			UNL_TOINTLAYSTANDART(X_C, Y_C);
-		}
+			UNL_TOINTLAYSTANDART(1, X_C, Y_C);
+
 		K = S, S = T++;
 	}
 	__UNLINTSTD__();
@@ -750,7 +758,7 @@ Shapes_Collar_Generator(void)
 		__INI_LvVt__();
 	}
 	S_FACTOR = 0;
-	if(__xSx__)__OVELSEG__();
+	//if(__xSx__)__OVELSEG__();
 
 	__coOut__(__iEx__? 2: 1);
 }
@@ -816,6 +824,8 @@ fprintf(stderr, "\n!!! Collars Data Base Generater Started on %s !!!\n",JOB.Name
 	if(CXMAX==-LONG_MAX)CXMAX = 0;
 	if(CYMAX==-LONG_MAX)CYMAX = 0;
 
+	MaSCOT_IO.SetMinMax();
+
 	MaSCOT_IO._fileIdentity.Delta_X = MaSCOT_IO._header.CXMIN;
 	MaSCOT_IO._fileIdentity.Delta_Y = MaSCOT_IO._header.CYMIN;
 
@@ -830,8 +840,6 @@ fprintf(stderr, "\n!!! Collars Data Base Generater Started on %s !!!\n",JOB.Name
 	MaSCOT_IO.O_Layer._lIdentity.XBSIZ = CXMAX-CXMIN;
 	MaSCOT_IO.O_Layer._lIdentity.YBSIZ = CYMAX-CYMIN;
 
-	MaSCOT_IO.SetMinMax();
-
 	char do_save_identity = 1;
 
 	MaSCOT_IO.Dix_close(do_save_identity);
@@ -839,6 +847,7 @@ fprintf(stderr, "\n!!! Collars Data Base Generater Started on %s !!!\n",JOB.Name
 
 	MaSCOT_IO.renameoutput();
 	MaSCOT_IO.Close_ILayer(0);
+
 	IEvaluater._ReleaseStorage();
 
 	__FINISHEDNORMALLY__();

@@ -166,7 +166,7 @@ extern LbBead*__LB0__;
 /**/
 #define FETCHSUCCESSOR(VT) ((VT)->ZVTNextSortedVtBead?(VT)->ZVTNextSortedVtBead:(VT)->ZVTCO1->ZPTFirstSortedVtBead)
 #define _EQ_(VA,VL,EN) (((VA)>(VL)-(EN))&&((VA)<(VL)+(EN)))
-#define FetchReverseLv(LV) ((LV)->ZLVMyVector->ZVTMeInreverse->ZVTFirstCoincident)
+LvBead* FetchReverseLv(LvBead* LV); 
 /**/
 typedef LvBead*compsplitlv(LvBead*, VtBead*, VtBead*, PtBead*);
 extern compsplitlv*COMPSPLITLV;

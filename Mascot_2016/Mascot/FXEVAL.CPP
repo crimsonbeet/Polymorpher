@@ -163,7 +163,8 @@ void MASLog(const char * format, ...) {
 	} 
 
 	if((MASLogbuffer_Lim + ncount + 1) >= MASLogbuffer_Max) { 
-		char*newMASLogbuffer = new char[(MASLogbuffer_Max + ncount) * 2]; 
+		MASLogbuffer_Max = (MASLogbuffer_Max + ncount) * 2;
+		char*newMASLogbuffer = new char[MASLogbuffer_Max];
 		if(MASLogbuffer) { 
 			memcpy(newMASLogbuffer, MASLogbuffer, MASLogbuffer_Lim + 1); 
 			delete MASLogbuffer; 
@@ -772,6 +773,7 @@ void MASCOT_IO::renameoutput(void)
 
 	funlink(Name);
 	frename(O_Layer.PdbN, Name);
+	memcpy(O_Layer.PdbN, Name, 20);
 
 	I = FPOS_2 + sizeof(LayerIdentity_Struct)*(O_Layer.Exist-1);
 	fsetpos(_dbLayers_FILE, &I);
@@ -1532,8 +1534,8 @@ long MASCOT_IO::MASLayerGetRTPolygon(const char* layer_name, long polygon_number
 
 	LayerDBHeader_Struct& L = n == 0? O_Layer: I_Layer[n - 1]; 
 
-	long dx = L.Delta_X - _header.CXMIN; 
-	long dy = L.Delta_Y - _header.CYMIN; 
+	long dx = L.Delta_X; // -_header.CXMIN; // ANB: TO DO Offset
+	long dy = L.Delta_Y; // -_header.CYMIN;
 
 	LbBead*Lb = GetLbBead(polygon_number); 
 	if(Lb->ZLBLayer == L.Lcode) { 
@@ -1559,8 +1561,8 @@ long MASCOT_IO::MASLayerGetRTPolygon(const char* layer_name, long polygon_number
 
 	LayerDBHeader_Struct& L = n == 0? O_Layer: I_Layer[n - 1]; 
 
-	long dx = L.Delta_X - _header.CXMIN; 
-	long dy = L.Delta_Y - _header.CYMIN; 
+	long dx = L.Delta_X; // -_header.CXMIN; // ANB: TO DO Offset
+	long dy = L.Delta_Y; // -_header.CYMIN;
 
 	LbBead*Lb = GetLbBead(polygon_number); 
 	if(Lb->ZLBLayer == L.Lcode) { 
