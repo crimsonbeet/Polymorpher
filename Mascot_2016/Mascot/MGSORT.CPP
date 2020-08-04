@@ -7,18 +7,9 @@
 #include<MATH.H>
 #include<STDIO.H>
 /**/
-#ifdef __BORLANDC__
-#include<DIR.H>
-#include<ALLOC.H>
-#endif
-/**/
 #include<STDLIB.H>
 #include<CTYPE.H>
 #include<STRING.H>
-/**/
-#ifdef __BORLANDC__
-#include<VALUES.H>
-#endif
 /**/
 #include<LIMITS.H>
 #include<PROCESS.H>
@@ -26,7 +17,7 @@
 #include "fqeval.hpp"
 #include "fxeval.hpp"
 /*-----------------------------------------*/
-#define zSnum 7
+constexpr auto zSnum = 7;
 /*-----------------------------------------*/
 /*
 	You need to define.

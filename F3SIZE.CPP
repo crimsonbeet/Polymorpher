@@ -1270,8 +1270,10 @@ fprintf(stderr, "\nTotal Fragments = %ld (X=%ld, Y=%ld)\n", XgCnt*YgCnt, XgCnt, 
 end_shapes_job:
 	MaSCOT_IO.SetMinMax();
 	__inTOPlt__= 0;
+
 	MaSCOT_IO.FCloseAll(); 
 	IEvaluater._ReleaseStorage();
+	FinishedNormally();
+
 	memcpy(JOB.Name, MaSCOT_IO.O_Layer.Name, 20); 
-__FINISHEDNORMALLY__();
 }

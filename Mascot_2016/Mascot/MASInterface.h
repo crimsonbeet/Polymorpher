@@ -13,7 +13,8 @@ typedef enum {
 	MAS_Or,
 	MAS_Not,
 	MAS_Area,
-	MAS_Size 
+	MAS_Size, 
+	MAS_ActivateLayer
 
 } MAS_Function; 
 

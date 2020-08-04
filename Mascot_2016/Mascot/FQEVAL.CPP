@@ -100,12 +100,13 @@ zabort(const char*ids, long lin)
 	zabort();
 }
 void
-__FINISHEDNORMALLY__(void)
-{
+__FINISHEDNORMALLY__(void) {
 	MASLog("\n!!! FINISHED NORMALLY. !!!\n");
 }
 void
-FinishedNormally(void){__FINISHEDNORMALLY__();}
+FinishedNormally(void){
+	__FINISHEDNORMALLY__();
+}
 /**/
 PtBead*GetPtBead(long Pt)
 {
@@ -197,7 +198,7 @@ COMBINE(LbBead*LB)
 	if(B3&&(L0==L1))return(2);
 	L0 = L1;
 	B3 = LB;
-	int c = ZLVLIM; 
+	int c = ZLVLIM*10; 
 	do /*FIND-L3-L2-(L0-IS-SECOND-FOR-LB)*/
 	{
 		L2 = L0;
@@ -224,7 +225,7 @@ COMBINE(LbBead*LB)
 	L4 = L3->ZLVNextLvBead;
 	L0 = L4;
 	L5 = L0;
-	c = ZLVLIM; 
+	c = ZLVLIM*10; 
 	while(L0!=L7 && c--)
 	{
 		L5 = L0;
@@ -545,6 +546,9 @@ VtBead*SPLITVT(VtBead*V3, PtBead*IP)
 	LvBead*L5;
 	LvBead*L6;
 	V4 = V3->ZVTMeInreverse;
+	if(!V4) { // ANB: july: error condition
+		return V3;
+	}
 	GetVtPair(V5, V6);
 	if(!VtIsEven(V3))
 	{
@@ -647,6 +651,9 @@ PVTable_ERASE_RedundantVTBead(VtBead*VT/*to be erased, must not be in PVTable*/,
 	VtBead*Pv;
 	Vt = VT->ZVTMeInreverse;
 	Pv = PV->ZVTMeInreverse;
+	//if(!Pv) {
+	//	return; // ANB: july: error condition
+	//}
 	if(Vt->ZVTPos < VT->ZVTPos)  { // reverse vector of VT has been inserted into PVTable. 
 		/*
 			Summary: 
@@ -887,7 +894,7 @@ LvBead*FETCHREVERSE(LbBead*LB, LvBead*LV)
 	LR = 0;
 	VR = (LV->ZLVMyVector)->ZVTMeInreverse;
 	LS = VR->ZVTFirstCoincident;
-	int c = ZLVLIM; 
+	int c = ZLVLIM*10; 
 	while(LS && c--)
 	{
 		if(!LS->ZLVMyLbBead) {
@@ -920,7 +927,7 @@ REMOVE_FROM_VT_CHAIN(LvBead*LV)
 		VT->ZVTFirstCoincident = LV->ZLVNextConcident;
 		return;
 	}
-	int c = ZLVLIM; 
+	int c = ZLVLIM*10; 
 	while(Lv&&c--) // ANB: july: error condition
 	{
 		if(Lv->ZLVNextConcident==LV)
@@ -1155,7 +1162,7 @@ TRAVERSE(VtBead*VT, char F_EVAL_INPROGRESS)
 			break; 
 		}
 	}
-	while(V3!=VT && !V3->ZVTAux);
+	while(V3!=VT && !V3->ZVTAux);  // ANB: july: error condition
 	LE = LV->ZLVNextLvBead = LB->ZLBFirstLvBead;
 	if(DJ)
 	{
@@ -1241,7 +1248,7 @@ LbBead_Unload2InputXY(LbBead*LB)
 	LN = LV->ZLVNextLvBead;
 	A1 = 361.0;
 	ZLDLIM = 0;
-	int c = ZLVLIM; 
+	int c = ZLVLIM*10; 
 	do
 	{
 		LV_First = LN->ZLVNextLvBead;
@@ -1295,7 +1302,10 @@ LbBead_Unload2InputXY(LbBead*LB)
 	LD = (ZLDLIM++);
 	ZLDCO0[LD] = ZLDCO0[0];
 	ZLDCO1[LD] = ZLDCO1[0];
-	return ZLDLIM>3;
+
+	DETERMINE_CLOCKSTATUS(ZLDCO0, ZLDCO1, ZLDLIM);
+
+	return ZLDLIM>3 && STATUS==1;
 }
 /*
 new functions for polygon classification.
@@ -1442,10 +1452,14 @@ char SET_INSIDE_ALL(VtBead*VtBegin, VtBead*VtEnd, LbBead*TopLb, long MaskCode)
 	VtBead*PV;
 	LvBead*LS;
 	VtBead*VR;
-	for(PV = FETCHSUCCESSOR(VtBegin); PV!=VtEnd; PV = FETCHSUCCESSOR(PV))
+	for (PV = FETCHSUCCESSOR(VtBegin); PV != VtEnd; PV = FETCHSUCCESSOR(PV))
 	{
 		VR = PV->ZVTMeInreverse;
 		LS = PV->ZVTFirstCoincident;
+
+		if(!VR || !LS) { // ANB: july: error condition
+			break; 
+		}
 
 		if(CheckItSelf(TopLb, PV))return 1;
 		if(CheckItSelf(TopLb, VR))return 1;
@@ -1548,6 +1562,7 @@ POINT_VECTOR_CLASS_2(LbBead*LB, long LayerCode, long MaskCode) /*After DUMMYJUNC
 	Si_LbNxt = Si_LbGrp!=LB||LB->ZLBNxt!=0;
 
 	/*For Each LV*/
+	int c = ZLVLIM*10; 
 	do
 	{
 		SET_LbGrp(V3->ZVTFirstCoincident, LB);
@@ -1563,8 +1578,8 @@ POINT_VECTOR_CLASS_2(LbBead*LB, long LayerCode, long MaskCode) /*After DUMMYJUNC
 
 		if(!V4->ZVTFirstCoincident&&!V6->ZVTFirstCoincident) { 
 			/*in reverse direction for SET_INSIDE_ALL.*/
-			VtBead*PV;
-			for(PV = FETCHSUCCESSOR(VtEnd); PV!=VtBegin; PV = FETCHSUCCESSOR(PV))
+			int c = ZVTLIM*100;
+			for(VtBead* PV = FETCHSUCCESSOR(VtEnd); PV!=VtBegin && c--; PV = FETCHSUCCESSOR(PV)) // ANB: july: error condition
 			{
 				SET_LbGrp(PV->ZVTFirstCoincident, LB);
 			}
@@ -1587,7 +1602,7 @@ POINT_VECTOR_CLASS_2(LbBead*LB, long LayerCode, long MaskCode) /*After DUMMYJUNC
 		}
 		else V3 = V5, V4 = V6, LV = LN, LN = LV->ZLVNextLvBead;
 	}
-	while(LV!=LE);
+	while(LV!=LE && c--); // ANB: july: error condition
 }
 LbBead*Loadmaster(char check_closure, char open_shape)
 // Loads points from ZLDCO0 and ZLDCO1 into the Polygon (LB) and Vector (LV) objects. 

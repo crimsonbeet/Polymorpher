@@ -72,6 +72,9 @@ Back_Scale_2(void)
 	for(p = 1; p<ZPTLIM; ++p)
 	{
 		Pt = GetPtBead(p);
+		if (!Pt) {
+			continue;
+		}
 		if(Pt->ZPTAux) {
 			/* 
 				Residual after the previous iteration. 
@@ -222,7 +225,9 @@ Back_Scale_4(void)
 				{
 					Vr = Vt->ZVTMeInreverse;
 					Vt->ZVTMeInreverse = 0;
-					Vr->ZVTMeInreverse = 0;
+					if(Vr) {
+						Vr->ZVTMeInreverse = 0;
+					}
 				}
 				Lv = Lv->ZLVNextLvBead;
 			}
@@ -233,6 +238,7 @@ Back_Scale_4(void)
 		Le = Lv;
 		Lo = Le;
 		Lv = Lv->ZLVNextLvBead;
+		if(Lv)
 		do
 		{
 			P1 = Lv->ZLVPoint1;

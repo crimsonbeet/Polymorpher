@@ -937,8 +937,9 @@ MASCOT_IO::FCloseAll(void)
 	}
 	Dix_close();
 
-	if(strlen(O_Layer.Name)) { 
+	if(strlen(O_Layer.PdbN)) {
 		renameoutput();
+		memset(O_Layer.PdbN, 0, 20);
 	} 
 
 	if(_dbHeader_Changed)
@@ -953,7 +954,6 @@ MASCOT_IO::FCloseAll(void)
 		fwrite(iLnames_hash.Strings[i].N, 1, strlen(iLnames_hash.Strings[i].N) + 1, _dbHeader_FILE);
 	}
 	fflush(_dbHeader_FILE);
-	//chsize(fileno(_dbHeader_FILE), (size_t)_dbHeader_FILE->getpos());
 	fchsize(_dbHeader_FILE, (size_t)_dbHeader_FILE->getpos());
 	fclose(_dbHeader_FILE);
 	fclose(_dbLayers_FILE);

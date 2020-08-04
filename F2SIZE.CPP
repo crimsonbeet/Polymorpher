@@ -6,18 +6,10 @@
 #include<DOS.H>
 #include<MATH.H>
 #include<STDIO.H>
-#ifdef __BORLANDC__
-#include<DIR.H>
-#include<ALLOC.H>
-#endif
 /**/
 #include<STDLIB.H>
 #include<CTYPE.H>
 #include<STRING.H>
-/**/
-#ifdef __BORLANDC__
-#include<VALUES.H>
-#endif
 /**/
 #include<LIMITS.H>
 #include<PROCESS.H>
@@ -470,6 +462,13 @@ DEFINE_SEGMENT(char S, long J, long I, long K)
 	long CANLess180 = 0, SW1 = 0, SW2 = 0, SW3 = 0, SPT = 0;/*SPECIAL-FLAGS*/
 	static long CANLess180Prev = 0;
 
+	auto swap_X1Y1 = [&X1, &Y1]() {
+		d_swap(X1 + 4, X1 + 7);
+		d_swap(Y1 + 4, Y1 + 7);
+		d_swap(X1 + 5, X1 + 6);
+		d_swap(Y1 + 5, Y1 + 6);
+	};
+
 	if(S==0)
 		CAN_Prev = 0;
 	X1[2] = NXFROM;
@@ -524,10 +523,7 @@ DEFINE_SEGMENT(char S, long J, long I, long K)
 			XELBOW = -XELBOW, YELBOW = -YELBOW;
 		if(CANLess180Prev)
 		{
-			d_swap(X1+4, X1+7);
-			d_swap(Y1+4, Y1+7);
-			d_swap(X1+5, X1+6);
-			d_swap(Y1+5, Y1+6);
+			swap_X1Y1();
 		}
 		break;
 		case 1: /*NOT-ACUTE-ANGLE*/
@@ -544,10 +540,7 @@ DEFINE_SEGMENT(char S, long J, long I, long K)
 		if(F_C_Prev == 0)
 			if ((MAN + CAN_Prev) < 0)
 			{
-				d_swap(X1 + 4, X1 + 7);
-				d_swap(Y1 + 4, Y1 + 7);
-				d_swap(X1 + 5, X1 + 6);
-				d_swap(Y1 + 5, Y1 + 6);
+				swap_X1Y1();
 			}
 		break;
 		case 2: /*ACUTE-ANGLE*/
@@ -581,10 +574,7 @@ DEFINE_SEGMENT(char S, long J, long I, long K)
 			if (F_C_Prev == 0)
 				if ((MAN + CAN_Prev) < 0)
 				{
-					d_swap(X1 + 4, X1 + 7);
-					d_swap(Y1 + 4, Y1 + 7);
-					d_swap(X1 + 5, X1 + 6);
-					d_swap(Y1 + 5, Y1 + 6);
+					swap_X1Y1();
 				}
 			break;
 		}
@@ -604,12 +594,10 @@ DEFINE_SEGMENT(char S, long J, long I, long K)
 
 		if (CANLess180)
 			XELBOW = -XELBOW, YELBOW = -YELBOW;
+
 		if(CANLess180Prev!= CANLess180)
 		{
-			d_swap(X1+4, X1+7);
-			d_swap(Y1+4, Y1+7);
-			d_swap(X1+5, X1+6);
-			d_swap(Y1+5, Y1+6);
+			swap_X1Y1();
 		}
 		F_C = 1;
 		break;
@@ -687,7 +675,7 @@ Shapes_Collar_Generator(void)
 	while(((J<<S_FACTOR)>>S_FACTOR)==J);
 	S_FACTOR--;
 	if(S_FACTOR<0)S_FACTOR = 0;
-	if(S_FACTOR>7)S_FACTOR = 7;
+	if(S_FACTOR>9)S_FACTOR = 9;
 
 	//S_FACTOR = 0;
 
@@ -758,7 +746,6 @@ Shapes_Collar_Generator(void)
 		__INI_LvVt__();
 	}
 	S_FACTOR = 0;
-	//if(__xSx__)__OVELSEG__();
 
 	__coOut__(__iEx__? 2: 1);
 }
@@ -768,7 +755,7 @@ Shapes_Collar_Generator(void)
 #define O_L MaSCOT_IO.O_Layer
 
 
-void __FINISHEDNORMALLY__(void);
+void FinishedNormally(void);
 
 
 void
@@ -850,5 +837,5 @@ fprintf(stderr, "\n!!! Collars Data Base Generater Started on %s !!!\n",JOB.Name
 
 	IEvaluater._ReleaseStorage();
 
-	__FINISHEDNORMALLY__();
+	FinishedNormally();
 }

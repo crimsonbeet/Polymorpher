@@ -202,7 +202,7 @@ void LFuEvaluaterLoop(long Function, char classifyType/*0 - main, 1 - quick*/, i
 		LFuEvaluater(Function, classifyType, log_graph);
 		SetNxtFrag(Function);
 	}
-	//MaSCOT_IO.FCloseAll();
+	MaSCOT_IO.FCloseAll();
 	//IEvaluater._ReleaseStorage();
 	FinishedNormally();
 }
@@ -270,20 +270,13 @@ void LoadFragment() {
 		} 
 	}
 }
-void PrintOk(void)
-{
+void PrintOk(void) {
 	MASLog(".");
 }
-#ifdef __BORLANDC__
-void ClrStr(void)
-{
-	MASLog("\r");
-	clreol();
-	MASLog("\r");
+
+void ClrStr(void){
 }
-#else
-void ClrStr(void){}
-#endif
+
 int WRITE_C_POLYGONS() {
 	long cnt = 0; 
 	for(long lb = 1; lb<ZLBLIM; ++lb) {
@@ -301,12 +294,7 @@ int WRITE_C_POLYGONS() {
 	}
 	return cnt; 
 }
-void DspNmbrFrgmnt(long Fr)
-{
-ClrStr();MASLog("\rFRAGMENT%ld!", Fr);
-}
 void LFuEvaluater(long Function, char classifyType/*0 - main, 1 - quick*/, int log_graph) {
-DspNmbrFrgmnt(C_Fragment);
 	Target_Function = Function;
 	ZLBLIM = 1;
 	ZLVLIM = 1;
@@ -316,14 +304,18 @@ DspNmbrFrgmnt(C_Fragment);
 
 	LoadFragment();
 
+	if (Function == MFunction_ActivateLayer) {
+		INTERSECTION_ANALYSIS();
+		POINT_VECTOR_ANALYSIS(2);
+		return;
+	}
+
 	if(Function==MFunction_Not) {
 		Load_Boundary();
 	}
 	__pAm__ = ZPTLIM;
 
 	ScalePoints();
-
-PrintOk();
 
 	ZVTLIM = 2;
 	STATUS =+1;
@@ -336,11 +328,8 @@ PrintOk();
 			graph_log_layer(MaSCOT_IO.I_Layer[n].Name); 
 		} 
 	} 
-PrintOk();
 
 	Classify_Polygons(classifyType); 
-
-PrintOk();
 
 	if(Function != MFunction_Intersect) { 
 		if(Function<0) True_Stat = Function==-1? AND_1:XOR_1;
@@ -365,22 +354,6 @@ PrintOk();
 
 	Back_ScalePoints();
 
-PrintOk();
-	if(!__aLlAng__||!__xSx__)goto w_c_p_only;
-
-//	ZVTLIM = 2;
-//	STATUS =+1;
-//	INTERSECTION_ANALYSIS();
-//	POINT_VECTOR_ANALYSIS(2);
-//PrintOk();
-//	Classify_Polygons(1/*quickclassify*/); 
-//	if(Function != MFunction_Intersect) { 
-//		True_Stat = O_R;
-//		FORCE_C_POLYGONS();
-//	} 
-//PrintOk();
-
-w_c_p_only:
 	WRITE_C_POLYGONS();
 }
 void SetNxtFrag(long Function)

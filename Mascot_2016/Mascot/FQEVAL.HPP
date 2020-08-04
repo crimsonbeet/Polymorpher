@@ -157,9 +157,10 @@ extern LbBead*__LB0__;
 #define MFunction_Not 5
 #define MFunction_Area 6
 #define MFunction_Size 7
-#define MFunction_5009 8
+#define MFunction_ActivateLayer 8
 #define MFunction_Intersect 9
 #define MFunction_Nothing 10
+#define MFunction_5009 11
 /**/
 #define MFunction_AndOne -1
 #define MFunction_XorOne -2
@@ -205,7 +206,7 @@ long DETERMINE_CLOCKSTATUS(LbBead*B);
 long DETERMINE_CLOCKSTATUS(_sAlong& x, _sAlong& y, long lim);
 VtBead*SPLITVT(VtBead*V3, PtBead*IP);
 VtBead*INSERTV(PtBead*P1, PtBead*P2, LvBead*LV);
-void Classify_Polygons(char classifyType); 
+void Classify_Polygons(char classifyType = 0); 
 void INTERSECTION_ANALYSIS(bool preloaded = false, int firts_lb = 1);
 char POINT_VECTOR_ANALYSIS(long first, char F_EVAL_INPROGRESS = 1, char F_FULLANALYSIS_INPROGRESS = 0);
 void DUMMYJUNCTIONANALYSIS(LbBead*LB);
