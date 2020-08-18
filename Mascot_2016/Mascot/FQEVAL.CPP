@@ -208,7 +208,10 @@ COMBINE(LbBead*LB)
 	}
 	while((B3==LB)&&(L1!=L0)&&c--); 
 	/*NON-COINCIDENT?*/
-	if(L1==L0||c<0)return(0); // ANB: july: error condition
+	if(c < 0) { // ANB: july: error condition
+		printf("COMBINE error condition 1\r\n");
+	} 
+	if(L1==L0||c<0)return(0); 
 	do /*FIND-LAST-COINCIDENT-WITH-B3(L6)*/
 	{
 		L6 = L0;
@@ -232,7 +235,10 @@ COMBINE(LbBead*LB)
 		L0->ZLVMyLbBead = LB;
 		L0 = L0->ZLVNextLvBead;
 	}
-	if(c<0)return(0); // ANB: july: error condition
+	if(c < 0) { // ANB: july: error condition
+		printf("COMBINE error condition 2\r\n");
+	}
+	if(c<0)return(0); 
 	if(L4==L7) L2->ZLVNextLvBead = L9;
 	else
 	{
@@ -547,7 +553,10 @@ VtBead*SPLITVT(VtBead*V3, PtBead*IP)
 	LvBead*L6;
 	V4 = V3->ZVTMeInreverse;
 	if(!V4) { // ANB: july: error condition
-		return V3;
+		printf("SPLITVT error condition 1\r\n");
+	}
+	if(!V4) { 
+		return 0;
 	}
 	GetVtPair(V5, V6);
 	if(!VtIsEven(V3))
@@ -629,7 +638,7 @@ PVTable_REPLACE_PVBead(VtBead*ptrOld, VtBead*ptrNew, char inherit_tail)
 		}
 		return;
 	}
-	int c = ZVTLIM; 
+	int c = ZVTLIM * 10; 
 	for(VT = PT->ZPTFirstSortedVtBead; VT&&c--; VT = VT->ZVTNextSortedVtBead) // ANB: july: error condition
 	{
 		if(VT->ZVTNextSortedVtBead!=ptrOld)
@@ -643,6 +652,9 @@ PVTable_REPLACE_PVBead(VtBead*ptrOld, VtBead*ptrNew, char inherit_tail)
 		VT->ZVTNextSortedVtBead = ptrNew;
 		return;
 	}
+	if(c<=0) { 
+		printf("PVTable_REPLACE_PVBead error condition 1\r\n");
+	}
 }
 void
 PVTable_ERASE_RedundantVTBead(VtBead*VT/*to be erased, must not be in PVTable*/, VtBead*PV/*to be retained, must be in PVTable*/, char F_EVAL_INPROGRESS, char F_FULLANALYSIS_INPROGRESS)
@@ -651,6 +663,9 @@ PVTable_ERASE_RedundantVTBead(VtBead*VT/*to be erased, must not be in PVTable*/,
 	VtBead*Pv;
 	Vt = VT->ZVTMeInreverse;
 	Pv = PV->ZVTMeInreverse;
+	if(!Pv) { 
+		printf("PVTable_ERASE_RedundantVTBead error condition 1\r\n");
+	}
 	//if(!Pv) {
 	//	return; // ANB: july: error condition
 	//}
@@ -675,7 +690,10 @@ PVTable_ERASE_RedundantVTBead(VtBead*VT/*to be erased, must not be in PVTable*/,
 	}
 
 	PVTable_MERGE_LVChain(VT, PV);
-	if (Vt && Pv) { // ANB: july: error condition
+	if(!Vt || !Pv) { 
+		printf("PVTable_ERASE_RedundantVTBead error condition 2\r\n");
+	}
+	if(Vt && Pv) { // ANB: july: error condition
 		PVTable_MERGE_LVChain(Vt, Pv);
 	}
 
@@ -751,8 +769,9 @@ POINT_VECTOR_ANALYSIS(long first, char F_EVAL_INPROGRESS, char F_FULLANALYSIS_IN
 		P4 = 0; 
 		for(char DONext = 1; PV!=0 && DONext; ++POINT_VECTOR_ANALYSIS_Pass_Count)
 		{
-			if(POINT_VECTOR_ANALYSIS_Pass_Count > (ZPTLIM << 2)) { // ANB: july: error condition
-				break; 
+			if(POINT_VECTOR_ANALYSIS_Pass_Count > (ZPTLIM << 8)) { // ANB: july: error condition
+				printf("POINT_VECTOR_ANALYSIS error condition 1\r\n");
+				break;
 			}
 			P4 = PV->ZVTCO2;
 			X4 = P4->ZPTCO1-PT->ZPTCO1;
@@ -893,6 +912,9 @@ LvBead*FETCHREVERSE(LbBead*LB, LvBead*LV)
 	long EC=0;
 	LR = 0;
 	VR = (LV->ZLVMyVector)->ZVTMeInreverse;
+	if(!VR) {
+		return 0;
+	}
 	LS = VR->ZVTFirstCoincident;
 	int c = ZLVLIM*10; 
 	while(LS && c--)
@@ -902,6 +924,9 @@ LvBead*FETCHREVERSE(LbBead*LB, LvBead*LV)
 		}
 		if(LS->ZLVMyLbBead==LB)LR = LS, ++EC;
 		LS = LS->ZLVNextConcident;
+	}
+	if(c<0) { 
+		printf("FETCHREVERSE error condition 1\r\n");
 	}
 	if(EC<=1||c<0)return LR; // ANB: july: error condition
 
@@ -936,6 +961,9 @@ REMOVE_FROM_VT_CHAIN(LvBead*LV)
 			return;
 		}
 		Lv = Lv->ZLVNextConcident;
+	}
+	if(c<0) { 
+		printf("REMOVE_FROM_VT_CHAIN error condition 1\r\n");
 	}
 }
 LvBead*CLEAR_LB_PTR(LvBead*Lv, LvBead*Ln)/*From Lv To Ln*/
@@ -1159,7 +1187,8 @@ TRAVERSE(VtBead*VT, char F_EVAL_INPROGRESS)
 				DJ = 1;
 		}
 		else {
-			break; 
+			printf("TRAVERSE error condition 1\r\n");
+			break;
 		}
 	}
 	while(V3!=VT && !V3->ZVTAux);  // ANB: july: error condition
@@ -1296,7 +1325,8 @@ LbBead_Unload2InputXY(LbBead*LB)
 	while(LV!=LE&&c--); // ANB: july: error condition
 
 	if(c<0) {
-		return 0; 
+		printf("LbBead_Unload2InputXY error condition 1\r\n");
+		return 0;
 	}
 
 	LD = (ZLDLIM++);
@@ -1457,8 +1487,12 @@ char SET_INSIDE_ALL(VtBead*VtBegin, VtBead*VtEnd, LbBead*TopLb, long MaskCode)
 		VR = PV->ZVTMeInreverse;
 		LS = PV->ZVTFirstCoincident;
 
-		if(!VR || !LS) { // ANB: july: error condition
-			break; 
+		if (!LS) { 
+			break;
+		}
+		if (!VR) { // ANB: july: error condition
+			printf("SET_INSIDE_ALL error condition 1\r\n");
+			break;
 		}
 
 		if(CheckItSelf(TopLb, PV))return 1;
@@ -1583,7 +1617,10 @@ POINT_VECTOR_CLASS_2(LbBead*LB, long LayerCode, long MaskCode) /*After DUMMYJUNC
 			{
 				SET_LbGrp(PV->ZVTFirstCoincident, LB);
 			}
-		} 
+			if(c < 0) {
+				printf("POINT_VECTOR_CLASS_2 error condition 1\r\n");
+			}
+		}
 
 		if(Target_Function<0/*and or xor on itself*/&&(V3->ZVTStatus & LayerCode))V3->ZVTStatus |= MaskCode;
 
@@ -1603,6 +1640,9 @@ POINT_VECTOR_CLASS_2(LbBead*LB, long LayerCode, long MaskCode) /*After DUMMYJUNC
 		else V3 = V5, V4 = V6, LV = LN, LN = LV->ZLVNextLvBead;
 	}
 	while(LV!=LE && c--); // ANB: july: error condition
+	if(c < 0) {
+		printf("POINT_VECTOR_CLASS_2 error condition 2\r\n");
+	}
 }
 LbBead*Loadmaster(char check_closure, char open_shape)
 // Loads points from ZLDCO0 and ZLDCO1 into the Polygon (LB) and Vector (LV) objects. 
@@ -2002,6 +2042,9 @@ Classify_Quick(void)
 		DUMMYJUNCTIONANALYSIS(Lb);
 		Set_Rstat(Lb, 0);
 	}
+	for (int V = 0; V < ZVTLIM; ++V) {
+		GetVtBead(V)->ZVTAux = 0;
+	}
 }
 void
 Classify_Main(void)
@@ -2050,6 +2093,41 @@ Classify_Polygons(char quickclassify) {
 		Classify_Main(); 
 	}
 } 
+
+
+static void setStat(VtBead* V, char call_flavor) {
+	if (!V) {
+		return;
+	}
+	if (call_flavor != 0) {
+		V->ZVTStatus |= 1;
+	}
+	else {
+		V->ZVTStatus = 1;
+	}
+};
+
+static void setChainStat(VtBead* R, VtBead* V, char call_flavor) {
+	if (R) {
+		VtBead* V4 = FETCHSUCCESSOR(R);
+		while (V4 != V) {
+			setStat(V4, call_flavor);
+			VtBead* V4R = V4->ZVTMeInreverse;
+			if (V4R) {
+				setStat(V4R, call_flavor);
+				if (!V4->ZVTAux && V4->ZVTFirstCoincident && V4R->ZVTFirstCoincident) {
+					V4->ZVTAux = 1;
+					setChainStat(V4R, V4R, call_flavor);
+				}
+			}
+
+			V4 = FETCHSUCCESSOR(V4);
+		}
+	}
+};
+
+
+
 void
 Set_Rstat(LbBead*Lb, char call_flavor)
 {
@@ -2059,6 +2137,7 @@ Set_Rstat(LbBead*Lb, char call_flavor)
 	{
 		return;
 	}
+
 	long T = Lb->ZLBStatus;
 	do
 	{
@@ -2078,17 +2157,27 @@ Set_Rstat(LbBead*Lb, char call_flavor)
 		{
 			V=R;
 		}
-
-		if(call_flavor != 0) 
-		{ 
-			V->ZVTStatus |= 1;
-		} 
-		else 
-		{
-			V->ZVTStatus = 1;
-		} 
+		setStat(V, call_flavor);
 	}
 	while(K!=Start);
+	
+	if(call_flavor == 7 || T == -1)
+	{
+		return; 
+	}
+
+	K = Start;
+	do
+	{
+		VtBead* V = K->ZLVMyVector;
+		VtBead* R = V? V->ZVTMeInreverse: 0;
+
+		K = K->ZLVNextLvBead;
+		V = K->ZLVMyVector; 
+
+		setChainStat(R, V, call_flavor);
+
+	} while (K != Start);
 }
 
 

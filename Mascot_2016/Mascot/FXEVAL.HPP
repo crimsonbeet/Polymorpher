@@ -170,6 +170,8 @@ struct MASCOTStringBuffer {
 	long S_BLEN;
 	char*S_BTOP;
 
+	long s_bposRest; 
+
 	MASCOTStringBuffer(); 
 	~MASCOTStringBuffer(); 
 
@@ -184,8 +186,8 @@ struct MASCOTStringHash {
 	};
 
 	MHString*Strings;
-	unsigned char Strings_Lim;
-	unsigned char Strings_Max;
+	unsigned long Strings_Lim;
+	unsigned long Strings_Max;
 
 	unsigned char*Hash;
 

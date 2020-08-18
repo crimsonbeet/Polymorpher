@@ -530,12 +530,12 @@ char MASCOT_IO::I_SKIP_P(void)
 }
 MASCOTStringBuffer::MASCOTStringBuffer() { 
 	S_BPOS = 1;
-	S_BLEN = 8192;
+	S_BLEN = 8192 * 8192;
 	S_BTOP = new char[S_BLEN];
 	memset(S_BTOP, 0, S_BLEN);
 
 	MASLogbuffer_Lim = 0; 
-	MASLogbuffer_Max = 2048; 
+	MASLogbuffer_Max = 2048 * 16; 
 	MASLogbuffer = new char[MASLogbuffer_Max]; 
 } 
 MASCOTStringBuffer::~MASCOTStringBuffer() { 
@@ -594,12 +594,14 @@ unsigned char MASCOTStringHash::Insert(const char*str) {
 }
 MASCOTStringHash::MASCOTStringHash(MASCOTStringBuffer&strbuf) { 
 	Strings_Lim = 1;
-	Strings_Max = 192;
-	Strings = (MHString*)strbuf.Get(sizeof(MHString)*Strings_Max);
+	Strings_Max = 1024;
+	Strings = (MHString*)(void*)strbuf.Get(sizeof(MHString)*Strings_Max);
 
 	memset(Strings, 0, sizeof(MHString)*Strings_Max);
 
 	Hash = (unsigned char*)strbuf.Get(64);
+
+	memset(Hash, 0, 64); 
 } 
 
 void MASCOT_IO::Make_File_Name_Main(char*Sd, long Id)
@@ -807,6 +809,8 @@ MASCOT_IO::MASCOT_IO(): strbuf(), iLnames_hash(strbuf)
 	memset(&P_Layer, 0, sizeof(P_Layer)); 
 
 	memset(xfiles, 0, sizeof(xfiles)); 
+
+	strbuf.s_bposRest = strbuf.S_BPOS; 
 
 	MASInitialize(1, 1); 
 }
@@ -1024,7 +1028,7 @@ bool MASCOT_IO::MASInitialize(long blocks_count_x, long blocks_count_y) {
 	memset(&P_Layer, 0, sizeof(P_Layer));
 
 	iLnames_hash.Strings_Lim = 1;
-	strbuf.S_BPOS = 1;
+	strbuf.S_BPOS = strbuf.s_bposRest;
 	memset(strbuf.S_BTOP, 0, strbuf.S_BLEN);
 
 	funlink_all(); 
@@ -1231,9 +1235,18 @@ bool MASCOT_IO::MASLayerAddPolygon2DBStorage(const char* inpLayer_name) {
 	_header.CXMAX = CXMAX;
 	_header.CYMAX = CYMAX;
 
+	_header.XBSIZ = 0;
+	_header.YBSIZ = 0;
+
+
 	_dbHeader_Changed = 1; 
 
-	return true; 
+	if (MASLogbuffer) {
+		printf(MASLogbuffer);
+		MASLogbuffer[MASLogbuffer_Lim = 0] = 0;
+	}
+
+	return true;
 } 
 
 
@@ -1399,6 +1412,11 @@ bool MASCOT_IO::MASEvaluateMain(long Function, const char* outLayer_name, int w)
 		MASLog(excpt_msg); 
 		rc = false; 
 	} 
+
+	if (MASLogbuffer) {
+		printf(MASLogbuffer);
+		MASLogbuffer[MASLogbuffer_Lim = 0] = 0;
+	}
 
 	return rc; 
 } 
