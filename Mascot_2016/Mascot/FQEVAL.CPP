@@ -1335,7 +1335,7 @@ LbBead_Unload2InputXY(LbBead*LB)
 
 	DETERMINE_CLOCKSTATUS(ZLDCO0, ZLDCO1, ZLDLIM);
 
-	return ZLDLIM>3 && STATUS==1;
+	return ZLDLIM > 3 && STATUS == 1;
 }
 /*
 new functions for polygon classification.
@@ -2110,7 +2110,8 @@ static void setStat(VtBead* V, char call_flavor) {
 static void setChainStat(VtBead* R, VtBead* V, char call_flavor) {
 	if (R) {
 		VtBead* V4 = FETCHSUCCESSOR(R);
-		while (V4 != V) {
+		int c = ZVTLIM * 10;
+		while (V4 != V && c-->0) {
 			setStat(V4, call_flavor);
 			VtBead* V4R = V4->ZVTMeInreverse;
 			if (V4R) {
@@ -2122,6 +2123,10 @@ static void setChainStat(VtBead* R, VtBead* V, char call_flavor) {
 			}
 
 			V4 = FETCHSUCCESSOR(V4);
+			--c; 
+		}
+		if (c <= 0) { // ANB: july: error condition
+			printf("setChainStat error condition\r\n");
 		}
 	}
 };
