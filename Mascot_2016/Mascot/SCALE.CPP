@@ -7,9 +7,6 @@
 #include<STDIO.H>
 #include "fqeval.hpp"
 /**/
-long __xSx__;
-long __pAm__;
-long __bSb__;
 /**/
 void
 ScalePoints(void)
@@ -32,20 +29,11 @@ void
 Back_Scale_1(void)
 {
 	register long p, l;
-	double sf;
 	PtBead*Pt;
 
-	sf = 1<<S_FACTOR;
+	double sf = ((int64_t)1L)<<S_FACTOR;
 
-	l = __pAm__;
-	for(p = 1; p<l; ++p)
-	{
-		Pt = GetPtBead(p);
-		Pt->ZPTCO1 >>= S_FACTOR;
-		Pt->ZPTCO2 >>= S_FACTOR;
-	}
-	for(p = l; p<ZPTLIM; ++p)
-	{
+	for(p = 1; p<ZPTLIM; ++p) {
 		Pt = GetPtBead(p);
 		Pt->ZPTCO1 = (long)floor((double)Pt->ZPTCO1/sf +0.5);
 		Pt->ZPTCO2 = (long)floor((double)Pt->ZPTCO2/sf +0.5);
@@ -68,7 +56,6 @@ Back_Scale_2(void)
 	PtBead*PT;
 
 	CleanZPTHASH();
-	f = 0;
 	for(p = 1; p<ZPTLIM; ++p)
 	{
 		Pt = GetPtBead(p);
@@ -109,11 +96,9 @@ Back_Scale_2(void)
 		else 
 		{ 
 			Pt->ZPTAux = PT;
-			f = 1;
 		} 
 	}
 	IPOINT = IPOINT4;
-	__xSx__ = f;
 }
 
 void
@@ -144,14 +129,8 @@ Back_Scale_3(void)
 	PtBead*Pt;
 	PtBead*P1;
 	PtBead*P2;
-	register char FA, FB, fg=0;
+	register char FA, FB;
 
-	if (__bSb__)
-	{
-		Back_Scale_5();
-		__xSx__ = 0;
-		return;
-	}
 	long vt;
 	for(vt = 2; vt<ZVTLIM; vt+=2)
 	{
@@ -180,12 +159,10 @@ Back_Scale_3(void)
 		}
 		if(FA||FB)
 		{
-			fg = 1;
 			Relink_Lv_Pt(Vt);
 			Relink_Lv_Pt(V4);
 		}
 	}
-	__xSx__ = fg;
 }
 void
 Back_Scale_4(void)
@@ -270,15 +247,11 @@ long
 Back_ScalePoints(void)
 {
 	CleanPvBead();
-	__xSx__ = 0;
 
 	Back_Scale_1();
 	Back_Scale_2();
 
-	if(__xSx__)Back_Scale_3();
-	if(__xSx__)Back_Scale_4();
-
 	CleanPvBead();
 
-	return __xSx__; 
+	return 0; 
 }

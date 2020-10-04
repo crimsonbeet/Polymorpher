@@ -792,13 +792,13 @@ void Lf_MergeChains() {
 
 	Lf_AddedChainsLim = 0;
 } 
-void INTERSECTION_ANALYSIS(bool preloaded, int firts_lb)
+void INTERSECTION_ANALYSIS(bool preloaded, int first_lb)
 {
 	if(!preloaded) { 
 		Init_Vt_FindTree();
 	} 
 
-	Lv_Sort(firts_lb); // sorts LvBeads into PTRAux_1. 
+	Lv_Sort(first_lb); // sorts LvBeads into PTRAux_1. 
 
 	for(long Lvsorted = 1; Lvsorted<PTRAux_1Lim; ++Lvsorted)
 	{

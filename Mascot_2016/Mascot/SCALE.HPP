@@ -3,7 +3,6 @@
 
 #ifndef _SCALE_
 #define _SCALE_ 1
-extern long __pAm__; // Zptlim_After_Loadmaster
 /**/
 void ScalePoints(void);
 long Back_ScalePoints(void);

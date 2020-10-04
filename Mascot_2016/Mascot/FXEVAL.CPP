@@ -1,7 +1,7 @@
 /* Created by Alex Nikol Bourakov in 1989 */
 /* Adopted for RtlsTether project on 23/11/2011 by Alex Bourakov */
 
-#include "stdafx.h" 
+#include <stdafx.h>
 
 void zabort(void);
 
@@ -323,12 +323,17 @@ void MASCOT_IO::Dix_output(char do_change_chip_dimensions, LayerIdentity_Struct*
 		ZX = ZLDCO0[LD];
 		ZY = ZLDCO1[LD];
 
+		long ZXMin = ZX;// -20;
+		long ZXMax = ZX;// +20;
+		long ZYMin = ZY;// -20;
+		long ZYMax = ZY;// +20;
+
 		if(do_change_chip_dimensions)
 		{
-			if(ZX<CXMIN)CXMIN = ZX;
-			if(ZX>CXMAX)CXMAX = ZX;
-			if(ZY<CYMIN)CYMIN = ZY;
-			if(ZY>CYMAX)CYMAX = ZY;
+			if(ZXMin<CXMIN)CXMIN = ZXMin;
+			if(ZXMax>CXMAX)CXMAX = ZXMax;
+			if(ZYMin<CYMIN)CYMIN = ZYMin;
+			if(ZYMax>CYMAX)CYMAX = ZYMax;
 		}
 		if(add_dl)
 		{
@@ -337,10 +342,10 @@ void MASCOT_IO::Dix_output(char do_change_chip_dimensions, LayerIdentity_Struct*
 		}
 		if(lDim)
 		{
-			if(ZX<lDim->CXMIN)lDim->CXMIN = ZX;
-			if(ZX>lDim->CXMAX)lDim->CXMAX = ZX;
-			if(ZY<lDim->CYMIN)lDim->CYMIN = ZY;
-			if(ZY>lDim->CYMAX)lDim->CYMAX = ZY;
+			if(ZXMin<lDim->CXMIN)lDim->CXMIN = ZXMin;
+			if(ZXMax>lDim->CXMAX)lDim->CXMAX = ZXMax;
+			if(ZYMin<lDim->CYMIN)lDim->CYMIN = ZYMin;
+			if(ZYMax>lDim->CYMAX)lDim->CYMAX = ZYMax;
 		}
 		DX = ZX - OX;
 		DY = ZY - OY;
@@ -1387,7 +1392,7 @@ bool MASCOT_IO::MASEvaluateMain(long Function, const char* outLayer_name, int w)
 		case MFunction_Nothing: 
 			break; 
 		case MFunction_OverlapElim:
-			LFuEvaluaterLoop(Function, 1/*classifyType is simple*/);
+			LFuEvaluaterLoop(Function, 0, 1/*classifyType is simple*/);
 			break;
 		case MFunction_Size:
 			__sizemain__(I_Layer[0].Name, w < 0 ? -w : w, w < 0 ? -1 : 1);
@@ -1598,53 +1603,33 @@ long MASCOT_IO::MASLayerGetRTPolygon(const char* layer_name, long polygon_number
 	return -1; 
 } 
 
+static std::string stringify_currentTime(bool file_mode) {
+	struct _timeb t;
+	_ftime(&t);
+	std::istringstream istrTime(ctime(&t.time));
+	std::string sWeekDay, sMonth;
+	int iDay, iHour, iMinutes, iSeconds, iYear;
+	char cSColmn;
+	istrTime >> sWeekDay >> sMonth >> iDay >> iHour >> cSColmn >> iMinutes >> cSColmn >> iSeconds >> iYear;
+	std::ostringstream ostr;
+	ostr.fill('0');
+	if (file_mode) {
+		ostr << std::setw(2) << iYear << sMonth << iDay << '_' << iHour << std::setw(2) << iMinutes << std::setw(2) << iSeconds << '_' << std::setw(3) << (int)t.millitm;
+	}
+	else {
+		ostr << std::setw(2) << iHour << ':' << std::setw(2) << iMinutes << ':' << std::setw(2) << iSeconds << '_' << std::setw(3) << (int)t.millitm;
+	}
 
+	return ostr.str();
+}
 
-DWORD WINAPI MASEvaluate_Test(LPVOID) { 
-	const char* outLayer_Name = "X"; 
-
-	long lb_count = 0; 
-	lb_count = MASLayerCountRTPolygons(outLayer_Name); 
-
-	if(lb_count <= 0) { 
-		return 1; 
-	} 
-
-	_sAlong *lb_x = new _sAlong[lb_count]; 
-	_sAlong *lb_y = new _sAlong[lb_count]; 
-
-	for(int j = 1; j < lb_count; ++j) { 
-		MASLayerGetRTPolygon(outLayer_Name, j, lb_x[j], lb_y[j]); 
-	} 
-
-	MASInitialize(10, 10); 
-
-	MASLayerCreateDBStorage(outLayer_Name); 
-
-	for(int j = 0; j < lb_count; ++j) { 
-		MASLayerAddPolygon2DBStorage(outLayer_Name, lb_x[j], lb_y[j]); 
-	} 
-
-	const char* in_layers[2] = {outLayer_Name, "XNot"}; 
-
-	MASEvaluate1(MAS_Not, in_layers[0], in_layers[1]); 
-
-	MASEvaluate2(MAS_And, &in_layers[0], 2, "XAnd"); 
-
-	lb_count = MASLayerCountRTPolygons(outLayer_Name); 
-
-	delete[] lb_x;
-	delete[] lb_y;
-
-	lb_x = new _sAlong[lb_count]; 
-	lb_y = new _sAlong[lb_count]; 
-
-	for(int j = 1; j < lb_count; ++j) { 
-		MASLayerGetRTPolygon(outLayer_Name, j, lb_x[j], lb_y[j]); 
-	} 
-
-	return 0; 
-} 
-
-
-
+void WriteStream2file(std::ostringstream* pOstr, const std::string &file_name) {
+	if (pOstr) {
+		HANDLE handle_file = (HANDLE)-1;
+		handle_file = OSWRONLYOpenFile("VSStatistics\\" + stringify_currentTime(true) + "_" + file_name + ".csv");
+		if (handle_file != (HANDLE)-1) {
+			OSAppendStringToFile(handle_file, pOstr->str());
+			OSCloseFile(handle_file);
+		}
+	}
+}

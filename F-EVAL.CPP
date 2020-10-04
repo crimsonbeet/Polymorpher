@@ -34,25 +34,6 @@ std::string itostdstring(int x, int width) {
 	} 
 	return ostr.str();
 }
-static std::string stringify_currentTime(bool file_mode) {
-	struct _timeb t;
-	_ftime(&t);
-	std::istringstream istrTime(ctime(&t.time));
-	std::string sWeekDay, sMonth;
-	int iDay, iHour, iMinutes, iSeconds, iYear;
-	char cSColmn;
-	istrTime >> sWeekDay >> sMonth >> iDay >> iHour >> cSColmn >> iMinutes >> cSColmn >> iSeconds >> iYear;
-	std::ostringstream ostr;
-	ostr.fill('0');
-	if(file_mode) { 
-		ostr << std::setw(2) << iYear << sMonth << iDay << '_' << iHour << std::setw(2) << iMinutes << std::setw(2) << iSeconds << '_' << std::setw(3) << (int)t.millitm;
-	} 
-	else { 
-		ostr << std::setw(2) << iHour << ':' << std::setw(2) << iMinutes << ':' << std::setw(2) << iSeconds << '_' << std::setw(3) << (int)t.millitm;
-	} 
-
-	return ostr.str();
-}
 void FileLog(const std::string& msg, bool do_close) {
 }
 
@@ -73,6 +54,8 @@ void graph_log_layer(char* layer_Name, int lb/*optional 0*/, int layer_index/*op
 		} 
 	} 
 
+	std::ostringstream ostr;
+
 	if(lb_count) { 
 		if(layer_index < 0) { 
 			layer_index = MaSCOT_IO.iLnames_hash.Exist(layer_Name); //Layer_Name2Pos(layer_Name); 
@@ -82,13 +65,56 @@ void graph_log_layer(char* layer_Name, int lb/*optional 0*/, int layer_index/*op
 		_sAlong *lb_y = new _sAlong[lb_count]; 
 
 		for(int j = lb - 1; j < lb_count; ++j) { 
-			MASLayerGetRTPolygon(layer_Name, j + (int)first_polygon_number, lb_x[j], lb_y[j]); 
-		} 
+			_sAlong& x = lb_x[j];
+			_sAlong& y = lb_y[j];
+
+			long nPoints = MASLayerGetRTPolygon(layer_Name, j + (int)first_polygon_number, x, y);
+
+			long n = 0;
+			while (n < nPoints) {
+				if (n > 0) {
+					ostr << ','; 
+				}
+				ostr << x[n] << ',' << y[n];
+				++n;
+			}
+			ostr << std::endl; 
+		}
+		WriteStream2file(&ostr, layer_Name);
 
 		delete[] lb_x; 
 		delete[] lb_y; 
 	} 
 } 
+
+void graph_log_polygons(char* file_name, long offsX, long offsY) {
+	std::ostringstream ostr;
+	for (long i = 1; i < ZLBLIM; ++i) {
+		LbBead* Lb = GetLbBead(i);
+		if (Lb->ZLBFirstLvBead != 0 && LbBead_Unload2InputXY(Lb, 0)) {
+			for (long j = 0; j < ZLDLIM; ++j) {
+				if (j > 0) {
+					ostr << ',';
+				}
+				ostr << (offsX + (long)ZLDCO0[j]) << ',' << (offsY + (long)ZLDCO1[j]);
+			}
+			ostr << std::endl;
+		}
+	}
+	WriteStream2file(&ostr, file_name);
+}
+
+void graph_log_ZLDLIM(char* file_name, long offsX, long offsY) {
+	std::ostringstream ostr;
+	for (long j = 0; j < ZLDLIM; ++j) {
+		if (j > 0) {
+			ostr << ',';
+		}
+		ostr << (offsX + (long)ZLDCO0[j]) << ',' << (offsY + (long)ZLDCO1[j]);
+	}
+	ostr << std::endl;
+	WriteStream2file(&ostr, file_name);
+}
 
 
 void zabort(void)
@@ -108,21 +134,25 @@ void zabort(void)
 void __sizemain__(char Name[20], long Size, char Sign)
 {
 	F_SIZE_JOB JOB;
+
 	memcpy(JOB.Name, Name, 20);
 	JOB.Size = Size;
 	JOB.Sign = Sign;
+	JOB.Do_log_graph = 0;
 
 	std::string O_name(MaSCOT_IO.O_Layer.Name, 20);
 	std::string I_name(Name, 20);
 
 	F_SIZE_SHAPES(JOB);
-	F_SIZE_COLLARS(JOB);
+	F_SIZE_COLLARS(JOB); // S_FACTOR is set here
 
 	MaSCOT_IO.ILayer_Cnt = 1;
 	memcpy(MaSCOT_IO.I_Layer[0].Name, MaSCOT_IO.O_Layer.Name, 20);
 	MaSCOT_IO.Activate_ILayers();
-	LFuInitialize(MaSCOT_IO.O_Layer.Name);
-	LFuEvaluaterLoop(MAS_OverlapElim);
+	if (MaSCOT_IO.I_Layer[0]._lIdentity.layer_STATUS == 0) {
+		LFuInitialize(MaSCOT_IO.O_Layer.Name);
+		LFuEvaluaterLoop(MAS_OverlapElim, JOB.Do_log_graph);
+	}
 
 	MaSCOT_IO.Setup();
 
@@ -131,7 +161,7 @@ void __sizemain__(char Name[20], long Size, char Sign)
 	memcpy(MaSCOT_IO.I_Layer[1].Name, MaSCOT_IO.O_Layer.Name, 20);
 	MaSCOT_IO.Activate_ILayers();
 	LFuInitialize(O_name.c_str());
-	LFuEvaluaterLoop(Sign > 0 ? (long)MAS_Or : (long)MAS_AndNot);
+	LFuEvaluaterLoop(Sign > 0 ? (long)MAS_Or : (long)MAS_AndNot, JOB.Do_log_graph);
 }
 
 
@@ -190,18 +220,22 @@ void LFuInitialize_ILayers() {
 void LFuInitialize(const char*outLayer_name = 0) {
 	LFuInitialize_ILayers(); 
 
-	LFuInitialize_S_Factor(); 
+	if (S_FACTOR == 0) {
+		LFuInitialize_S_Factor();
+	}
 
 	LFuInitialize_OutLayer(outLayer_name); 
 }
-void LFuEvaluaterLoop(long Function, char classifyType/*0 - main, 1 - quick*/, int log_graph)
+void LFuEvaluaterLoop(long Function, int log_graph, char classifyType/*0 - main, 1 - quick*/)
 {
 	while(C_Fragment!=LONG_MAX)
 	{
 		CleanZPTHASH();
-		LFuEvaluater(Function, classifyType, log_graph);
+		LFuEvaluater(Function, log_graph, classifyType);
 		SetNxtFrag(Function);
 	}
+	S_FACTOR = 0;
+
 	MaSCOT_IO.FCloseAll();
 	//IEvaluater._ReleaseStorage();
 	FinishedNormally();
@@ -244,7 +278,7 @@ void Load_Boundary(void)
 
 	Loadmaster();
 }
-void LoadFragment() {
+void LoadFragment(int log_graph) {
 	unsigned short n;
 	__aLlAng__ = 0;
 	for(n = 0; n<MaSCOT_IO.ILayer_Cnt; ++n) {
@@ -264,6 +298,10 @@ void LoadFragment() {
 					else { 
 						STATUS = 1; 
 					} 
+					if (log_graph) {
+						Sleep(1); 
+						graph_log_ZLDLIM("LoadFragment", 0, 0);
+					}
 					Loadmaster(1, open_shape);
 				}
 			}
@@ -294,7 +332,7 @@ int WRITE_C_POLYGONS() {
 	}
 	return cnt; 
 }
-void LFuEvaluater(long Function, char classifyType/*0 - main, 1 - quick*/, int log_graph) {
+void LFuEvaluater(long Function, int log_graph, char classifyType/*0 - main, 1 - quick*/) {
 	Target_Function = Function;
 	ZLBLIM = 1;
 	ZLVLIM = 1;
@@ -302,7 +340,7 @@ void LFuEvaluater(long Function, char classifyType/*0 - main, 1 - quick*/, int l
 	ZVTLIM = 2;
 	STATUS =+1;
 
-	LoadFragment();
+	LoadFragment(log_graph);
 
 	if (Function == MFunction_ActivateLayer) {
 		INTERSECTION_ANALYSIS();
@@ -313,7 +351,6 @@ void LFuEvaluater(long Function, char classifyType/*0 - main, 1 - quick*/, int l
 	if(Function==MFunction_Not) {
 		Load_Boundary();
 	}
-	__pAm__ = ZPTLIM;
 
 	ScalePoints();
 
@@ -322,12 +359,6 @@ void LFuEvaluater(long Function, char classifyType/*0 - main, 1 - quick*/, int l
 	INTERSECTION_ANALYSIS();
 
 	POINT_VECTOR_ANALYSIS(2);
-
-	if(log_graph) { 
-		for(int n = 0; n < MaSCOT_IO.ILayer_Cnt; ++n) {
-			graph_log_layer(MaSCOT_IO.I_Layer[n].Name); 
-		} 
-	} 
 
 	Classify_Polygons(classifyType); 
 
@@ -353,6 +384,8 @@ void LFuEvaluater(long Function, char classifyType/*0 - main, 1 - quick*/, int l
 	} 
 
 	Back_ScalePoints();
+
+	S_FACTOR = 0; 
 
 	WRITE_C_POLYGONS();
 }
@@ -408,7 +441,8 @@ int F_EVAL_JOB::ProcessArguments(short N, const char*A[]) {
 				break;
 
 				case 'S': /*sizing width.*/
-				strncpy(S, A[I]+2, 100);
+				strncpy(S, A[I]+2, 99);
+				A[99] = 0;
 				ERR = sscanf(S, "%ld", &w);
 				if(ERR!=1){ERR = 1;break;}
 				ERR = 0;
@@ -532,7 +566,7 @@ void F_EVAL_JOB::PerformFunction(int log_graph) {
 				F_AREA_MAIN(I_name[0]);
 			}
 			else { 
-				LFuEvaluaterLoop(Function, classifyType, log_graph); 
+				LFuEvaluaterLoop(Function, log_graph, classifyType);
 			} 
 		} 
 	} 
@@ -725,76 +759,6 @@ bool MASPreload_StaticLayers(long N, const char *Names[]) {
 	ZLVLIM = 1; 
 
 	return rc; 
-} 
-
-
-DWORD WINAPI test_preload(LPVOID pArgs) { 
-	const char*a[2] = {"", "3"}; 
-	MASPreload_StaticLayers(2, a); 
-
-	unsigned short n = MaSCOT_IO.iLnames_hash.Exist("2"); 
-	if(n == 0) { 
-		return 1; 
-	} 
-
-	n = MaSCOT_IO.ILayer_Cnt++; 
-
-	strcpy(MaSCOT_IO.I_Layer[n].Name, "2");
-
-	MaSCOT_IO.Load_ILayer_Identity(n); 
-
-	MaSCOT_IO.INIT_ILayer(n);
-
-	C_Layer = MaSCOT_IO.I_Layer[n].Lcode;
-	C_Fragment = 0; 
-	MaSCOT_IO.D_Link(n);
-	while(MaSCOT_IO.I_Fragment(n)==C_Fragment) {
-		MaSCOT_IO.I_READ_P();
-		MaSCOT_IO.MASLayerAddRTPolygon("2"); 
-	}
-	MaSCOT_IO.I_Layer[n].Fragment = C_Fragment = 0; 
-
-	LFuInitialize_S_Factor(); 
-
-	LFuInitialize_OutLayer("X"); 
-
-
-	Target_Function = MFunction_Or;
-
-	STATUS =+1;
-	if(Target_Function==MFunction_Not) {
-		Load_Boundary();
-	}
-	__pAm__ = ZPTLIM;
-
-	ScalePoints();
-
-	STATUS =+1;
-	INTERSECTION_ANALYSIS(true); 
-
-	POINT_VECTOR_ANALYSIS(ZVTLim_threshold);
-
-	Classify_Polygons(0); 
-
-	if(Target_Function<0) True_Stat = Target_Function==-1? AND_1:XOR_1;
-	else True_Stat = Cmp_Modules[Target_Function];
-
-	FORCE_C_POLYGONS();
-
-	for(long I = 1; I<ZLBLIM; ++I) {
-		LbBead*Lb = GetLbBead(I);
-		if(Lb->ZLBFirstLvBead)DUMMYJUNCTIONANALYSIS(Lb);
-	}
-
-	graph_log_layer(MaSCOT_IO.O_Layer.Name); 
-
-	Back_ScalePoints();
-
-	WRITE_C_POLYGONS();
-
-	graph_wait_for_user_action(); 
-
-	return 0; 
 } 
 
 

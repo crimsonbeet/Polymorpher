@@ -339,8 +339,12 @@ long Layer_Name2Pos(const char* layer_name);
 
 void graph_wait_for_user_action(); 
 void graph_log_layer(char* layer_Name, int lb = 0, int layer = -1); 
+void graph_log_polygons(char* file_name, long offsX, long offsY); 
+void graph_log_ZLDLIM(char* file_name, long offsX, long offsY); 
 
 std::string itostdstring(int x, int width = 0); 
 void FileLog(const std::string& msg, bool do_close = false); 
+
+void WriteStream2file(std::ostringstream* pOstr, const std::string& file_name = "");
 
 #endif

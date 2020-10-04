@@ -11,6 +11,9 @@
 
 #define WIN32_LEAN_AND_MEAN
 
+#include "stdafx_windows.h"
+
+
 #ifdef max 
 #undef max 
 #endif 
@@ -53,6 +56,7 @@
 
 
 #include "MASInterface.h"
+#include "IPCGate.h"
 
 
 

@@ -75,6 +75,7 @@ struct F_SIZE_JOB
 	char Name[20];
 	long Size;
 	char Sign;
+	int Do_log_graph; 
 };
 class F_EVAL_JOB
 {
@@ -207,7 +208,7 @@ long DETERMINE_CLOCKSTATUS(_sAlong& x, _sAlong& y, long lim);
 VtBead*SPLITVT(VtBead*V3, PtBead*IP);
 VtBead*INSERTV(PtBead*P1, PtBead*P2, LvBead*LV);
 void Classify_Polygons(char classifyType = 0); 
-void INTERSECTION_ANALYSIS(bool preloaded = false, int firts_lb = 1);
+void INTERSECTION_ANALYSIS(bool preloaded = false, int first_lb = 1);
 char POINT_VECTOR_ANALYSIS(long first, char F_EVAL_INPROGRESS = 1, char F_FULLANALYSIS_INPROGRESS = 0);
 void DUMMYJUNCTIONANALYSIS(LbBead*LB);
 void LDMake_ClosedPolygon(void);
@@ -222,8 +223,8 @@ char X_OR(unsigned char S);
 char NO_T(unsigned char S);
 extern compare *True_Stat;
 extern compare *Cmp_Modules[6];
-void FORCE_C_POLYGONS(char F_EVAL_INPROGRESS = 1);
-long LbBead_Unload2InputXY(LbBead*LB);
+bool FORCE_C_POLYGONS(char F_EVAL_INPROGRESS = 1);
+long LbBead_Unload2InputXY(LbBead*LB, char run_linearizer = 1, int log_graph = 0);
 LbBead*Loadmaster(char check_closure = 0, char open_shape = 0);
 void SET_INSIDE_ALL_1(void);
 char POINT_VECTOR_CLASS_1(LbBead*LB);
@@ -233,14 +234,16 @@ void Set_Rstat(LbBead*I, char call_flavor);
 void F_AREA_MAIN(const char* Name);
 
 void LFuInitialize(const char*outLayer_name);
-void LFuEvaluater(long Function, char classifyType/*0 - main, 1 - quick*/, int log_graph = 0);
-void LFuEvaluaterLoop(long Function, char classifyType = 0, int log_graph = 0);
+void LFuEvaluater(long Function, int log_graph = 0, char classifyType = 0/*0 - main, 1 - quick*/);
+void LFuEvaluaterLoop(long Function, int log_graph = 0, char classifyType = 0);
 void SetNxtFrag(long Function);
 
 LvBead* FETCHREVERSE(LbBead* LB, LvBead* LV);
 
 void F_SIZE_SHAPES(F_SIZE_JOB& JOB);
 void F_SIZE_COLLARS(F_SIZE_JOB& JOB);
+
+void linearizeContour(std::vector<long>& x, std::vector<long>& y, size_t stepSize, const size_t maxSegmentSize); // external
 
 
 

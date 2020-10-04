@@ -2,6 +2,9 @@
 
 #include "stdafx.h"
 
+#pragma warning(disable : 26451)
+
+
 /**/
 #include<DOS.H>
 #include<MATH.H>
@@ -39,6 +42,7 @@ double Y_C[9];
 char F_C;
 char F_C_Prev;
 
+
 char __iEx__;
 
 
@@ -49,10 +53,8 @@ extern long Delta_X_2;
 extern long Delta_Y_1;
 extern long Delta_Y_2;
 
-extern long __bSb__;
-
 void
-__PsPLINE__(LbBead* LB)
+__PsPLINE__(LbBead* LB, double angleVariance)
 {
 	LvBead* LE;
 	LvBead* LV;
@@ -71,9 +73,8 @@ __PsPLINE__(LbBead* LB)
 	do
 	{
 		A2 = COMPLVANGLE(LN);
-		if (_EQ_(A1, A2, 0.1))
+		if (_EQ_(A1, A2, angleVariance))
 		{
-			__bSb__ = 1;
 			REMOVE_FROM_VT_CHAIN(LN);
 			REMOVE_FROM_VT_CHAIN(LV);
 			LN->ZLVMyLbBead = __LB0__;
@@ -94,117 +95,6 @@ __PsPLINE__(LbBead* LB)
 		}
 		LN = LV->ZLVNextLvBead;
 	} while (LV != LE);
-}
-
-
-char __GrpNONE__;
-
-
-void
-__OVELSEG__(void)
-{
-	long I;
-	long K;
-	ZVTLIM = 2;
-	INTERSECTION_ANALYSIS();
-	POINT_VECTOR_ANALYSIS(2);
-	for (I = 1; I < ZLBLIM; ++I)
-	{
-		LbBead* Lb = GetLbBead(I);
-		if (Lb->ZLBFirstLvBead)
-			DUMMYJUNCTIONANALYSIS(Lb);
-	}
-	if (__iEx__)
-	{
-		K = 2;
-		True_Stat = AND_NOT;
-		__GrpNONE__ = 1;
-		POINT_VECTOR_CLASS_2(GetLbBead(1), 8, 8);
-		__GrpNONE__ = 0;
-	}
-	else	K = 1;
-	for (I = K; I < ZLBLIM; ++I)
-	{
-		LbBead* Lb = GetLbBead(I);
-		if (Lb->ZLBFirstLvBead)Set_Rstat(Lb, 1);
-	}
-	FORCE_C_POLYGONS();
-	if (!__iEx__ && !S_FACTOR)
-	{
-		K = ZLBLIM;
-	}
-	else	K = 1;
-	for (I = K; I < ZLBLIM; ++I)
-	{
-		LbBead* Lb = GetLbBead(I);
-		if (Lb->ZLBFirstLvBead)
-			DUMMYJUNCTIONANALYSIS(Lb);
-	}
-	__bSb__ = 0;
-	if (__iEx__)
-		for (I = 1; I < ZLBLIM; ++I)
-		{
-			LbBead* Lb = GetLbBead(I);
-			if (Lb->ZLBFirstLvBead)
-			{
-				__PsPLINE__(Lb);
-			}
-		}
-	True_Stat = O_R;
-	__iEx__ = 0;
-}
-
-
-char Open_Shape; 
-
-
-void
-__coOut__(long j)
-{
-	long i;
-	for(i = j; i<ZLBLIM; ++i)
-	{
-		LbBead*Lb=GetLbBead(i);
-		if(Lb->ZLBFirstLvBead==0)
-		{
-			continue;
-		}
-		if(!LbBead_Unload2InputXY(Lb))
-		{
-			continue;
-		}
-		++Total_Shapes;
-		for(j = 0; j<ZLDLIM; ++j)
-		{
-			ZLDCO0[j] += Delta_X_2;
-			ZLDCO1[j] += Delta_Y_2;
-		}
-		char do_change_chip_dimensions = 1;
-		char open_shape = Open_Shape;
-		MaSCOT_IO.Dix_output(open_shape, 0, do_change_chip_dimensions);
-	}
-}
-
-
-
-void
-__READSH__(void)
-{
-	Open_Shape = MaSCOT_IO.I_READ_P(1,1);
-	if(ZLDLIM) {
-		if(!Open_Shape)
-		{
-			long x = ZLDCO4[1];
-			long y = ZLDCO5[1];
-			if(x!=ZLDCO4[ZLDLIM]||y!=ZLDCO5[ZLDLIM])
-			{
-				++ZLDLIM;
-				ZLDCO4[ZLDLIM]=x;
-				ZLDCO5[ZLDLIM]=y;
-			}
-		}
-	}
-	PLDLIM = ZLDLIM+1;
 }
 
 
@@ -232,6 +122,198 @@ __INI_LvVt__(void)
 	__VT0__->ZVTMeInreverse = __VT1__;
 	__VT1__->ZVTMeInreverse = __VT0__;
 	memset(__LB0__, 0, sizeof(LbBead));
+}
+
+
+
+
+long UnloadLbVectors(std::vector<std::vector<long>> &Xs, std::vector<std::vector<long>> &Ys, bool run_linearizer = 0) {
+	long originalLbCount = 0;
+	for (long i = __iEx__ ? 2 : 1; i < ZLBLIM; ++i) {
+		LbBead* Lb = GetLbBead(i);
+		LvBead* LV = Lb->ZLBFirstLvBead;
+		if (LV != 0) {
+			LvBead* LE;
+			LvBead* LN;
+
+			LN = LV->ZLVNextLvBead;
+			LE = LV;
+
+			ZLDLIM = 0;
+			do
+			{
+				long LD = ZLDLIM++;
+
+				ZLDCO0[LD] = LV->ZLVPoint2->ZPTCO1;
+				ZLDCO1[LD] = LV->ZLVPoint2->ZPTCO2;
+
+				LV = LN;
+				LN = LV->ZLVNextLvBead;
+
+			} while (LV != LE);
+
+			std::vector<long>& x = Xs[originalLbCount];
+			std::vector<long>& y = Ys[originalLbCount];
+
+			++originalLbCount;
+
+			x.resize(ZLDLIM);
+			y.resize(ZLDLIM);
+			for (long j = 0; j < ZLDLIM; ++j) {
+				x[j] = ZLDCO0[j];
+				y[j] = ZLDCO1[j];
+			}
+			if (run_linearizer) {
+				size_t stepSize = S_FACTOR > 1 ? (((size_t)1) << (S_FACTOR - 1)) : 1; 
+				linearizeContour(x, y, stepSize, 5);
+			}
+		}
+	}
+	return originalLbCount; 
+}
+
+void LoadLbVectors(std::vector<std::vector<long>>& Xs, std::vector<std::vector<long>>& Ys, long originalLbCount, int log_graph = 0) {
+	__INI_LvVt__();
+
+	CleanZPTHASH();
+
+	ZLBLIM = 1;
+	ZLVLIM = 1;
+	ZPTLIM = 1;
+	ZVTLIM = 2;
+	ZLDLIM = 0;
+
+	for (long i = 0; i < originalLbCount; ++i) {
+		std::vector<long>& x = Xs[i];
+		std::vector<long>& y = Ys[i];
+		ZLDLIM = x.size();
+		for (long j = 0; j < ZLDLIM; ++j) {
+			ZLDCO0[j] = x[j];
+			ZLDCO1[j] = y[j];
+		}
+		if (log_graph) {
+			graph_log_ZLDLIM("LoadmasterPhaseX", 0, 0);
+		}
+		STATUS = 1;
+		char check_closure = 1;
+		Loadmaster(check_closure);
+	}
+}
+
+
+
+char __GrpNONE__;
+
+
+void
+__OVELSEG__(void) { 
+	bool done = false;
+
+	std::vector<std::vector<long>> Xs(ZLBLIM);
+	std::vector<std::vector<long>> Ys(ZLBLIM);
+
+	long originalLbCount = 0;
+
+	int c = 100;
+	while (!done && (c--)>=0) {
+		long prevVTcount = ZVTLIM; 
+		if (c < 99) {
+			LoadLbVectors(Xs, Ys, originalLbCount); 
+		}
+
+		INTERSECTION_ANALYSIS();
+
+		// here: unload all polygons to vectors; reload vectors on next iteration.
+
+		originalLbCount = UnloadLbVectors(Xs, Ys, c < 99);
+
+		POINT_VECTOR_ANALYSIS(2);
+
+		for (long I = 1; I < ZLBLIM; ++I) {
+			LbBead* Lb = GetLbBead(I);
+			if (Lb->ZLBFirstLvBead)
+				DUMMYJUNCTIONANALYSIS(Lb);
+		}
+
+		long K = 1;
+		if (__iEx__) {
+			K = 2;
+			True_Stat = AND_NOT;
+			__GrpNONE__ = 1;
+			POINT_VECTOR_CLASS_2(GetLbBead(1), 8, 8);
+			__GrpNONE__ = 0;
+		}
+
+		for (long I = K; I < ZLBLIM; ++I) {
+			LbBead* Lb = GetLbBead(I);
+
+			if (Lb->ZLBFirstLvBead) {
+				Set_Rstat(Lb, 1);
+			}
+		}
+
+		done = FORCE_C_POLYGONS();
+
+		if (prevVTcount == ZVTLIM) {
+			done = true; 
+		}
+	}
+
+
+	long K = 1;
+	if (!__iEx__ && !S_FACTOR) {
+		K = ZLBLIM;
+	}
+
+
+	for (long I = K; I < ZLBLIM; ++I) {
+		LbBead* Lb = GetLbBead(I);
+		if (Lb->ZLBFirstLvBead) {
+			DUMMYJUNCTIONANALYSIS(Lb);
+		}
+	}
+
+	if (__iEx__) {
+		for (long I = 1; I < ZLBLIM; ++I)
+		{
+			LbBead* Lb = GetLbBead(I);
+			if (Lb->ZLBFirstLvBead) 
+			{
+				__PsPLINE__(Lb, 0.1);
+			}
+		}
+	}
+	__iEx__ = 0;
+
+	True_Stat = O_R;
+}
+
+
+
+
+
+char Do_Open_Shapes; 
+
+
+
+void
+__READSH__(void)
+{
+	Do_Open_Shapes = MaSCOT_IO.I_READ_P(1,1);
+	if(ZLDLIM) {
+		if(!Do_Open_Shapes)
+		{
+			long x = ZLDCO4[1];
+			long y = ZLDCO5[1];
+			if(x!=ZLDCO4[ZLDLIM]||y!=ZLDCO5[ZLDLIM])
+			{
+				++ZLDLIM;
+				ZLDCO4[ZLDLIM]=x;
+				ZLDCO5[ZLDLIM]=y;
+			}
+		}
+	}
+	PLDLIM = ZLDLIM+1;
 }
 
 
@@ -347,7 +429,7 @@ POINTONSEGMENT
 	return((X>=XMIN&&X<=XMAX)&&(Y>=YMIN&&Y<=YMAX));
 }
 void
-__UNLINTSTD__(void)
+__UNLINTSTD__(std::ostringstream *ostr = 0)
 {
 	long I;
 	long J;
@@ -362,12 +444,26 @@ __UNLINTSTD__(void)
 		ZLDCO0[I] = ZLDCO2[J];
 		ZLDCO1[I] = ZLDCO3[J];
 	}
+	if (ostr) {
+		long offsX = Delta_X_2 << S_FACTOR;
+		long offsY = Delta_Y_2 << S_FACTOR;
+		long cnt = 0;
+		J = 0;
+		while (J < ZLDLIM) {
+			if (cnt++ > 0) {
+				*ostr << ',';
+			}
+			*ostr << (offsX + (long)ZLDCO0[J]) << ',' << (offsY + (long)ZLDCO1[J]);
+			++J;
+		}
+		*ostr << std::endl;
+	}
 	STATUS = 1;
 	char check_closure = 1;
 	Loadmaster(check_closure);
 }
 void
-UNL_TOINTLAYSTANDART(char NO_CONT_2, double*X, double*Y)
+UNL_TOINTLAYSTANDART(char NO_CONT_2, double*X, double*Y, std::ostringstream* ostr = 0)
 {
 	long J;
 	long I;
@@ -388,18 +484,31 @@ UNL_TOINTLAYSTANDART(char NO_CONT_2, double*X, double*Y)
 		y[I] = floor(Y[J]*s+0.5);
 	}
 	J = DETERMINE_CLOCKSTATUS(x, y, L);
-	if(J==0)
-	{
-		DEFINE_INTERSECTION(X+5, Y+5, X+7, Y+7, X, Y);
-		x[2] = floor(X[0]*s+0.5);
-		y[2] = floor(Y[0]*s+0.5);
-		x[3] = x[2];
-		y[3] = y[2];
+	if(J==0) {
+		for (long j = 0; j < L; ++j) {
+			printf("x=%ld, y=%ld\r\n", (long)x[j], (long)y[j]);
+		}
+		long x2 = x[2];
+		long y2 = y[2];
+		x[2] = x[3];
+		y[2] = y[3];
+		x[3] = x2;
+		y[3] = y2;
 		J = DETERMINE_CLOCKSTATUS(x, y, L);
-		if(J==0)
-		{
+		if (J == 0) {
+			DEFINE_INTERSECTION(X + 5, Y + 5, X + 7, Y + 7, X, Y);
+			x[2] = floor(X[0] * s + 0.5);
+			y[2] = floor(Y[0] * s + 0.5);
+			x[3] = x[4];
+			y[3] = y[4];
+			L = 4;
+			J = DETERMINE_CLOCKSTATUS(x, y, L);
+		}
+		if (J == 0) {
+			printf("rejected segment\r\n\r\n");
 			return;
 		}
+		printf("fixed segment\r\n\r\n");
 	}
 	if(J!=1)
 	{
@@ -422,7 +531,7 @@ UNL_TOINTLAYSTANDART(char NO_CONT_2, double*X, double*Y)
 		}
 		if(NO_CONT_2)
 		{
-			__UNLINTSTD__();
+			__UNLINTSTD__(ostr);
 			ZLDLIM = 0;
 		}
 	}
@@ -447,7 +556,7 @@ d_swap(double*A, double*B)
 double T = *A; *A = *B, *B = T;
 }
 void
-DEFINE_SEGMENT(char S, long J, long I, long K)
+DEFINE_SEGMENT(char isNotFirstSegment, long J, long I, long K, std::ostringstream *ostr = 0)
 {
 	/*[0]-FIRST-DISPLACE-POINT!*/
 	/*[1]-SECOND-DISP-POINT!*/
@@ -459,8 +568,12 @@ DEFINE_SEGMENT(char S, long J, long I, long K)
 	double X1[9] = { 0 }, X2[3] = { 0 }, Y1[9] = { 0 }, Y2[3] = { 0 };
 
 	static double CAN_Prev = 0;
-	long CANLess180 = 0, SW1 = 0, SW2 = 0, SW3 = 0, SPT = 0;/*SPECIAL-FLAGS*/
+	long CANLess180 = 0;
+	long SPT = 0; /*spline type*/
 	static long CANLess180Prev = 0;
+
+	//long SW1 = 0, SW2 = 0, SW3 = 0;
+
 
 	auto swap_X1Y1 = [&X1, &Y1]() {
 		d_swap(X1 + 4, X1 + 7);
@@ -469,8 +582,10 @@ DEFINE_SEGMENT(char S, long J, long I, long K)
 		d_swap(Y1 + 5, Y1 + 6);
 	};
 
-	if(S==0)
+	if (!isNotFirstSegment) {
 		CAN_Prev = 0;
+	}
+
 	X1[2] = NXFROM;
 	Y1[2] = NYFROM;
 	DEFINE_NORMALFROM(I, K);
@@ -558,26 +673,28 @@ DEFINE_SEGMENT(char S, long J, long I, long K)
 		/*Check For Cover Make up*/
 		if(!DEFINE_INTERSECTION(X1, Y1, X2, Y2, X1 + 3, Y1 + 3))
 			zabort(f2size,__LINE__);
-		SW1 = POINTONSEGMENT(X1, Y1, X1[3], Y1[3]);
-		SW2 = POINTONSEGMENT(X2, Y2, X1[3], Y1[3]);
-		if(SPT == 3 && SW1&&SW2)
-		{
-			XELBOW = IX;
-			YELBOW = IY;
-			DEFINE_ELBOW(X1, Y1, I);
-			if (CANLess180)
-				XELBOW = -XELBOW, YELBOW = -YELBOW;
 
-			if(CANLess180Prev&&!CANLess180)CAN_Prev -= 360;
-			if(!CANLess180Prev&& CANLess180)CAN_Prev *=-1.0;
+		//SW1 = POINTONSEGMENT(X1, Y1, X1[3], Y1[3]);
+		//SW2 = POINTONSEGMENT(X2, Y2, X1[3], Y1[3]);
+		//if(SPT == 3 && SW1&&SW2)
+		//{
+		//	XELBOW = IX;
+		//	YELBOW = IY;
+		//	DEFINE_ELBOW(X1, Y1, I);
+		//	if (CANLess180)
+		//		XELBOW = -XELBOW, YELBOW = -YELBOW;
 
-			if (F_C_Prev == 0)
-				if ((MAN + CAN_Prev) < 0)
-				{
-					swap_X1Y1();
-				}
-			break;
-		}
+		//	if(CANLess180Prev&&!CANLess180)CAN_Prev -= 360;
+		//	if(!CANLess180Prev&& CANLess180)CAN_Prev *=-1.0;
+
+		//	if (F_C_Prev == 0)
+		//		if ((MAN + CAN_Prev) < 0)
+		//		{
+		//			swap_X1Y1();
+		//		}
+		//	break;
+		//}
+
 		X2[2] =-X2[2];
 		Y2[2] =-Y2[2];
 		XELBOW = X2[2]*__SIZWID__;
@@ -605,8 +722,13 @@ DEFINE_SEGMENT(char S, long J, long I, long K)
 	}
 	X1[8] = X1[4];
 	Y1[8] = Y1[4];
-	if (S)
-		UNL_TOINTLAYSTANDART(F_C, X1, Y1);
+
+	if (J > 0) {
+		UNL_TOINTLAYSTANDART(F_C, X1, Y1, ostr);
+		if (F_C && isNotFirstSegment) {
+			UNL_TOINTLAYSTANDART(1, X_C, Y_C, ostr);
+		}
+	}
 
 	CANLess180Prev = CANLess180;
 
@@ -614,15 +736,11 @@ DEFINE_SEGMENT(char S, long J, long I, long K)
 	CAN_Prev = CAN;
 }
 void
-Shapes_Collar_Generator(void)
+Shapes_Collar_Generator(int log_graph = 0)
 {
 	long S;
-	long K;
 	long T;
-	long I;
-	long J;
 	long Q;
-	long Z;
 
 	if(PLDLIM<2)
 	{
@@ -633,10 +751,10 @@ Shapes_Collar_Generator(void)
 	PXMAX += __SIZWID__;
 	PYMAX += __SIZWID__;
 
-	for(I = 1; I<PLDLIM; ++I)
+	for(long j = 1; j<PLDLIM; ++j)
 	{
-		ZLDCO4[I] -= PXMIN;
-		ZLDCO5[I] -= PYMIN;
+		ZLDCO4[j] -= PXMIN;
+		ZLDCO5[j] -= PYMIN;
 	}
 	PXMAX -= PXMIN;
 	PYMAX -= PYMIN;
@@ -644,47 +762,49 @@ Shapes_Collar_Generator(void)
 	PXMIN = PYMIN = 0;
 	CleanZPTHASH();
 
-	if(!Open_Shape)
-	{
-/*LAST POINT .EQ. FIRST POINT ALWAYS.*/
-/*DUPLICATE POINTS NEVER TAKES PLACE.*/
-		K = PLDLIM -2;
-		ZLDCO4[0] = ZLDCO4[K];
-		ZLDCO5[0] = ZLDCO5[K];
-		Q = 0;
-		S = 1;
-		T = 2;
-		I = PLDLIM++;
-		ZLDCO4[I] = ZLDCO4[T];
-		ZLDCO5[I] = ZLDCO5[T];
-	}
-	else
+	long isNotFirstSegment = 0;
+
+	if(Do_Open_Shapes)
 	{
 		Q = 1;
 		S = 2;
 		T = 3;
+		isNotFirstSegment = 1;
 	}
-	Z = S;
+	else
+	{
+		/*LAST POINT .EQ. FIRST POINT ALWAYS.*/
+		/*DUPLICATE POINTS NEVER TAKE PLACE.*/
+		Q = 0;
+		S = 1;
+		T = 2;
+		isNotFirstSegment = 0;
+
+		long j = PLDLIM - 2;
+		ZLDCO4[Q] = ZLDCO4[j];
+		ZLDCO5[Q] = ZLDCO5[j];
+		j = PLDLIM++;
+		ZLDCO4[j] = ZLDCO4[T];
+		ZLDCO5[j] = ZLDCO5[T];
+	}
 	/*SCALE POINTS*/
-	J = PYMAX>PXMAX? PYMAX: PXMAX;
+	long maxJ = PYMAX>PXMAX? PYMAX: PXMAX;
 	S_FACTOR = 0;
 	do
 	{
 		++S_FACTOR;
 	}
-	while(((J<<S_FACTOR)>>S_FACTOR)==J);
+	while(((maxJ<<S_FACTOR)>>S_FACTOR)== maxJ);
 	S_FACTOR--;
 	if(S_FACTOR<0)S_FACTOR = 0;
 	if(S_FACTOR>9)S_FACTOR = 9;
-
-	//S_FACTOR = 0;
 
 	PXMAX <<= S_FACTOR;
 	PYMAX <<= S_FACTOR;
 	PXMIN <<= S_FACTOR;
 	PYMIN <<= S_FACTOR;
 
-	DEFINE_NORMALFROM(Q, Z);
+	DEFINE_NORMALFROM(Q, S);
 
 	XELBOW = NXFROM*__SIZWID__;
 	YELBOW = NYFROM*__SIZWID__;
@@ -694,60 +814,116 @@ Shapes_Collar_Generator(void)
 	ZPTLIM = 1;
 	ZVTLIM = 2;
 	ZLDLIM = 0;
+
 	__iEx__= 0;
 
-	J = Open_Shape? 1: 0;
+	C_Layer = Do_Open_Shapes? 1: 0;
 
-	C_Layer = J;
-	DEFINE_SEGMENT(J, S-1, S, T);
+	std::ostringstream ostr; 
+	std::ostringstream *pOstr = &ostr;
+	if (!log_graph) {
+		pOstr = 0; 
+	}
 
-	if(J)
-	{
+	DEFINE_SEGMENT(0, Q, S, T, pOstr);
+
+	if(Do_Open_Shapes) {
 		if(ZLDLIM)
 			__iEx__ = 1;
 
-		__UNLINTSTD__();
+		__UNLINTSTD__(pOstr);
 
 		ZLDLIM = 0;
-		if (F_C)
-			UNL_TOINTLAYSTANDART(1, X_C, Y_C);
+		if (F_C) {
+			UNL_TOINTLAYSTANDART(1, X_C, Y_C, pOstr);
+		}
 	}
+
 	C_Layer = 0;
+
 	F_C_Prev = 0;
+	while(T<PLDLIM) {
+		Q = S; 
+		S = T++; 
 
-	K = S, S = T++;
-
-	while(T<PLDLIM)
-	{
-		DEFINE_SEGMENT(1, K, S, T);
-		if(F_C)
-			UNL_TOINTLAYSTANDART(1, X_C, Y_C);
-
-		K = S, S = T++;
+		DEFINE_SEGMENT(1, Q, S, T, pOstr);
 	}
-	__UNLINTSTD__();
 
-	if(J)I = ZLBLIM>3;
-	else I = ZLBLIM>2;
+	__UNLINTSTD__(pOstr);
 
-	__pAm__ = ZPTLIM;
+	if (pOstr) {
+		WriteStream2file(pOstr, "Shapes");
+	}
+	ostr = std::ostringstream();
 
-	if(I)
+
+	std::vector<std::vector<long>> Xs(ZLBLIM);
+	std::vector<std::vector<long>> Ys(ZLBLIM);
+	long count = 0;
+
+
+	if (Do_Open_Shapes ? (ZLBLIM > 3) : (ZLBLIM > 2)) {
 		__OVELSEG__();
-	else
+
+		for (long i = __iEx__ ? 2 : 1; i < ZLBLIM; ++i) {
+			LbBead* Lb = GetLbBead(i);
+			if (Lb->ZLBFirstLvBead != 0 && LbBead_Unload2InputXY(Lb, 0, log_graph)) {
+				std::vector<long> &x = Xs[count];
+				std::vector<long> &y = Ys[count];
+				++count; 
+				x.resize(ZLDLIM);
+				y.resize(ZLDLIM);
+				for (long j = 0; j < ZLDLIM; ++j) {
+					x[j] = ZLDCO0[j];
+					y[j] = ZLDCO1[j];
+				}
+				if (S_FACTOR > 2) {
+					linearizeContour(x, y, ((size_t)1) << (S_FACTOR - 1), 3);
+				}
+			}
+		}
+
+		LoadLbVectors(Xs, Ys, count, log_graph); 
+
+		__OVELSEG__();
+	}
+	else {
 		__INI_LvVt__();
+	}
+
+	if (log_graph) {
+		graph_log_polygons("ShapesCombined", Delta_X_2 << S_FACTOR, Delta_Y_2 << S_FACTOR);
+	}
+		
 
 	Back_ScalePoints();
 
-	if(__bSb__)
-	{
-		ZVTLIM = 2;
-		__bSb__= 0;
-		__INI_LvVt__();
-	}
 	S_FACTOR = 0;
 
-	__coOut__(__iEx__? 2: 1);
+	count = 0;
+	for (long j = 0; j < 2 && count == 0; ++j) {
+		for (long i = 1; i < ZLBLIM; ++i) {
+			LbBead* Lb = GetLbBead(i);
+			if (Lb->ZLBFirstLvBead != 0 && LbBead_Unload2InputXY(Lb, 0, log_graph)) {
+				++Total_Shapes;
+				long offsX = Delta_X_2 << S_FACTOR;
+				long offsY = Delta_Y_2 << S_FACTOR;
+				for (long j = 0; j < ZLDLIM; ++j) {
+					ZLDCO0[j] += offsX;
+					ZLDCO1[j] += offsY;
+				}
+				char do_change_chip_dimensions = 1;
+				MaSCOT_IO.Dix_output(do_change_chip_dimensions, 0, Do_Open_Shapes);
+				++count; 
+			}
+		}
+		if (count == 0) {
+			count = UnloadLbVectors(Xs, Ys, true);
+			LoadLbVectors(Xs, Ys, count);
+
+			__OVELSEG__();
+		}
+	}
 }
 
 
@@ -759,8 +935,7 @@ void FinishedNormally(void);
 
 
 void
-F_SIZE_COLLARS(F_SIZE_JOB&JOB)
-{
+F_SIZE_COLLARS(F_SIZE_JOB&JOB) {
 fprintf(stderr, "\n!!! Collars Data Base Generater Started on %s !!!\n",JOB.Name);
 
 	__SIZWID__ = JOB.Size;
@@ -796,11 +971,13 @@ fprintf(stderr, "\n!!! Collars Data Base Generater Started on %s !!!\n",JOB.Name
 	CYMAX=-LONG_MAX;
 	IEvaluater.__SetVT0LB0__();
 
+	Total_Shapes = 0; 
+
 	for(__READSH__(); !feof(MaSCOT_IO.I_Layer[0].File); __READSH__()) {
 		if(PLDLIM<2) {
 			continue;
 		}
-		Shapes_Collar_Generator();
+		Shapes_Collar_Generator(JOB.Do_log_graph);
 	}
 
 	ZPBLIM = 8191;
@@ -813,10 +990,8 @@ fprintf(stderr, "\n!!! Collars Data Base Generater Started on %s !!!\n",JOB.Name
 
 	MaSCOT_IO.SetMinMax();
 
-	MaSCOT_IO._fileIdentity.Delta_X = MaSCOT_IO._header.CXMIN;
-	MaSCOT_IO._fileIdentity.Delta_Y = MaSCOT_IO._header.CYMIN;
+	MaSCOT_IO.O_Layer._lIdentity.layer_STATUS = Total_Shapes <= 1;
 
-	MaSCOT_IO.O_Layer._lIdentity.layer_STATUS = 0;
 	MaSCOT_IO.O_Layer._lIdentity.CXMIN = CXMIN;
 	MaSCOT_IO.O_Layer._lIdentity.CXMAX = CXMAX;
 	MaSCOT_IO.O_Layer._lIdentity.CYMIN = CYMIN;
@@ -827,10 +1002,15 @@ fprintf(stderr, "\n!!! Collars Data Base Generater Started on %s !!!\n",JOB.Name
 	MaSCOT_IO.O_Layer._lIdentity.XBSIZ = CXMAX-CXMIN;
 	MaSCOT_IO.O_Layer._lIdentity.YBSIZ = CYMAX-CYMIN;
 
-	char do_save_identity = 1;
 
+	MaSCOT_IO._fileIdentity.Delta_X = 0; // MaSCOT_IO._header.CXMIN;
+	MaSCOT_IO._fileIdentity.Delta_Y = 0; // MaSCOT_IO._header.CYMIN;
+
+	char do_save_identity = 1;
 	MaSCOT_IO.Dix_close(do_save_identity);
-	Open_Shape = 0;
+
+
+	Do_Open_Shapes = 0;
 
 	MaSCOT_IO.renameoutput();
 	MaSCOT_IO.Close_ILayer(0);

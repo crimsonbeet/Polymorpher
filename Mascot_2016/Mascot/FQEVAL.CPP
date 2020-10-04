@@ -12,6 +12,9 @@
 #include "fxeval.hpp"
 
 #include "QuickSort.h"
+
+#pragma warning(disable : 26451)
+
 /**/
 extern void zabort(void);
 const char*fqeval = "fqeval";
@@ -66,8 +69,15 @@ long PYMIN;
 /**/
 
 inline LvBead* FetchReverseLv(LvBead* LV) {
-	auto vt = (LV)->ZLVMyVector->ZVTMeInreverse;
-	return vt ? vt->ZVTFirstCoincident : 0;
+	LvBead* lvc = 0; 
+	auto vt = LV->ZLVMyVector->ZVTMeInreverse;
+	if (vt) {
+		lvc = vt->ZVTFirstCoincident;
+		//while (lvc && lvc->ZLVMyLbBead != LV->ZLVMyLbBead) {
+		//	lvc = lvc->ZLVNextConcident; 
+		//}
+	}
+	return lvc;
 }
 
 struct Find_Ix_Intsect_Summary { 
@@ -422,8 +432,8 @@ double
 COMPANGLE(_sAlong& x, _sAlong& y, long L)
 {
 	double X, Y;
-	X = x[L]-x[L-1];
-	Y = y[L]-y[L-1];
+	X = (double)(x[L]-x[L-1]);
+	Y = (double)(y[L]-y[L-1]);
 	if(X==0&&Y==0)
 	{
 		SS_Fl = 1;
@@ -911,6 +921,9 @@ LvBead*FETCHREVERSE(LbBead*LB, LvBead*LV)
 	LvBead*LR;
 	long EC=0;
 	LR = 0;
+	if (!LV->ZLVMyVector) {
+		return 0; 
+	}
 	VR = (LV->ZLVMyVector)->ZVTMeInreverse;
 	if(!VR) {
 		return 0;
@@ -934,8 +947,7 @@ LvBead*FETCHREVERSE(LbBead*LB, LvBead*LV)
 		Get direct successor. Walk down the chain until VR is found. 
 	*/ 
 	LS = LV->ZLVNextLvBead;
-	while(LS->ZLVMyVector!=VR)
-	{
+	while(LS->ZLVMyVector!=VR && LS!=LR) {
 		LS = LS->ZLVNextLvBead;
 	}
 	return LS;
@@ -946,6 +958,9 @@ REMOVE_FROM_VT_CHAIN(LvBead*LV)
 	VtBead*VT;
 	LvBead*Lv;
 	VT = LV->ZLVMyVector;
+	if (!VT) {
+		return; 
+	}
 	Lv = VT->ZVTFirstCoincident;
 	if(Lv==LV)
 	{
@@ -1070,22 +1085,22 @@ DUMMYJUNCTIONANALYSIS(LbBead*LB)
 
 		if(FetchReverseLv(LN))
 		{
-			while(DUMMYJUNCTION(LB, LN, &LV_First, &LV_Reverse))
-			{
+			while(DUMMYJUNCTION(LB, LN, &LV_First, &LV_Reverse)) {
 				LN = CLEAR_LB_PTR(LN, LV_Reverse);
 				LV->ZLVNextLvBead = LN;
 				LV_First = LN->ZLVNextLvBead;
 			}
-			do
-			{
+
+			do {
 				LV = LN;
 				LN = LV->ZLVNextLvBead;
 			}
 			while(LV!=LE&&LN!=LV_First);
 		}
-		else
-		LV = LN,
-		LN = LV->ZLVNextLvBead;
+		else {
+			LV = LN;
+			LN = LV->ZLVNextLvBead;
+		}
 	}
 	while(LV!=LE);
 }
@@ -1152,9 +1167,11 @@ char NO_T(unsigned char S)
 }
 compare *True_Stat = O_R;
 compare *Cmp_Modules[6] ={OVR_ELIM, AND_NOT, AN_D, X_OR, O_R, NO_T};
-void
+bool
 TRAVERSE(VtBead*VT, char F_EVAL_INPROGRESS)
 {
+	bool rc = true; 
+
 	LbBead*LB;
 	LvBead*LE;
 	LvBead*LV;
@@ -1198,12 +1215,10 @@ TRAVERSE(VtBead*VT, char F_EVAL_INPROGRESS)
 		DUMMYJUNCTIONANALYSIS(LB);
 	}
 	if(DETERMINE_CLOCKSTATUS(LB) != +1) { 
-		graph_log_layer(MaSCOT_IO.O_Layer.Name, ZLBLIM - 1, 5); 
-//		graph_wait_for_user_action();
-
-//		if(F_EVAL_INPROGRESS) {
-//			MASLog("\n!!! ATTEMPTING TO GENERATE COUNTER CLOCKWISE POLYGON !!!"); zabort(fqeval,__LINE__);
-//		}
+		if(F_EVAL_INPROGRESS) {
+			MASLog("\n!!! ATTEMPTING TO GENERATE COUNTER CLOCKWISE POLYGON !!!"); 
+			rc = false; 
+		}
 		LB->ZLBFirstLvBead = 0;
 		LV = LE;
 		do
@@ -1215,10 +1230,12 @@ TRAVERSE(VtBead*VT, char F_EVAL_INPROGRESS)
 		ZLBLIM = Lim_1;
 		ZLVLIM = Lim_2; 
 	} 
+	return rc; 
 }
-void
-FORCE_C_POLYGONS(char F_EVAL_INPROGRESS)
-{
+bool
+FORCE_C_POLYGONS(char F_EVAL_INPROGRESS) {
+	bool rc = true; 
+
 	VtBead*Vt;
 	long V;
 
@@ -1239,12 +1256,15 @@ FORCE_C_POLYGONS(char F_EVAL_INPROGRESS)
 		{
 			continue;
 		}
-		TRAVERSE(Vt, F_EVAL_INPROGRESS);
+		if (!TRAVERSE(Vt, F_EVAL_INPROGRESS)) {
+			rc = false; 
+		}
 	}
 	COMBINE_C_POLYGONS();
+	return rc; 
 }
 long
-LbBead_Unload2InputXY(LbBead*LB)
+LbBead_Unload2InputXY(LbBead*LB, char run_linearizer, int log_graph)
 {
 	LvBead*LE;
 	LvBead*LV;
@@ -1253,7 +1273,6 @@ LbBead_Unload2InputXY(LbBead*LB)
 	VtBead*V2;
 
 	LvBead*LV_First; 
-	LvBead*LV_Reverse; 
 
 	long LD;
 
@@ -1284,6 +1303,7 @@ LbBead_Unload2InputXY(LbBead*LB)
 
 		if(FetchReverseLv(LN)) 
 		{ 
+			LvBead* LV_Reverse;
 			while(DUMMYJUNCTION(LB, LN, &LV_First, &LV_Reverse))
 			{
 				LN = CLEAR_LB_PTR(LN, LV_Reverse);
@@ -1291,35 +1311,55 @@ LbBead_Unload2InputXY(LbBead*LB)
 				LV_Reverse = LN->ZLVNextLvBead;
 			}
 		} 
-		LD = (ZLDLIM++);
+		LD = ZLDLIM;
 
 		ZLDCO0[LD] = LV->ZLVPoint2->ZPTCO1;
 		ZLDCO1[LD] = LV->ZLVPoint2->ZPTCO2;
 
-		A2 = COMPLVANGLE(LV);
-		if(_EQ_(A1, A2, 1E-3))
-		{
-			ZLDLIM -= 1;
-			ZLDCO0[LD-1] = ZLDCO0[LD];
-			ZLDCO1[LD-1] = ZLDCO1[LD];
-			if(LD-1)
+		if (run_linearizer || (!FetchReverseLv(LN) || !FetchReverseLv(LV))) {
+		}
+		else 
+		if(FETCHREVERSE(LB, LV) && FETCHREVERSE(LB, LN)) {
+			LV = LN;
+			LN = LV->ZLVNextLvBead;
+			continue;
+		}
+
+		++ZLDLIM;
+
+		if (run_linearizer) {
+			A2 = COMPLVANGLE(LV);
+			if(_EQ_(A1, A2, 1E-3))
 			{
-				A2 = COMPLDANGLE(LD-1);
+				ZLDLIM -= 1;
+				ZLDCO0[LD-1] = ZLDCO0[LD];
+				ZLDCO1[LD-1] = ZLDCO1[LD];
+				if(LD-1)
+				{
+					A2 = COMPLDANGLE(LD-1);
+				}
+			}
+			A1 = A2;
+
+			LV = LN;
+			LN = LV->ZLVNextLvBead;
+
+			while(LN!=LV_First&&LV!=LE)
+			{
+				LD = (ZLDLIM++);
+
+				ZLDCO0[LD] = LV->ZLVPoint2->ZPTCO1;
+				ZLDCO1[LD] = LV->ZLVPoint2->ZPTCO2;
+				A1 = COMPLVANGLE(LV);
+				LV = LN;
+				LN = LV->ZLVNextLvBead;
 			}
 		}
-		A1 = A2;
-		LV = LN;
-		LN = LV->ZLVNextLvBead;
-		while(LN!=LV_First&&LV!=LE)
-		{
-			LD = (ZLDLIM++);
-
-			ZLDCO0[LD] = LV->ZLVPoint2->ZPTCO1;
-			ZLDCO1[LD] = LV->ZLVPoint2->ZPTCO2;
-			A1 = COMPLVANGLE(LV);
+		else {
 			LV = LN;
 			LN = LV->ZLVNextLvBead;
 		}
+
 	/*End Of Broken Junction*/
 	}
 	while(LV!=LE&&c--); // ANB: july: error condition
@@ -1333,7 +1373,31 @@ LbBead_Unload2InputXY(LbBead*LB)
 	ZLDCO0[LD] = ZLDCO0[0];
 	ZLDCO1[LD] = ZLDCO1[0];
 
+	if (run_linearizer && S_FACTOR == 0) {
+		std::vector<long> x(ZLDLIM);
+		std::vector<long> y(ZLDLIM);
+		for (int j = 0; j < ZLDLIM; ++j) {
+			x[j] = ZLDCO0[j];
+			y[j] = ZLDCO1[j];
+		}
+		linearizeContour(x, y, 1, 5);
+		ZLDLIM = x.size();
+		for (size_t j = 0; j < ZLDLIM; ++j) {
+			ZLDCO0[j] = x[j];
+			ZLDCO1[j] = y[j];
+		}
+	}
+
 	DETERMINE_CLOCKSTATUS(ZLDCO0, ZLDCO1, ZLDLIM);
+
+	if (log_graph) {
+		if (STATUS != 1) {
+			graph_log_ZLDLIM("LbBead_UnloadFailed", 0, 0);
+		}
+		else {
+			graph_log_ZLDLIM("LbBead_Unload", 0, 0);
+		}
+	}
 
 	return ZLDLIM > 3 && STATUS == 1;
 }
