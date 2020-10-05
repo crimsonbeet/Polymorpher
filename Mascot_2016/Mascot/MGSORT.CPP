@@ -961,7 +961,6 @@ mg_sort(char*fnam)
 	{
 		#pragma warning(suppress : 4996)
 		sprintf(fq[i].nam, "mg$sort%d", (long)i);
-		//tmpnam(fq[i].nam);fq[i].nam[0]='s';
 
 		fq[i].fil = NULL;
 		fq[i].Obj = &Obj[i+1];

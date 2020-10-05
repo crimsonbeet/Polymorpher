@@ -111,7 +111,7 @@ zabort(const char*ids, long lin)
 }
 void
 __FINISHEDNORMALLY__(void) {
-	MASLog("\n!!! FINISHED NORMALLY. !!!\n");
+	//MASLog("\n!!! FINISHED NORMALLY. !!!\n");
 }
 void
 FinishedNormally(void){

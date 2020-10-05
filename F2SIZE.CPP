@@ -920,6 +920,7 @@ Shapes_Collar_Generator(int log_graph = 0)
 		if (count == 0) {
 			count = UnloadLbVectors(Xs, Ys, true);
 			LoadLbVectors(Xs, Ys, count);
+			count = 0; 
 
 			__OVELSEG__();
 		}
