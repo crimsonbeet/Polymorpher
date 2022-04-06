@@ -48,15 +48,13 @@ Back_Scale_2(void)
 {
 	register long X;
 	register long Y;
-	long p;
-	char f;
 	register long S;
 	register long h;
 	PtBead*Pt;
 	PtBead*PT;
 
 	CleanZPTHASH();
-	for(p = 1; p<ZPTLIM; ++p)
+	for(long p = 1; p<ZPTLIM; ++p)
 	{
 		Pt = GetPtBead(p);
 		if (!Pt) {
