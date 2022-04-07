@@ -41,7 +41,7 @@ void FileLog(const std::string& msg, bool do_close) {
 void graph_wait_for_user_action() { 
 } 
 
-void graph_log_layer(char* layer_Name, int lb/*optional 0*/, int layer_index/*optional -1*/) { 
+void graph_log_layer(const char* layer_Name, int lb/*optional 0*/, int layer_index/*optional -1*/) { 
 	size_t first_polygon_number = 0; 
 	long lb_count = 0; 
 	if(lb) { 
@@ -87,7 +87,7 @@ void graph_log_layer(char* layer_Name, int lb/*optional 0*/, int layer_index/*op
 	} 
 } 
 
-void graph_log_polygons(char* file_name, long offsX, long offsY) {
+void graph_log_polygons(const char* file_name, long offsX, long offsY) {
 	std::ostringstream ostr;
 	for (long i = 1; i < ZLBLIM; ++i) {
 		LbBead* Lb = GetLbBead(i);
@@ -104,7 +104,7 @@ void graph_log_polygons(char* file_name, long offsX, long offsY) {
 	WriteStream2file(&ostr, file_name);
 }
 
-void graph_log_ZLDLIM(char* file_name, long offsX, long offsY) {
+void graph_log_ZLDLIM(const char* file_name, long offsX, long offsY) {
 	std::ostringstream ostr;
 	for (long j = 0; j < ZLDLIM; ++j) {
 		if (j > 0) {

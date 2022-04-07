@@ -29,7 +29,7 @@ public:
 		delete _blocks; 
 	} 
 	char& operator[](size_t i) { 
-		size_t block_num = i >> 10; 
+		int block_num = (int)(i >> 10); 
 		if (_last_block_num != block_num) {
 			if (block_num >= (size_t)_blocks_lim) {
 				size_t new_blocks_lim = block_num << 1;
