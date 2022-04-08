@@ -258,7 +258,7 @@ public:
 	void I_READ(char*B, char L);
 	void I_READ_X(long*D, char Z);
 	char I_READ_L(Obj_Line&Obj);
-	char I_READ_P(char UseSecondaryLDSet = 0, char SetUp_Min_Max = 0);
+	char I_READ_P(char UseSecondaryLDSet = 0, char SetUp_Min_Max = 0, int* testPolygon = nullptr);
 	char I_SKIP_P(void); 
 	void SetMinMax(void);
 	void Setup(void);

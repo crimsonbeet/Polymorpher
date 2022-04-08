@@ -75,7 +75,7 @@ void graph_log_layer(const char* layer_Name, int lb/*optional 0*/, int layer_ind
 				if (n > 0) {
 					ostr << ','; 
 				}
-				ostr << x[n] << ',' << y[n];
+				ostr << (x[n] >> S_FACTOR) << ',' << (y[n] >> S_FACTOR);
 				++n;
 			}
 			ostr << std::endl; 
@@ -226,7 +226,7 @@ void LFuInitialize(const char*outLayer_name = 0) {
 
 	LFuInitialize_OutLayer(outLayer_name); 
 }
-void LFuEvaluaterLoop(long Function, int log_graph, char classifyType/*0 - main, 1 - quick*/)
+void LFuEvaluaterLoop(long Function, int log_graph, char classifyType/*0 - main, 1 - light*/)
 {
 	while(C_Fragment!=LONG_MAX)
 	{
@@ -278,10 +278,51 @@ void Load_Boundary(void)
 
 	Loadmaster();
 }
-void LoadFragment(int log_graph) {
-	unsigned short n;
+
+// use Test contours: ANB-07-APR-2022
+int s_testPointsContour[] = { 177, 208, 180, 209, 184, 209, 188, 207, 191, 205, 193, 204, 196, 203, 202, 197, 204, 196, 208, 192, 203, 191, 198, 185, 200, 184, 200, 178, 199, 171, 201, 164, 197, 157, 203, 150, 206, 146, 209, 145, 211, 143, 215, 137, 216, 134, 219, 133, 222, 131, 224, 129, 226, 125, 221, 124, 218, 123, 245, 122, 211, 121, 210, 115, 213, 110, 216, 109, 218, 107, 221, 103, 224, 102, 214, 101, 210, 100, 210, 94, 208, 80, 210, 74, 216, 73, 212, 72, 215, 69, 221, 66, 223, 64, 229, 63, 228, 57, 226, 55, 222, 53, 218, 52, 191, 49, 188, 49, 185, 55, 185, 61, 187, 62, 187, 69, 181, 76, 179, 83, 183, 97, 181, 111, 178, 118, 177, 125, 183, 139, 183, 146, 181, 153, 180, 160, 180, 167, 177, 174, 172, 181, 170, 188, 166, 194, 166, 196, 162, 197, 160, 203, 162, 204, 164, 207, 177, 208, std::numeric_limits<int>::max() };
+int s_testPointsCollar[] = { 161, 205, 163, 208, 177, 209, 180, 210, 184, 210, 189, 208, 192, 206, 193, 205, 197, 204, 203, 198, 205, 197, 209, 193, 209, 192, 208, 191, 204, 190, 200, 185, 201, 185, 201, 178, 200, 171, 202, 164, 198, 157, 204, 151, 207, 147, 210, 146, 212, 144, 216, 137, 217, 135, 219, 134, 223, 132, 225, 130, 227, 125, 227, 124, 226, 124, 225, 124, 245, 123, 245, 122, 245, 121, 212, 120, 211, 115, 214, 111, 217, 110, 219, 108, 222, 104, 220, 103, 217, 106, 215, 108, 212, 109, 209, 115, 210, 122, 218, 122, 218, 123, 218, 124, 221, 125, 225, 126, 223, 128, 221, 130, 219, 132, 215, 133, 214, 137, 210, 142, 208, 144, 205, 145, 202, 149, 196, 157, 200, 164, 198, 171, 199, 178, 199, 183, 198, 184, 197, 185, 197, 186, 202, 192, 206, 193, 203, 195, 201, 196, 195, 202, 193, 203, 190, 204, 187, 206, 184, 208, 180, 208, 177, 207, 165, 206, 163, 203, 161, 202, 163, 198, 167, 197, 167, 194, 171, 188, 173, 181, 178, 174, 181, 167, 181, 160, 182, 153, 184, 146, 184, 139, 178, 125, 179, 118, 182, 111, 184, 97, 180, 83, 182, 76, 188, 69, 188, 61, 186, 60, 186, 55, 189, 50, 191, 50, 218, 53, 222, 54, 225, 56, 227, 57, 228, 62, 223, 63, 220, 65, 214, 68, 211, 71, 211, 72, 209, 73, 207, 80, 209, 94, 209, 101, 214, 102, 220, 103, 222, 104, 224, 103, 224, 102, 224, 101, 214, 100, 211, 99, 211, 94, 209, 80, 211, 75, 216, 74, 216, 73, 216, 72, 214, 71, 216, 70, 222, 67, 223, 65, 230, 64, 229, 57, 227, 54, 222, 52, 218, 51, 191, 48, 187, 48, 184, 55, 184, 62, 186, 63, 186, 69, 180, 76, 178, 83, 182, 97, 180, 111, 177, 118, 176, 125, 182, 139, 182, 146, 180, 153, 179, 160, 179, 167, 176, 174, 171, 181, 169, 188, 165, 194, 165, 195, 161, 196, 159, 204, 161, 205, std::numeric_limits<int>::max() };
+
+// use Test contours: ANB-07-APR-2022
+void LoadTestFragment() {
+	short n;
 	__aLlAng__ = 0;
-	for(n = 0; n<MaSCOT_IO.ILayer_Cnt; ++n) {
+	for (n = 0; n < MaSCOT_IO.ILayer_Cnt; ++n) {
+
+		C_Layer = MaSCOT_IO.I_Layer[n].Lcode;
+
+		long layer_STATUS = MaSCOT_IO.I_Layer[n]._lIdentity.layer_STATUS;
+
+		MaSCOT_IO.D_Link(n);
+		if (MaSCOT_IO.I_Fragment(n) <= C_Fragment) {
+			while (MaSCOT_IO.I_Fragment(n) == C_Fragment) {
+				char open_shape = n == 0 ? MaSCOT_IO.I_READ_P(0, 0, s_testPointsContour) : MaSCOT_IO.I_READ_P(0, 0, s_testPointsCollar);
+				open_shape = n == 0 ? MaSCOT_IO.I_READ_P(0, 0, s_testPointsContour) : MaSCOT_IO.I_READ_P(0, 0, s_testPointsCollar);
+				MaSCOT_IO.I_Fragment(n) = LONG_MAX;
+				layer_STATUS = 0;
+				if (ZLDLIM > 0) {
+					if (layer_STATUS == 0) {
+						LDMake_ClosedPolygon();
+						DETERMINE_CLOCKSTATUS(ZLDCO0, ZLDCO1, ZLDLIM);
+					}
+					else {
+						STATUS = 1;
+					}
+					Loadmaster(1, open_shape);
+					break;
+				}
+			}
+		}
+	}
+	C_Fragment = LONG_MAX;
+}
+
+
+void LoadFragment(int log_graph) {
+	short n;
+	__aLlAng__ = 0;
+	for(n = 0; n < MaSCOT_IO.ILayer_Cnt; ++n) {
+
 		C_Layer = MaSCOT_IO.I_Layer[n].Lcode;
 
 		long layer_STATUS = MaSCOT_IO.I_Layer[n]._lIdentity.layer_STATUS; 
@@ -290,7 +331,8 @@ void LoadFragment(int log_graph) {
 		if(MaSCOT_IO.I_Fragment(n)<=C_Fragment) {
 			while(MaSCOT_IO.I_Fragment(n)==C_Fragment) {
 				char open_shape = MaSCOT_IO.I_READ_P();
-				if(ZLDLIM>0) { 
+				layer_STATUS = 0;
+				if(ZLDLIM>0) {
 					if(layer_STATUS == 0) { 
 						LDMake_ClosedPolygon();
 						DETERMINE_CLOCKSTATUS(ZLDCO0, ZLDCO1, ZLDLIM); 
@@ -308,6 +350,7 @@ void LoadFragment(int log_graph) {
 		} 
 	}
 }
+
 void PrintOk(void) {
 	MASLog(".");
 }
@@ -332,13 +375,21 @@ int WRITE_C_POLYGONS() {
 	}
 	return cnt; 
 }
-void LFuEvaluater(long Function, int log_graph, char classifyType/*0 - main, 1 - quick*/) {
+void LFuEvaluater(long Function, int log_graph, char classifyType/*0 - main, 1 - light*/) {
 	Target_Function = Function;
 	ZLBLIM = 1;
 	ZLVLIM = 1;
 	ZPTLIM = 1;
 	ZVTLIM = 2;
 	STATUS =+1;
+
+	//// use Test contours: ANB-07-APR-2022
+	//if (Function == MAS_AndNot) {
+	//	LoadTestFragment();
+	//}
+	//else {
+	//	LoadFragment(log_graph);
+	//}
 
 	LoadFragment(log_graph);
 
@@ -373,9 +424,9 @@ void LFuEvaluater(long Function, int log_graph, char classifyType/*0 - main, 1 -
 			if(Lb->ZLBFirstLvBead)DUMMYJUNCTIONANALYSIS(Lb);
 		}
 
-		if(log_graph) { 
+		if(log_graph) {
 			graph_wait_for_user_action();
-			graph_log_layer(MaSCOT_IO.O_Layer.Name); 
+			graph_log_layer(MaSCOT_IO.O_Layer.Name);
 		} 
 	} 
 	else { 

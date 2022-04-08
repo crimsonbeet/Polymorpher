@@ -428,7 +428,7 @@ char MASCOT_IO::I_READ_L(Obj_Line&Obj)
 	}
 	return 1;
 }
-char MASCOT_IO::I_READ_P(char UseSecondaryLDSet, char SetUp_Min_Max) 
+char MASCOT_IO::I_READ_P(char UseSecondaryLDSet, char SetUp_Min_Max, int* testPolygon)
 // Reads a polygon from storage. 
 // Puts the points to ZLDCO0 and ZLDCO1, or into ZLDCO4 and ZLDCO5 based on parameter UseSecondaryLDSet (0 by default). 
 {
@@ -445,7 +445,7 @@ char MASCOT_IO::I_READ_P(char UseSecondaryLDSet, char SetUp_Min_Max)
 
 	ZLDLIM = 0;
 	I_READ(&Z, 1);
-	if(!Z)
+	if(!Z && testPolygon == nullptr)
 	{
 		I_READ(&Z, 1), L = (Z&(7<<4))>>4;
 		if(L)
@@ -480,24 +480,42 @@ char MASCOT_IO::I_READ_P(char UseSecondaryLDSet, char SetUp_Min_Max)
 	adddl = DDelta_X||DDelta_Y? 1: 0;
 	do
 	{
-		I_READ_X(&D[0], Z);
-		I_READ(&Z, 1);
-		I_READ_X(&D[1], Z);
-		X += D[0];
-		Y += D[1];
-		if(adddl)
-		{
-			Px = X-DDelta_X;
-			Py = Y-DDelta_Y;
+		if (testPolygon == nullptr) {
+			I_READ_X(&D[0], Z);
+			I_READ(&Z, 1);
+			I_READ_X(&D[1], Z);
+			X += D[0];
+			Y += D[1];
+			if (adddl)
+			{
+				Px = X - DDelta_X;
+				Py = Y - DDelta_Y;
+			}
+			else {
+				Px = X;
+				Py = Y;
+			}
+
+			if (!__aLlAng__)
+				if (D[0] && D[1])
+					if (l_abs(D[0]) != l_abs(D[1]))
+					{
+						__aLlAng__ = ZLDLIM != 0;
+					}
+			I_READ(&Z, 1);
 		}
-		else	Px = X, Py = Y;
-		if(!__aLlAng__)
-		if(D[0]&&D[1])
-		if(l_abs(D[0])!=l_abs(D[1]))
-		{
-			__aLlAng__ = ZLDLIM!=0;
+		else {
+			int i = ZLDLIM * 2;
+			X = testPolygon[i];
+			Y = testPolygon[i + 1];
+			Px = X;
+			Py = Y;
+
+			Z = (testPolygon[i + 2] != std::numeric_limits<int>::max());
 		}
+
 		L = (ZLDLIM++);
+
 		if(UseSecondaryLDSet)
 		{
 			++L;
@@ -516,7 +534,6 @@ char MASCOT_IO::I_READ_P(char UseSecondaryLDSet, char SetUp_Min_Max)
 			if(PYMIN>Py)PYMIN = Py;
 			if(PYMAX<Py)PYMAX = Py;
 		}
-		I_READ(&Z, 1);
 	}
 	while(Z);
 
@@ -542,6 +559,7 @@ MASCOTStringBuffer::MASCOTStringBuffer() {
 	MASLogbuffer_Lim = 0; 
 	MASLogbuffer_Max = 2048 * 16; 
 	MASLogbuffer = new char[MASLogbuffer_Max]; 
+	MASLogbuffer[0] = 0; 
 } 
 MASCOTStringBuffer::~MASCOTStringBuffer() { 
 	delete S_BTOP;
@@ -1418,7 +1436,7 @@ bool MASCOT_IO::MASEvaluateMain(long Function, const char* outLayer_name, int w)
 		rc = false; 
 	} 
 
-	if (MASLogbuffer) {
+	if (MASLogbuffer && MASLogbuffer[0]) {
 		printf(MASLogbuffer);
 		MASLogbuffer[MASLogbuffer_Lim = 0] = 0;
 	}

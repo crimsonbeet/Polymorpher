@@ -1218,8 +1218,9 @@ void Shapes_Generation(void)
 void
 F_SIZE_SHAPES(F_SIZE_JOB&JOB)
 {
-fprintf(stderr, "\n!!! <Boundary data Extraction> Started on %s !!!\n",JOB.Name);
-fprintf(stderr, "\nTotal Fragments = %ld (X=%ld, Y=%ld)\n", XgCnt*YgCnt, XgCnt, YgCnt);
+	//fprintf(stderr, "\n!!! <Boundary data Extraction> Started on %s !!!\n",JOB.Name);
+	//fprintf(stderr, "\nTotal Fragments = %ld (X=%ld, Y=%ld)\n", XgCnt*YgCnt, XgCnt, YgCnt);
+
 	unsigned I;
 	for(I = 0; I<4; ++I)
 	{

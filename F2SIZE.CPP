@@ -485,9 +485,9 @@ UNL_TOINTLAYSTANDART(char NO_CONT_2, double*X, double*Y, std::ostringstream* ost
 	}
 	J = DETERMINE_CLOCKSTATUS(x, y, L);
 	if(J==0) {
-		for (long j = 0; j < L; ++j) {
-			printf("x=%ld, y=%ld\r\n", (long)x[j], (long)y[j]);
-		}
+		//for (long j = 0; j < L; ++j) {
+		//	printf("x=%ld, y=%ld\r\n", (long)x[j], (long)y[j]);
+		//}
 		long x2 = x[2];
 		long y2 = y[2];
 		x[2] = x[3];
@@ -863,6 +863,7 @@ Shapes_Collar_Generator(int log_graph = 0)
 
 
 	if (Do_Open_Shapes ? (ZLBLIM > 3) : (ZLBLIM > 2)) {
+
 		__OVELSEG__();
 
 		for (long i = __iEx__ ? 2 : 1; i < ZLBLIM; ++i) {
@@ -877,8 +878,8 @@ Shapes_Collar_Generator(int log_graph = 0)
 					x[j] = ZLDCO0[j];
 					y[j] = ZLDCO1[j];
 				}
-				if (S_FACTOR > 2) {
-					linearizeContour(x, y, ((size_t)1) << (S_FACTOR - 1), 3);
+				if (S_FACTOR > 0) {
+					linearizeContour(x, y, static_cast<size_t>(1) << (S_FACTOR), 5);
 				}
 			}
 		}
@@ -937,7 +938,7 @@ void FinishedNormally(void);
 
 void
 F_SIZE_COLLARS(F_SIZE_JOB&JOB) {
-fprintf(stderr, "\n!!! Collars Data Base Generater Started on %s !!!\n",JOB.Name);
+	//fprintf(stderr, "\n!!! Collars Data Base Generater Started on %s !!!\n",JOB.Name);
 
 	__SIZWID__ = JOB.Size;
 	__SISIGN__ = JOB.Sign;
@@ -955,7 +956,7 @@ fprintf(stderr, "\n!!! Collars Data Base Generater Started on %s !!!\n",JOB.Name
 	memset(MaSCOT_IO.O_Layer.Name, 0, 20);
 	memcpy(MaSCOT_IO.O_Layer.Name, MaSCOT_IO._header.TempP, 3);
 
-	fprintf(stderr, "\n!!! Output Layer will be %s !!!\n", MaSCOT_IO.O_Layer.Name);
+	fprintf(stderr, "!!! Output Layer will be %s !!!\n", MaSCOT_IO.O_Layer.Name);
 	MaSCOT_IO.INIT_OLayer();
 
 

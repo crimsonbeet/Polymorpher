@@ -904,7 +904,7 @@ void PVTable_RestoreStaticConfiguration() {
 
 
 char
-CheckItSelf(LbBead*LB, VtBead*VT)
+VectorBelongsToLb(LbBead*LB, VtBead*VT)
 {
 	LvBead*LE;
 	LE = VT->ZVTFirstCoincident;
@@ -1216,7 +1216,7 @@ TRAVERSE(VtBead*VT, char F_EVAL_INPROGRESS)
 	}
 	if(DETERMINE_CLOCKSTATUS(LB) != +1) { 
 		if(F_EVAL_INPROGRESS) {
-			MASLog("\n!!! ATTEMPTING TO GENERATE COUNTER CLOCKWISE POLYGON !!!"); 
+			//MASLog("\n!!! ATTEMPTING TO GENERATE COUNTER CLOCKWISE POLYGON !!!"); 
 			rc = false; 
 		}
 		LB->ZLBFirstLvBead = 0;
@@ -1248,6 +1248,19 @@ FORCE_C_POLYGONS(char F_EVAL_INPROGRESS) {
 	}
 	for(Vt=GetVtBead(V=2); V<ZVTLIM; Vt=GetVtBead(++V))
 	{
+		//// use Test contours: ANB-07-APR-2022
+		//long testX[5] = { 218 << S_FACTOR, 245 << S_FACTOR, 220 << S_FACTOR, 224 << S_FACTOR, 216 << S_FACTOR };
+		//long testY[5] = { 123 << S_FACTOR, 121 << S_FACTOR, 163 << S_FACTOR, 102 << S_FACTOR, 73 << S_FACTOR };
+		//long x = Vt->ZVTCO1->ZPTCO1;
+		//long y = Vt->ZVTCO1->ZPTCO2;
+		//for (int j = 0; j < 5; ++j) {
+		//	if (x == testX[j] && y == testY[j]) {
+		//		if (!True_Stat(Vt->ZVTStatus))
+		//		{
+		//		}
+		//	}
+		//}
+
 		if(!Vt->ZVTMeInreverse||Vt->ZVTAux)
 		{
 			continue;
@@ -1286,7 +1299,7 @@ LbBead_Unload2InputXY(LbBead*LB, char run_linearizer, int log_graph)
 	if(!V1||!V2) { // ANB: july: error condition
 		return 0; 
 	}
-	if(CheckItSelf(LB, V1)||CheckItSelf(LB, V2))
+	if(VectorBelongsToLb(LB, V1) || VectorBelongsToLb(LB, V2))
 	{
 		LV = SET_INITIAL_VECTOR(LB);
 		if(!LV)
@@ -1551,26 +1564,31 @@ char SET_INSIDE_ALL(VtBead*VtBegin, VtBead*VtEnd, LbBead*TopLb, long MaskCode)
 		VR = PV->ZVTMeInreverse;
 		LS = PV->ZVTFirstCoincident;
 
-		if (!LS) { 
-			break;
-		}
 		if (!VR) { // ANB: july: error condition
 			printf("SET_INSIDE_ALL error condition 1\r\n");
 			break;
 		}
 
-		if(CheckItSelf(TopLb, PV))return 1;
-		if(CheckItSelf(TopLb, VR))return 1;
+		if(VectorBelongsToLb(TopLb, PV))return 1;
+		if(VectorBelongsToLb(TopLb, VR))return 1;
 
-		if(LS==0)continue;
+		if (LS == 0) {
+			LS = VR->ZVTFirstCoincident; // seems not to make difference
+		}
 
-		PTRAux_1[PTRAux_1Lim=1] = (void*)LS;
-		while(PTRAux_1Lim>0)
-		{
-			LvBead*Lv = (LvBead*)PTRAux_1[PTRAux_1Lim--];
-			if(Lv->ZLVAux!=TopLb)
+		if (LS == 0) {
+			PV->ZVTStatus |= MaskCode;
+			VR->ZVTStatus |= MaskCode; 
+		}
+		else {
+			PTRAux_1[PTRAux_1Lim = 1] = (void*)LS;
+			while (PTRAux_1Lim > 0)
 			{
-				SET_INSIDE_ONE(Lv, TopLb, MaskCode);
+				LvBead* Lv = (LvBead*)PTRAux_1[PTRAux_1Lim--];
+				if (Lv->ZLVAux != TopLb)
+				{
+					SET_INSIDE_ONE(Lv, TopLb, MaskCode);
+				}
 			}
 		}
 	}
@@ -1584,8 +1602,8 @@ char Point_ExistsOtherVtWithMyLb(VtBead*VtBegin, VtBead*VtEnd, LbBead*TopLb)
 	{
 		VR = PV->ZVTMeInreverse;
 
-		if(CheckItSelf(TopLb, PV))return 1;
-		if(CheckItSelf(TopLb, VR))return 1;
+		if(VectorBelongsToLb(TopLb, PV))return 1;
+		if(VectorBelongsToLb(TopLb, VR))return 1;
 	}
 	return 0;
 }
@@ -1653,6 +1671,7 @@ POINT_VECTOR_CLASS_2(LbBead*LB, long LayerCode, long MaskCode) /*After DUMMYJUNC
 	LE = LV;
 
 	LN = LV->ZLVNextLvBead;
+
 	V3 = LV->ZLVMyVector;
 	V4 = V3->ZVTMeInreverse;
 
@@ -1668,6 +1687,17 @@ POINT_VECTOR_CLASS_2(LbBead*LB, long LayerCode, long MaskCode) /*After DUMMYJUNC
 
 		V5 = LN->ZLVMyVector;
 		V6 = V5->ZVTMeInreverse;
+
+		//// use Test contours: ANB-07-APR-2022
+		//long testX[5] = { 218 << S_FACTOR, 245 << S_FACTOR, 220 << S_FACTOR, 224 << S_FACTOR, 216 << S_FACTOR };
+		//long testY[5] = { 123 << S_FACTOR, 121 << S_FACTOR, 163 << S_FACTOR, 102 << S_FACTOR, 73 << S_FACTOR };
+		//long x = V4->ZVTCO1->ZPTCO1;
+		//long y = V4->ZVTCO1->ZPTCO2;
+		//for (int j = 4; j < 5; ++j) {
+		//	if (x == testX[j] && y == testY[j]) {
+		//		VtBegin = V4;
+		//	}
+		//}
 
 		VtBegin = V4;
 		VtEnd = V5;
@@ -1699,7 +1729,7 @@ POINT_VECTOR_CLASS_2(LbBead*LB, long LayerCode, long MaskCode) /*After DUMMYJUNC
 				V3 = LV->ZLVMyVector;
 				V4 = V3->ZVTMeInreverse;
 			}
-			while(CheckItSelf(LB, V4));
+			while(VectorBelongsToLb(LB, V4));
 		}
 		else V3 = V5, V4 = V6, LV = LN, LN = LV->ZLVNextLvBead;
 	}
@@ -2094,7 +2124,7 @@ Class_IX_Status(LbBead*LB, long S_Factor = 0)
 	return 2;
 }
 void
-Classify_Quick(void)
+Classify_Light(void)
 {
 	for(long i = 1; i<ZLBLIM; ++i)
 	{
@@ -2147,10 +2177,10 @@ Classify_Main(void)
 	--Classify_Iteration;
 }
 void
-Classify_Polygons(char quickclassify) { 
-	if(quickclassify) 
+Classify_Polygons(char lightclassify) { 
+	if(lightclassify)
 	{ 
-		Classify_Quick();
+		Classify_Light();
 	} 
 	else 
 	{ 
@@ -2217,7 +2247,7 @@ Set_Rstat(LbBead*Lb, char call_flavor)
 
 		if(call_flavor==7)
 		{
-			if(CheckItSelf(Lb, V)&&CheckItSelf(Lb, R)) 
+			if(VectorBelongsToLb(Lb, V) && VectorBelongsToLb(Lb, R))
 			{ 
 				continue; 
 			} 
