@@ -812,8 +812,6 @@ void GenerateOpenShapes(int log_graph = 0) {
 	ZVTLIM = 2;
 	ZLDLIM = 0;
 
-	C_Layer = Do_Open_Shapes ? 1 : 0;
-
 	std::ostringstream ostr;
 	std::ostringstream* pOstr = &ostr;
 	if (!log_graph) {
@@ -830,8 +828,6 @@ void GenerateOpenShapes(int log_graph = 0) {
 	if (F_C) {
 		UNL_TOINTLAYSTANDART(1, X_C, Y_C, pOstr);
 	}
-
-	C_Layer = 0;
 
 	F_C_Prev = 0;
 	while (T < PLDLIM) {
@@ -884,8 +880,6 @@ void GenerateClosedShapes(int log_graph = 0) {
 	ZVTLIM = 2;
 	ZLDLIM = 0;
 
-	C_Layer = Do_Open_Shapes ? 1 : 0;
-
 	std::ostringstream ostr;
 	std::ostringstream* pOstr = &ostr;
 	if (!log_graph) {
@@ -894,8 +888,6 @@ void GenerateClosedShapes(int log_graph = 0) {
 
 
 	DEFINE_SEGMENT(isNotFirstSegment, Q, S, T, pOstr);
-
-	C_Layer = 0;
 
 	F_C_Prev = 0;
 	while (T < PLDLIM) {
@@ -959,6 +951,7 @@ Shapes_Collar_Generator(int log_graph = 0)
 	PXMIN <<= S_FACTOR;
 	PYMIN <<= S_FACTOR;
 
+	C_Layer = 1;
 
 	if (Do_Open_Shapes) {
 
@@ -1039,6 +1032,8 @@ Shapes_Collar_Generator(int log_graph = 0)
 			__OVELSEG__();
 		}
 	}
+
+	C_Layer = 0;
 }
 
 

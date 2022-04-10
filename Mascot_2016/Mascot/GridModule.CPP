@@ -886,7 +886,10 @@ SPLIT_POLYGON(char params_were_set)
 	{
 		E |= POINT_VECTOR_CLASS_1(GetLbBead(1));
 	}
-	if(E)REBUILD_GRIDTABLE();
+	if (E) 
+	{
+		REBUILD_GRIDTABLE();
+	}
 
 	for(Y = SP_YMIN; Y<=SP_YMAX; ++Y)
 	{
