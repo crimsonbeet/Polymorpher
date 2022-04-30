@@ -1028,7 +1028,9 @@ long MASLayerGetRTPolygon(const char* outLayer_name, long polygon_number, _sAlon
 	return MaSCOT_IO.MASLayerGetRTPolygon(outLayer_name, polygon_number, points_x, points_y);
 } 
 
-
+bool MASLogLayer(const char* layer_Name) {
+	return graph_log_layer(layer_Name);
+}
 
 
 bool MASCOT_IO::MASInitialize(long blocks_count_x, long blocks_count_y) { 
@@ -1298,6 +1300,8 @@ bool MASCOT_IO::MASLayerAddPolygon2DBStorage(const char* inpLayer_name, _sAlong&
 
 	ZLDLIM = points_count; 
 
+	DETERMINE_CLOCKSTATUS(ZLDCO0, ZLDCO1, ZLDLIM);
+
 	return MASLayerAddPolygon2DBStorage(inpLayer_name); 
 } 
 
@@ -1348,9 +1352,9 @@ bool MASCOT_IO::MASLayerAddRTPolygon(const char* name) { // This can work only w
 	DETERMINE_CLOCKSTATUS(Lb); 
 
 	if(STATUS == -1) {
-		STATUS = 1; 
 		Reverse_Lv_Chain(Lb); 
-	} 
+		STATUS = 1;
+	}
 
 	return true; 
 } 
@@ -1410,7 +1414,7 @@ bool MASCOT_IO::MASEvaluateMain(long Function, const char* outLayer_name, int w)
 		case MFunction_Nothing: 
 			break; 
 		case MFunction_OverlapElim:
-			LFuEvaluaterLoop(Function, 0, 1/*classifyType is simple*/);
+			rc = LFuEvaluaterLoop(Function, 0); /*classifyType is main*/
 			break;
 		case MFunction_Size:
 			__sizemain__(I_Layer[0].Name, w < 0 ? -w : w, w < 0 ? -1 : 1);
@@ -1419,7 +1423,7 @@ bool MASCOT_IO::MASEvaluateMain(long Function, const char* outLayer_name, int w)
 			F_AREA_MAIN(I_Layer[0].Name);
 			break; 
 		default: 
-			LFuEvaluaterLoop(Function); 
+			rc = LFuEvaluaterLoop(Function); 
 			break; 
 		} 
 	} 
@@ -1581,7 +1585,7 @@ long MASCOT_IO::MASLayerGetRTPolygon(const char* layer_name, long polygon_number
 	LbBead*Lb = GetLbBead(polygon_number); 
 	if(Lb->ZLBLayer == L.Lcode) { 
 		if(Lb->ZLBFirstLvBead) { 
-			if(LbBead_Unload2InputXY(Lb)) { 
+			if(LbBead_Unload2InputXY(Lb, 0)) { 
 				return copy_inputXY(points_x, points_y, points_count, dx, dy); 
 			} 
 		} 
@@ -1608,7 +1612,7 @@ long MASCOT_IO::MASLayerGetRTPolygon(const char* layer_name, long polygon_number
 	LbBead*Lb = GetLbBead(polygon_number); 
 	if(Lb->ZLBLayer == L.Lcode) { 
 		if(Lb->ZLBFirstLvBead && Lb->ZLBFirstLvBead->ZLVMyVector) { 
-			if(LbBead_Unload2InputXY(Lb)) { 
+			if(LbBead_Unload2InputXY(Lb, 0)) { 
 				return copy_inputXY(points_x, points_y, ZLDLIM, dx, dy); 
 			} 
 		} 

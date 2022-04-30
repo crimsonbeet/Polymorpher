@@ -1342,36 +1342,20 @@ LbBead_Unload2InputXY(LbBead*LB, char run_linearizer, int log_graph)
 
 		if (run_linearizer) {
 			A2 = COMPLVANGLE(LV);
-			if(_EQ_(A1, A2, 1E-3))
+			if(LD > 1 && _EQ_(A1, A2, 1E-3))
 			{
-				ZLDLIM -= 1;
+				--ZLDLIM;
+
 				ZLDCO0[LD-1] = ZLDCO0[LD];
 				ZLDCO1[LD-1] = ZLDCO1[LD];
-				if(LD-1)
-				{
-					A2 = COMPLDANGLE(LD-1);
-				}
+
+				A2 = COMPLDANGLE(LD - 1);
 			}
 			A1 = A2;
-
-			LV = LN;
-			LN = LV->ZLVNextLvBead;
-
-			while(LN!=LV_First&&LV!=LE)
-			{
-				LD = (ZLDLIM++);
-
-				ZLDCO0[LD] = LV->ZLVPoint2->ZPTCO1;
-				ZLDCO1[LD] = LV->ZLVPoint2->ZPTCO2;
-				A1 = COMPLVANGLE(LV);
-				LV = LN;
-				LN = LV->ZLVNextLvBead;
-			}
 		}
-		else {
-			LV = LN;
-			LN = LV->ZLVNextLvBead;
-		}
+
+		LV = LN;
+		LN = LV->ZLVNextLvBead;
 
 	/*End Of Broken Junction*/
 	}

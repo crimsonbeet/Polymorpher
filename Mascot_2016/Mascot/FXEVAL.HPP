@@ -338,7 +338,7 @@ int fchsize(XMemoryFile*xfile, const size_t newsize);
 long Layer_Name2Pos(const char* layer_name); 
 
 void graph_wait_for_user_action(); 
-void graph_log_layer(const char* layer_Name, int lb = 0, int layer = -1); 
+bool graph_log_layer(const char* layer_Name, int lb = 0, int layer = -1);
 void graph_log_polygons(const char* file_name, long offsX, long offsY); 
 void graph_log_ZLDLIM(const char* file_name, long offsX, long offsY); 
 

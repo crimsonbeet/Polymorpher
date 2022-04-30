@@ -41,7 +41,7 @@ void FileLog(const std::string& msg, bool do_close) {
 void graph_wait_for_user_action() { 
 } 
 
-void graph_log_layer(const char* layer_Name, int lb/*optional 0*/, int layer_index/*optional -1*/) { 
+bool graph_log_layer(const char* layer_Name, int lb/*optional 0*/, int layer_index/*optional -1*/) { 
 	size_t first_polygon_number = 0; 
 	long lb_count = 0; 
 	if(lb) { 
@@ -56,7 +56,7 @@ void graph_log_layer(const char* layer_Name, int lb/*optional 0*/, int layer_ind
 
 	std::ostringstream ostr;
 
-	if(lb_count) { 
+	if(lb_count > 0) { 
 		if(layer_index < 0) { 
 			layer_index = MaSCOT_IO.iLnames_hash.Exist(layer_Name); //Layer_Name2Pos(layer_Name); 
 		} 
@@ -85,6 +85,8 @@ void graph_log_layer(const char* layer_Name, int lb/*optional 0*/, int layer_ind
 		delete[] lb_x; 
 		delete[] lb_y; 
 	} 
+
+	return lb_count > 0;
 } 
 
 void graph_log_polygons(const char* file_name, long offsX, long offsY) {
@@ -226,12 +228,14 @@ void LFuInitialize(const char*outLayer_name = 0) {
 
 	LFuInitialize_OutLayer(outLayer_name); 
 }
-void LFuEvaluaterLoop(long Function, int log_graph, char classifyType/*0 - main, 1 - light*/)
+bool LFuEvaluaterLoop(long Function, int log_graph, char classifyType/*0 - main, 1 - light*/)
 {
+	int produced_polygons = 0;
+
 	while(C_Fragment!=LONG_MAX)
 	{
 		CleanZPTHASH();
-		LFuEvaluater(Function, log_graph, classifyType);
+		produced_polygons += LFuEvaluater(Function, log_graph, classifyType);
 		SetNxtFrag(Function);
 	}
 	S_FACTOR = 0;
@@ -239,6 +243,8 @@ void LFuEvaluaterLoop(long Function, int log_graph, char classifyType/*0 - main,
 	MaSCOT_IO.FCloseAll();
 	//IEvaluater._ReleaseStorage();
 	FinishedNormally();
+
+	return produced_polygons > 0;
 }
 void Load_Boundary(void)
 {
@@ -375,7 +381,7 @@ int WRITE_C_POLYGONS() {
 	}
 	return cnt; 
 }
-void LFuEvaluater(long Function, int log_graph, char classifyType/*0 - main, 1 - light*/) {
+int LFuEvaluater(long Function, int log_graph, char classifyType/*0 - main, 1 - light*/) {
 	Target_Function = Function;
 	ZLBLIM = 1;
 	ZLVLIM = 1;
@@ -396,7 +402,7 @@ void LFuEvaluater(long Function, int log_graph, char classifyType/*0 - main, 1 -
 	if (Function == MFunction_ActivateLayer) {
 		INTERSECTION_ANALYSIS();
 		POINT_VECTOR_ANALYSIS(2);
-		return;
+		return true;
 	}
 
 	if(Function==MFunction_Not) {
@@ -438,7 +444,8 @@ void LFuEvaluater(long Function, int log_graph, char classifyType/*0 - main, 1 -
 
 	S_FACTOR = 0; 
 
-	WRITE_C_POLYGONS();
+	int cnt = WRITE_C_POLYGONS();
+	return cnt; 
 }
 void SetNxtFrag(long Function)
 {

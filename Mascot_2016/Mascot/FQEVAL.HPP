@@ -234,8 +234,8 @@ void Set_Rstat(LbBead*I, char call_flavor);
 void F_AREA_MAIN(const char* Name);
 
 void LFuInitialize(const char*outLayer_name);
-void LFuEvaluater(long Function, int log_graph = 0, char classifyType = 0/*0 - main, 1 - quick*/);
-void LFuEvaluaterLoop(long Function, int log_graph = 0, char classifyType = 0);
+int LFuEvaluater(long Function, int log_graph = 0, char classifyType = 0/*0 - main, 1 - quick*/);
+bool LFuEvaluaterLoop(long Function, int log_graph = 0, char classifyType = 0);
 void SetNxtFrag(long Function);
 
 LvBead* FETCHREVERSE(LbBead* LB, LvBead* LV);

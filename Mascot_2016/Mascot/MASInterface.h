@@ -45,6 +45,9 @@ long MASLayerGetRTPolygon(const char* outLayer_name, long polygon_number, long* 
 
 long MASLayerRTPolygonLocate(const char* outLayer_name, long x, long y); /*returns polygon number or -1*/
 
+bool MASLogLayer(const char* layer_Name);
+
+
 
 
 
