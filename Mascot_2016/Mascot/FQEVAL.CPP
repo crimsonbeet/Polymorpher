@@ -442,7 +442,7 @@ COMPANGLE(_sAlong& x, _sAlong& y, long L)
 	return(Eval_Angle(X, Y));
 }
 long
-DETERMINE_CLOCKSTATUS(_sAlong& x, _sAlong& y, long lim)
+DETERMINE_CLOCKSTATUS(_sAlong& x, _sAlong& y, long lim, double* A)
 {
 	long S, D;
 	double F, L, C, T;
@@ -468,10 +468,15 @@ DETERMINE_CLOCKSTATUS(_sAlong& x, _sAlong& y, long lim)
 	if(T>0.0) S = _EQ_(T, 360.0, 0.001) ? 1: 0;
 	else S = _EQ_(T,-360.0, 0.001) ?-1: 0;
 	STATUS = S;
+
+	if (A != nullptr) {
+		*A = T;
+	}
+
 	return(S);
 }
 long
-DETERMINE_CLOCKSTATUS(LbBead*B)
+DETERMINE_CLOCKSTATUS(LbBead*B, double* A)
 {
 	long S;
 	LvBead*E;
@@ -499,6 +504,11 @@ DETERMINE_CLOCKSTATUS(LbBead*B)
 	if(T>0.0) S = _EQ_(T, 360.0, 0.001) ? 1: 0;
 	else S = _EQ_(T,-360.0, 0.001) ?-1: 0;
 	STATUS = S;
+
+	if (A != nullptr) {
+		*A = T;
+	}
+
 	return(S);
 }
 LvBead*SPLITLV_M(LvBead*L3, PtBead*IP)
@@ -1292,6 +1302,8 @@ LbBead_Unload2InputXY(LbBead*LB, char run_linearizer, int log_graph)
 	double A1;
 	double A2;
 
+	STATUS = 0;
+
 	LV = LB->ZLBFirstLvBead;
 	LN = LV->ZLVNextLvBead;
 	V1 = LV->ZLVMyVector->ZVTMeInreverse;
@@ -1370,14 +1382,14 @@ LbBead_Unload2InputXY(LbBead*LB, char run_linearizer, int log_graph)
 	ZLDCO0[LD] = ZLDCO0[0];
 	ZLDCO1[LD] = ZLDCO1[0];
 
-	if (run_linearizer && S_FACTOR == 0) {
+	if (run_linearizer) {
 		std::vector<long> x(ZLDLIM);
 		std::vector<long> y(ZLDLIM);
 		for (int j = 0; j < ZLDLIM; ++j) {
 			x[j] = ZLDCO0[j];
 			y[j] = ZLDCO1[j];
 		}
-		linearizeContour(x, y, 1, 5);
+		linearizeContour(x, y, (static_cast<size_t>(1) << (S_FACTOR >> 0)), 7);
 		ZLDLIM = x.size();
 		for (size_t j = 0; j < ZLDLIM; ++j) {
 			ZLDCO0[j] = x[j];
@@ -1385,7 +1397,15 @@ LbBead_Unload2InputXY(LbBead*LB, char run_linearizer, int log_graph)
 		}
 	}
 
-	DETERMINE_CLOCKSTATUS(ZLDCO0, ZLDCO1, ZLDLIM);
+	if (ZLDLIM == 0) {
+		return 0;
+	}
+
+	double A; 
+	DETERMINE_CLOCKSTATUS(ZLDCO0, ZLDCO1, ZLDLIM, &A);
+	if (STATUS != 1) {
+		printf("LbBead_Unload2InputXY: total angle %f with %d points\r\n", A, ZLDLIM);
+	}
 
 	if (log_graph) {
 		if (STATUS != 1) {
@@ -1396,7 +1416,7 @@ LbBead_Unload2InputXY(LbBead*LB, char run_linearizer, int log_graph)
 		}
 	}
 
-	return ZLDLIM > 3 && STATUS == 1;
+	return STATUS == 1;
 }
 /*
 new functions for polygon classification.

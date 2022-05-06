@@ -165,8 +165,7 @@ long UnloadLbVectors(std::vector<std::vector<long>> &Xs, std::vector<std::vector
 				y[j] = ZLDCO1[j];
 			}
 			if (run_linearizer) {
-				size_t stepSize = S_FACTOR > 1 ? (((size_t)1) << (S_FACTOR - 1)) : 1; 
-				linearizeContour(x, y, stepSize, 5);
+				linearizeContour(x, y, ((size_t)1) << (S_FACTOR >> 1), 7);
 			}
 		}
 	}
@@ -546,7 +545,8 @@ UNL_TOINTLAYSTANDART(char NO_CONT_2, double*X, double*Y, std::ostringstream* ost
 		x[3] = x2;
 		y[3] = y2;
 		J = DETERMINE_CLOCKSTATUS(x, y, L);
-		if (J == 0) {
+		if (J == 0) 
+		{
 			DEFINE_INTERSECTION(X + 5, Y + 5, X + 7, Y + 7, X, Y);
 			x[2] = floor(X[0] * s + 0.5);
 			y[2] = floor(Y[0] * s + 0.5);
@@ -964,8 +964,8 @@ Shapes_Collar_Generator(int log_graph = 0)
 
 	std::vector<std::vector<long>> Xs(ZLBLIM);
 	std::vector<std::vector<long>> Ys(ZLBLIM);
-	long count = 0;
 
+	long count = 0;
 
 	if (Do_Open_Shapes ? (ZLBLIM > 3) : (ZLBLIM > 2)) {
 
@@ -973,7 +973,7 @@ Shapes_Collar_Generator(int log_graph = 0)
 
 		for (long i = __iEx__ ? 2 : 1; i < ZLBLIM; ++i) {
 			LbBead* Lb = GetLbBead(i);
-			if (Lb->ZLBFirstLvBead != 0 && LbBead_Unload2InputXY(Lb, 0, log_graph)) {
+			if (Lb->ZLBFirstLvBead != 0 && LbBead_Unload2InputXY(Lb, 1, log_graph)) {
 				std::vector<long> &x = Xs[count];
 				std::vector<long> &y = Ys[count];
 				++count; 
@@ -983,13 +983,15 @@ Shapes_Collar_Generator(int log_graph = 0)
 					x[j] = ZLDCO0[j];
 					y[j] = ZLDCO1[j];
 				}
-				if (S_FACTOR > 0) {
-					linearizeContour(x, y, static_cast<size_t>(1) << (S_FACTOR), 5);
-				}
 			}
 		}
 
-		LoadLbVectors(Xs, Ys, count, log_graph); 
+		if (count == 0) {
+			printf("Shapes_Collar_Generator scaled unload failed\r\nrecovering\r\n");
+			count = UnloadLbVectors(Xs, Ys, __iEx__ ? 2 : 1, true);
+		}
+
+		LoadLbVectors(Xs, Ys, count, log_graph);
 
 		__OVELSEG__();
 	}
@@ -1011,7 +1013,12 @@ Shapes_Collar_Generator(int log_graph = 0)
 	for (long j = 0; j < 2 && count == 0; ++j) {
 		for (long i = 1; i < ZLBLIM; ++i) {
 			LbBead* Lb = GetLbBead(i);
-			if (Lb->ZLBFirstLvBead != 0 && LbBead_Unload2InputXY(Lb, 0, log_graph)) {
+			if (Lb->ZLBFirstLvBead != 0) {
+				if (!LbBead_Unload2InputXY(Lb, 1, log_graph)) {
+					printf("Shapes_Collar_Generator.LbBead_Unload2InputXY failed\r\n");
+					continue;
+				}
+
 				++Total_Shapes;
 				long offsX = Delta_X_2 << S_FACTOR;
 				long offsY = Delta_Y_2 << S_FACTOR;
@@ -1021,10 +1028,11 @@ Shapes_Collar_Generator(int log_graph = 0)
 				}
 				char do_change_chip_dimensions = 1;
 				MaSCOT_IO.Dix_output(do_change_chip_dimensions, 0, Do_Open_Shapes);
-				++count; 
+				++count;
 			}
 		}
 		if (count == 0) {
+			printf("Shapes_Collar_Generator recovering on unload\r\n\r\n");
 			count = UnloadLbVectors(Xs, Ys, __iEx__ ? 2 : 1, true);
 			LoadLbVectors(Xs, Ys, count);
 			count = 0; 
@@ -1036,9 +1044,6 @@ Shapes_Collar_Generator(int log_graph = 0)
 	C_Layer = 0;
 }
 
-
-
-#define O_L MaSCOT_IO.O_Layer
 
 
 void FinishedNormally(void);
