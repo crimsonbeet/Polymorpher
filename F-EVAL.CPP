@@ -135,26 +135,28 @@ void zabort(void)
 
 void __sizemain__(char Name[20], long Size, char Sign)
 {
-	F_SIZE_JOB JOB;
+	std::string O_name(MaSCOT_IO.O_Layer.Name, 20);
+	std::string I_name(Name, 20);
 
+
+	F_SIZE_JOB JOB{};
 	memcpy(JOB.Name, Name, 20);
 	JOB.Size = Size;
 	JOB.Sign = Sign;
 	JOB.Do_log_graph = 0;
+	JOB.Preserve_ScaleFactor = 1;
 
-	std::string O_name(MaSCOT_IO.O_Layer.Name, 20);
-	std::string I_name(Name, 20);
-
-	F_SIZE_SHAPES(JOB);
 	F_SIZE_COLLARS(JOB); // S_FACTOR is set here
+
 
 	MaSCOT_IO.ILayer_Cnt = 1;
 	memcpy(MaSCOT_IO.I_Layer[0].Name, MaSCOT_IO.O_Layer.Name, 20);
 	MaSCOT_IO.Activate_ILayers();
 	if (MaSCOT_IO.I_Layer[0]._lIdentity.layer_STATUS == 0) {
 		LFuInitialize(MaSCOT_IO.O_Layer.Name);
-		LFuEvaluaterLoop(MAS_OverlapElim, JOB.Do_log_graph);
+		LFuEvaluaterLoop(MAS_OverlapElim);
 	}
+
 
 	MaSCOT_IO.Setup();
 
@@ -168,10 +170,6 @@ void __sizemain__(char Name[20], long Size, char Sign)
 
 
 void LFuInitialize_S_Factor() {
-	PYMIN = 0;
-	PXMIN = 0;
-	PYMAX = XBSIZ;
-	PXMAX = YBSIZ;
 	S_FACTOR = 0;
 	long n = XBSIZ>YBSIZ? XBSIZ: YBSIZ;
 	if(!n)zabort();
@@ -194,6 +192,7 @@ void LFuInitialize_OutLayer(const char*outLayer_name = 0) {
 		}
 		MaSCOT_IO.INIT_OLayer();
 		MaSCOT_IO.O_Layer._lIdentity.layer_STATUS = 1;
+		MaSCOT_IO.O_Layer._lIdentity.SCALE_FACTOR = 0;
 
 		IEvaluater.__SetVT0LB0__();
 	} 
@@ -201,26 +200,32 @@ void LFuInitialize_OutLayer(const char*outLayer_name = 0) {
 void LFuInitialize_ILayers() {
 	for(long n = 0; n < MaSCOT_IO.ILayer_Cnt; ++n) {
 		MaSCOT_IO.INIT_ILayer(n);
-		if(!SET_Xg_Yg(n))
+		if(SET_Xg_Yg(n))
 		{
-			continue;
+			zabort();
 		}
-		memcpy(MaSCOT_IO.O_Layer.Name, MaSCOT_IO.I_Layer[n].Name, 20);
-		MaSCOT_IO.INIT_OLayer();
-		FragmPolygons(n);
-		MaSCOT_IO.Dix_close();
-		MaSCOT_IO.Close_ILayer(n);
-		Destroy_GridStorage();
-		//IEvaluater._ReleaseStorage();
-		memcpy(MaSCOT_IO.O_Layer.PdbN,mg_sort(MaSCOT_IO.O_Layer.PdbN),15);
-		MaSCOT_IO.O_Layer._lIdentity.layer_STATUS = 0;
-		MaSCOT_IO.renameoutput();
-		MaSCOT_IO.INIT_ILayer(n);
+
+		auto f = MaSCOT_IO.I_Layer[n]._lIdentity.SCALE_FACTOR; 
+		if (f > S_FACTOR) {
+			S_FACTOR = f; 
+		}
+
+		//memcpy(MaSCOT_IO.O_Layer.Name, MaSCOT_IO.I_Layer[n].Name, 20);
+		//MaSCOT_IO.INIT_OLayer();
+		//FragmPolygons(n);
+		//MaSCOT_IO.Dix_close();
+		//MaSCOT_IO.Close_ILayer(n);
+		//Destroy_GridStorage();
+		////IEvaluater._ReleaseStorage();
+		//memcpy(MaSCOT_IO.O_Layer.PdbN,mg_sort(MaSCOT_IO.O_Layer.PdbN),15);
+		//MaSCOT_IO.O_Layer._lIdentity.layer_STATUS = 0;
+		//MaSCOT_IO.renameoutput();
+		//MaSCOT_IO.INIT_ILayer(n);
 	}
 	C_Fragment = 0; 
 }
 void LFuInitialize(const char*outLayer_name = 0) {
-	LFuInitialize_ILayers(); 
+	LFuInitialize_ILayers();
 
 	if (S_FACTOR == 0) {
 		LFuInitialize_S_Factor();
@@ -276,9 +281,9 @@ void Load_Boundary(void)
 	else DY = YBSIZ;
 
 	ZLDCO0[0] = ZLDCO0[1] = 0L;
-	ZLDCO0[2] = ZLDCO0[3] = DX;
+	ZLDCO0[2] = ZLDCO0[3] = DX << S_FACTOR;
 	ZLDCO1[0] = ZLDCO1[3] = 0L;
-	ZLDCO1[1] = ZLDCO1[2] = DY;
+	ZLDCO1[1] = ZLDCO1[2] = DY << S_FACTOR;
 	ZLDCO0[4] = ZLDCO0[0];
 	ZLDCO1[4] = ZLDCO1[0];
 
@@ -292,7 +297,6 @@ int s_testPointsCollar[] = { 161, 205, 163, 208, 177, 209, 180, 210, 184, 210, 1
 // use Test contours: ANB-07-APR-2022
 void LoadTestFragment() {
 	short n;
-	__aLlAng__ = 0;
 	for (n = 0; n < MaSCOT_IO.ILayer_Cnt; ++n) {
 
 		C_Layer = MaSCOT_IO.I_Layer[n].Lcode;
@@ -325,13 +329,23 @@ void LoadTestFragment() {
 
 
 void LoadFragment(int log_graph) {
-	short n;
-	__aLlAng__ = 0;
-	for(n = 0; n < MaSCOT_IO.ILayer_Cnt; ++n) {
+	PYMIN = 0;
+	PXMIN = 0;
+	PYMAX = XBSIZ;
+	PXMAX = YBSIZ;
+
+	for(short n = 0; n < MaSCOT_IO.ILayer_Cnt; ++n) {
 
 		C_Layer = MaSCOT_IO.I_Layer[n].Lcode;
 
 		long layer_STATUS = MaSCOT_IO.I_Layer[n]._lIdentity.layer_STATUS; 
+		long layer_S_FACTOR = S_FACTOR - MaSCOT_IO.I_Layer[n]._lIdentity.SCALE_FACTOR;
+		if (layer_S_FACTOR < 0) {
+			zabort();
+		}
+		if (layer_S_FACTOR > S_FACTOR) {
+			zabort();
+		}
 
 		MaSCOT_IO.D_Link(n);
 		if(MaSCOT_IO.I_Fragment(n)<=C_Fragment) {
@@ -346,6 +360,9 @@ void LoadFragment(int log_graph) {
 					else { 
 						STATUS = 1; 
 					} 
+					if (layer_S_FACTOR > 0) {
+						ScalePoints(ZLDCO0, ZLDCO1, ZLDLIM, layer_S_FACTOR);
+					}
 					if (log_graph) {
 						Sleep(1); 
 						graph_log_ZLDLIM("LoadFragment", 0, 0);
@@ -355,6 +372,11 @@ void LoadFragment(int log_graph) {
 			}
 		} 
 	}
+
+	PXMIN <<= S_FACTOR;
+	PYMIN <<= S_FACTOR;
+	PXMAX <<= S_FACTOR;
+	PYMAX <<= S_FACTOR;
 }
 
 void PrintOk(void) {
@@ -381,6 +403,25 @@ int WRITE_C_POLYGONS() {
 	}
 	return cnt; 
 }
+
+void LFuActivateFirstFragment() {
+	Target_Function = MFunction_ActivateLayer;
+	ZLBLIM = 1;
+	ZLVLIM = 1;
+	ZPTLIM = 1;
+	ZVTLIM = 2;
+	STATUS = 1;
+
+	C_Fragment = 0;
+	S_FACTOR = 0;
+
+	CleanZPTHASH();
+	LFuInitialize_ILayers();
+	LoadFragment();
+	INTERSECTION_ANALYSIS();
+	POINT_VECTOR_ANALYSIS();
+}
+
 int LFuEvaluater(long Function, int log_graph, char classifyType/*0 - main, 1 - light*/) {
 	Target_Function = Function;
 	ZLBLIM = 1;
@@ -388,6 +429,10 @@ int LFuEvaluater(long Function, int log_graph, char classifyType/*0 - main, 1 - 
 	ZPTLIM = 1;
 	ZVTLIM = 2;
 	STATUS =+1;
+
+	if (Function == MFunction_ActivateLayer) {
+		zabort();
+	}
 
 	//// use Test contours: ANB-07-APR-2022
 	//if (Function == MAS_AndNot) {
@@ -399,29 +444,20 @@ int LFuEvaluater(long Function, int log_graph, char classifyType/*0 - main, 1 - 
 
 	LoadFragment(log_graph);
 
-	if (Function == MFunction_ActivateLayer) {
-		INTERSECTION_ANALYSIS();
-		POINT_VECTOR_ANALYSIS(2);
-		return true;
-	}
-
 	if(Function==MFunction_Not) {
 		Load_Boundary();
 	}
 
-	ScalePoints();
-
 	ZVTLIM = 2;
 	STATUS =+1;
 	INTERSECTION_ANALYSIS();
-
-	POINT_VECTOR_ANALYSIS(2);
+	POINT_VECTOR_ANALYSIS();
 
 	Classify_Polygons(classifyType); 
 
 	if(Function != MFunction_Intersect) { 
 		if(Function<0) True_Stat = Function==-1? AND_1:XOR_1;
-		else True_Stat = Cmp_Modules[Function];
+		else True_Stat = Function < ARRAY_NUM_ELEMENTS(Cmp_Modules) ? Cmp_Modules[Function] : 0;
 
 		FORCE_C_POLYGONS();
 

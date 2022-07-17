@@ -17,7 +17,6 @@ template <class T, int N>
 #endif
 
 	
-extern char __aLlAng__;
 /**/
 extern long XBSIZ;
 extern long YBSIZ;
@@ -97,7 +96,7 @@ struct LayerIdentity_Struct
 	long XBSIZ;
 	long YBSIZ;
 
-	long _1;
+	long SCALE_FACTOR;
 	long _2;
 
 	long lastWrittenFragment; 
@@ -114,6 +113,8 @@ struct LayerIdentity_Struct
 		YBCNT = header.YBCNT;
 		XBSIZ = header.XBSIZ;
 		YBSIZ = header.YBSIZ;
+
+		SCALE_FACTOR = 0;
 
 		layer_STATUS = 0; 
 
@@ -132,7 +133,9 @@ struct LayerIdentity_Struct
 		CXMAX =-LONG_MAX;
 		CYMAX =-LONG_MAX;
 
-		layer_STATUS = 0; 
+		SCALE_FACTOR = 0;
+
+		layer_STATUS = 0;
 
 		lastWrittenFragment = -1;
 	} 
@@ -254,6 +257,7 @@ public:
 
 	void Dix_write(void*Buf, long Count);
 	void Dix_close(char do_save_identity = 0);
+	void Dix_save_and_close();
 	void Dix_output(char do_change_chip_dimensions = 0, LayerIdentity_Struct*lDim = 0, char open_shape = 0);
 	void I_READ(char*B, char L);
 	void I_READ_X(long*D, char Z);

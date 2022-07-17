@@ -1191,7 +1191,7 @@ SXTraverse(void)
 	}
 }
 void
-ZZxLoadxAbout(void)
+Load_Center_Left_Right(void)
 {
 	long i;
 	Lb_PbasTO = ZLBLIM;
@@ -1249,7 +1249,8 @@ F_SIZE_SHAPES(F_SIZE_JOB&JOB)
 	MaSCOT_IO.INIT_OLayer();
 	IEvaluater.__SetVT0LB0__();
 	Initial_Load_Common_Case();
-	ZZxLoadxAbout();
+
+	Load_Center_Left_Right();
 
 	Shapes_Generation();
 	while(Pdb_Xg+1<XgCnt||Pdb_Yg+1<YgCnt)
@@ -1262,7 +1263,8 @@ F_SIZE_SHAPES(F_SIZE_JOB&JOB)
 			Regen_Row_Streams();
 		else
 			Load_Next_Row_Common_Case();
-		ZZxLoadxAbout();
+
+		Load_Center_Left_Right();
 
 		Shapes_Generation();
 	}

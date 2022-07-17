@@ -5,5 +5,6 @@
 #define _SCALE_ 1
 /**/
 void ScalePoints(void);
+void ScalePoints(_sAlong& x, _sAlong& y, long lim, long s_factor);
 long Back_ScalePoints(void);
 #endif

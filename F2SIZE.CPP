@@ -616,7 +616,10 @@ DEFINE_SEGMENT(char isNotFirstSegment, long J, long I, long K, std::ostringstrea
 	double IX = 0, IY = 0;
 	double CAN = 0, MAN = 0;
 
-	double X1[9] = { 0 }, X2[3] = { 0 }, Y1[9] = { 0 }, Y2[3] = { 0 };
+	double X1[9] = { 0 };
+	double X2[3] = { 0 };
+	double Y1[9] = { 0 };
+	double Y2[3] = { 0 };
 
 	static double CAN_Prev = 0;
 	long CANLess180 = 0;
@@ -909,7 +912,7 @@ void GenerateClosedShapes(int log_graph = 0) {
 
 
 void
-Shapes_Collar_Generator(int log_graph = 0)
+Shapes_Collar_Generator(int preserve_scaleFactor = 0, int log_graph = 0)
 {
 	__iEx__ = 0;
 
@@ -944,7 +947,7 @@ Shapes_Collar_Generator(int log_graph = 0)
 	} while (((maxJ << S_FACTOR) >> S_FACTOR) == maxJ);
 	S_FACTOR--;
 	if (S_FACTOR < 0)S_FACTOR = 0;
-	if (S_FACTOR > 9)S_FACTOR = 9;
+	if (S_FACTOR > 12)S_FACTOR = 12;
 
 	PXMAX <<= S_FACTOR;
 	PYMAX <<= S_FACTOR;
@@ -1003,11 +1006,10 @@ Shapes_Collar_Generator(int log_graph = 0)
 		graph_log_polygons("ShapesCombined", Delta_X_2 << S_FACTOR, Delta_Y_2 << S_FACTOR);
 	}
 		
-
-	Back_ScalePoints();
-
-
-	S_FACTOR = 0;
+	if (!preserve_scaleFactor) {
+		Back_ScalePoints();
+		S_FACTOR = 0;
+	}
 
 	count = 0;
 	for (long j = 0; j < 2 && count == 0; ++j) {
@@ -1092,16 +1094,11 @@ F_SIZE_COLLARS(F_SIZE_JOB&JOB) {
 		if(PLDLIM<2) {
 			continue;
 		}
-		Shapes_Collar_Generator(JOB.Do_log_graph);
+		Shapes_Collar_Generator(JOB.Preserve_ScaleFactor, JOB.Do_log_graph);
 	}
 
 	ZPBLIM = 8191;
 
-
-	if(CXMIN==+LONG_MAX)CXMIN = 0;
-	if(CYMIN==+LONG_MAX)CYMIN = 0;
-	if(CXMAX==-LONG_MAX)CXMAX = 0;
-	if(CYMAX==-LONG_MAX)CYMAX = 0;
 
 	MaSCOT_IO.SetMinMax();
 
@@ -1117,12 +1114,16 @@ F_SIZE_COLLARS(F_SIZE_JOB&JOB) {
 	MaSCOT_IO.O_Layer._lIdentity.XBSIZ = CXMAX-CXMIN;
 	MaSCOT_IO.O_Layer._lIdentity.YBSIZ = CYMAX-CYMIN;
 
+	MaSCOT_IO.O_Layer._lIdentity.SCALE_FACTOR = S_FACTOR;
+
 
 	MaSCOT_IO._fileIdentity.Delta_X = 0; // MaSCOT_IO._header.CXMIN;
 	MaSCOT_IO._fileIdentity.Delta_Y = 0; // MaSCOT_IO._header.CYMIN;
 
-	char do_save_identity = 1;
-	MaSCOT_IO.Dix_close(do_save_identity);
+	MaSCOT_IO.Dix_save_and_close();
+
+
+	S_FACTOR = 0;
 
 
 	Do_Open_Shapes = 0;

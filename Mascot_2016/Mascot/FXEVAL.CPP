@@ -180,7 +180,6 @@ void MASLog(const char * format, ...) {
 } 
 
 
-char __aLlAng__;
 /**/
 long XBSIZ;
 long YBSIZ;
@@ -217,6 +216,10 @@ void MASCOT_IO::Dix_close(char do_save_identity)
 	Ferror(O_File, O_FileName);
 	O_File = 0;
 }
+void MASCOT_IO::Dix_save_and_close() {
+	Dix_close(1);
+}
+
 
 
 extern char __Head_follow__;
@@ -496,12 +499,6 @@ char MASCOT_IO::I_READ_P(char UseSecondaryLDSet, char SetUp_Min_Max, int* testPo
 				Py = Y;
 			}
 
-			if (!__aLlAng__)
-				if (D[0] && D[1])
-					if (l_abs(D[0]) != l_abs(D[1]))
-					{
-						__aLlAng__ = ZLDLIM != 0;
-					}
 			I_READ(&Z, 1);
 		}
 		else {
@@ -839,18 +836,16 @@ MASCOT_IO::MASCOT_IO(): strbuf(), iLnames_hash(strbuf)
 }
 void MASCOT_IO::SetMinMax(void)
 {
-	CXMIN = _header.CXMIN;
-	CXMAX = _header.CXMAX;
-	CYMIN = _header.CYMIN;
-	CYMAX = _header.CYMAX;
+	CXMIN = _header.CXMIN;// << S_FACTOR;
+	CXMAX = _header.CXMAX;// << S_FACTOR;
+	CYMIN = _header.CYMIN;// << S_FACTOR;
+	CYMAX = _header.CYMAX;// << S_FACTOR;
 
-	XBSIZ = _header.XBSIZ;
-	YBSIZ = _header.YBSIZ;
+	XBSIZ = _header.XBSIZ;// << S_FACTOR;
+	YBSIZ = _header.YBSIZ;// << S_FACTOR;
+
 	XBCNT = _header.XBCNT;
 	YBCNT = _header.YBCNT;
-
-	//XBCNT = (CXMAX - CXMIN) / 512; 
-	//YBCNT = (CYMAX - CYMIN) / 512; 
 
 	if(XBCNT<=0)XBCNT=1;
 	if(YBCNT<=0)YBCNT=1;
@@ -1247,7 +1242,8 @@ bool MASCOT_IO::MASLayerAddPolygon2DBStorage(const char* inpLayer_name) {
 	O_File = 0; 
 
 	P_Layer._lIdentity.layer_STATUS = 0; 
-	P_Layer._lIdentity.lastWrittenFragment = O_Fragment; 
+	P_Layer._lIdentity.SCALE_FACTOR = 0;
+	P_Layer._lIdentity.lastWrittenFragment = O_Fragment;
 
 	fpos_t I = FPOS_2 + sizeof(LayerIdentity_Struct)*(n - 1);
 	fsetpos(_dbLayers_FILE, &I);
@@ -1406,15 +1402,19 @@ bool MASCOT_IO::MASEvaluateMain(long Function, const char* outLayer_name, int w)
 
 			_dbHeader_FILE = 0; 
 		} 
+
 		Setup();
 		Activate_ILayers();
-
 		LFuInitialize(outLayer_name);
+
 		switch(Function) { 
 		case MFunction_Nothing: 
 			break; 
+		case MFunction_ActivateLayer:
+			LFuActivateFirstFragment();
+			break;
 		case MFunction_OverlapElim:
-			rc = LFuEvaluaterLoop(Function, 0); /*classifyType is main*/
+			rc = LFuEvaluaterLoop(MFunction_OverlapElim, 0); /*classifyType is main*/
 			break;
 		case MFunction_Size:
 			__sizemain__(I_Layer[0].Name, w < 0 ? -w : w, w < 0 ? -1 : 1);

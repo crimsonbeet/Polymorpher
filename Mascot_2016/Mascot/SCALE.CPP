@@ -25,6 +25,14 @@ ScalePoints(void)
 	PXMAX <<= S_FACTOR;
 	PYMAX <<= S_FACTOR;
 }
+
+void ScalePoints(_sAlong& x, _sAlong& y, long lim, long s_factor) {
+	for (long j = 0; j < lim; ++j) {
+		x[j] <<= s_factor;
+		y[j] <<= s_factor;
+	}
+}
+
 void
 Back_Scale_1(void)
 {

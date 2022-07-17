@@ -76,6 +76,7 @@ struct F_SIZE_JOB
 	long Size;
 	char Sign;
 	int Do_log_graph; 
+	int Preserve_ScaleFactor;
 };
 class F_EVAL_JOB
 {
@@ -209,7 +210,7 @@ VtBead*SPLITVT(VtBead*V3, PtBead*IP);
 VtBead*INSERTV(PtBead*P1, PtBead*P2, LvBead*LV);
 void Classify_Polygons(char classifyType = 0); 
 void INTERSECTION_ANALYSIS(bool preloaded = false, int first_lb = 1);
-char POINT_VECTOR_ANALYSIS(long first, char F_EVAL_INPROGRESS = 1, char F_FULLANALYSIS_INPROGRESS = 0);
+char POINT_VECTOR_ANALYSIS(long first = 2, char F_EVAL_INPROGRESS = 1, char F_FULLANALYSIS_INPROGRESS = 0);
 void DUMMYJUNCTIONANALYSIS(LbBead*LB);
 void LDMake_ClosedPolygon(void);
 typedef char compare(unsigned char);
@@ -233,9 +234,11 @@ void Set_Rstat(LbBead*I, char call_flavor);
 void F_AREA_MAIN(const char* Name);
 
 void LFuInitialize(const char*outLayer_name);
-int LFuEvaluater(long Function, int log_graph = 0, char classifyType = 0/*0 - main, 1 - quick*/);
+int LFuEvaluater(long Function, int log_graph = 0, char classifyType = 0/*0 - main, 1 - light*/);
+void LFuActivateFirstFragment();
 bool LFuEvaluaterLoop(long Function, int log_graph = 0, char classifyType = 0);
 void SetNxtFrag(long Function);
+void LoadFragment(int log_graph = 0);
 
 LvBead* FETCHREVERSE(LbBead* LB, LvBead* LV);
 
