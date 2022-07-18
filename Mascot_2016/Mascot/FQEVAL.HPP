@@ -105,6 +105,7 @@ public:
 extern _IEvaluater IEvaluater;
 /**/
 extern long S_FACTOR;
+extern long LAYER_S_FACTOR;
 /**/
 extern _sAlong ZLDCO0; /*X*/
 extern _sAlong ZLDCO1; /*Y*/
@@ -234,9 +235,9 @@ void Set_Rstat(LbBead*I, char call_flavor);
 void F_AREA_MAIN(const char* Name);
 
 void LFuInitialize(const char*outLayer_name);
-int LFuEvaluater(long Function, int log_graph = 0, char classifyType = 0/*0 - main, 1 - light*/);
+int LFuEvaluater(long Function, int log_graph = 0, char classifyType = 0/*0 - main, 1 - light*/, int preserve_scaleFactor = 0);
+bool LFuEvaluaterLoop(long Function, int log_graph = 0, char classifyType = 0, int preserve_scaleFactor = 0);
 void LFuActivateFirstFragment();
-bool LFuEvaluaterLoop(long Function, int log_graph = 0, char classifyType = 0);
 void SetNxtFrag(long Function);
 void LoadFragment(int log_graph = 0);
 

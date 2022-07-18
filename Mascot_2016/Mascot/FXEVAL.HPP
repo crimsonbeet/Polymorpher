@@ -285,23 +285,24 @@ public:
 
 	bool MASEvaluateMain(long Function, const char* outLayer_name, int size_param = 0);
 	bool MASLayerAddPolygon2DBStorage(const char* inpLayer_name); 
-	bool MASLayerAddRTPolygon(const char* inpLayer_name); 
 
 	bool MASInitialize(long blocks_count_x, long blocks_count_y); 
 	bool MASGrid(long blocks_count_x, long blocks_count_y); 
 
-	bool MASLayerCreateDBStorage(const char* inpLayer_name); 
+	bool MASLayerCreateDBStorage(const char* inpLayer_name, long scale_factor);
 	bool MASLayerAddPolygon2DBStorage(const char* inpLayer_name, long* points_x, long* points_y, long points_count); 
 	bool MASLayerAddPolygon2DBStorage(const char* inpLayer_name, _sAlong& points_x, _sAlong& points_y); 
 	bool MASEvaluate1(MAS_Function action, const char* inpLayer_name, const char* outLayer_name); 
 	bool MASEvaluate2(MAS_Function action, const char** inpLayers, long inpLayers_count, const char* outLayer_name, int size_param = 0);
 	void MASReleaseRTStorage();
 	long MASLayerCountRTPolygons(const char* outLayer_name, size_t* first_polygon_number = 0); 
-	long MASLayerGetRTPolygon(const char* outLayer_name, long polygon_number, long* points_x, long* points_y, long points_count); 
-	long MASLayerGetRTPolygon(const char* outLayer_name, long polygon_number, _sAlong& points_x, _sAlong& points_y); 
 
-	bool MASLayerAddRTPolygon(const char* inpLayer_name, long* points_x, long* points_y, long points_count); 
-	bool MASLayerAddRTPolygon(const char* inpLayer_name, _sAlong& points_x, _sAlong& points_y); 
+	long MASLayerGetRTPolygon(const char* outLayer_name, long polygon_number, long* points_x, long* points_y, long points_count, long& scale_factor);
+	long MASLayerGetRTPolygon(const char* outLayer_name, long polygon_number, _sAlong& points_x, _sAlong& points_y, long& scale_factor);
+
+	bool MASLayerAddRTPolygon(const char* inpLayer_name, long scale_factor);
+	bool MASLayerAddRTPolygon(const char* inpLayer_name, long* points_x, long* points_y, long points_count, long scale_factor);
+	bool MASLayerAddRTPolygon(const char* inpLayer_name, _sAlong& points_x, _sAlong& points_y, long scale_factor);
 };
 extern MASCOT_IO& MaSCOT_IO;
 

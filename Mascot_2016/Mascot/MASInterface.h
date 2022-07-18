@@ -25,7 +25,7 @@ bool MASPreload_StaticLayers(long N, const char *Names[]); // N is the number of
 bool MASInitialize(long blocks_count_x, long blocks_count_y); 
 bool MASGrid(long blocks_count_x, long blocks_count_y); 
 
-bool MASLayerCreateDBStorage(const char* inpLayer_name); 
+bool MASLayerCreateDBStorage(const char* inpLayer_name, long scale_factor); 
 
 bool MASLayerAddPolygon2DBStorage(const char* inpLayer_name, long* points_x, long* points_y, long points_count); 
 
@@ -41,7 +41,7 @@ long MASLayerCountRTPolygons(const char* outLayer_name, size_t* first_polygon_nu
 
 long MASLayerGetRTPolygonPointsCount(const char* outLayer_name, long polygon_number); 
 
-long MASLayerGetRTPolygon(const char* outLayer_name, long polygon_number, long* points_x, long* points_y, long points_count); 
+long MASLayerGetRTPolygon(const char* outLayer_name, long polygon_number, long* points_x, long* points_y, long points_count, long& scale_factor);
 
 long MASLayerRTPolygonLocate(const char* outLayer_name, long x, long y); /*returns polygon number or -1*/
 
@@ -56,7 +56,7 @@ bool MASLogLayer(const char* layer_Name);
 
 bool MASLayerAddPolygon2DBStorage(const char* inpLayer_name, _sAlong& points_x, _sAlong& points_y); 
 
-long MASLayerGetRTPolygon(const char* outLayer_name, long polygon_number, _sAlong& points_x, _sAlong& points_y); 
+long MASLayerGetRTPolygon(const char* outLayer_name, long polygon_number, _sAlong& points_x, _sAlong& points_y, long& scale_factor);
 
 #endif
 

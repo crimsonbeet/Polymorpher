@@ -728,12 +728,14 @@ PVTable_ERASE_RedundantVTBead(VtBead*VT/*to be erased, must not be in PVTable*/,
 		PV->ZVTStatus = 0;
 		Pv? Pv->ZVTStatus = 0: 0;
 	}
-	/*
-	memset(VT, 0, sizeof(VtBead));
-	memset(Vt, 0, sizeof(VtBead));
-	*/
+
 	VT->ZVTMeInreverse = 0;
 	Vt? Vt->ZVTMeInreverse = 0: 0;
+
+	//memset(VT, 0, sizeof(VtBead));
+	//if (Vt) {
+	//	memset(Vt, 0, sizeof(VtBead));
+	//}
 }
 void
 split_vt_pv
@@ -951,7 +953,8 @@ LvBead*FETCHREVERSE(LbBead*LB, LvBead*LV)
 	if(c<0) { 
 		printf("FETCHREVERSE error condition 1\r\n");
 	}
-	if(EC<=1||c<0)return LR; // ANB: july: error condition
+	if (c < 0)return nullptr; // ANB: july: error condition
+	if (EC <= 1)return LR;
 
 	/*
 		Get direct successor. Walk down the chain until VR is found. 
@@ -1389,7 +1392,11 @@ LbBead_Unload2InputXY(LbBead*LB, char run_linearizer, int log_graph)
 			x[j] = ZLDCO0[j];
 			y[j] = ZLDCO1[j];
 		}
-		linearizeContour(x, y, (static_cast<size_t>(1) << (S_FACTOR >> 0)), 7);
+		long s_factor = S_FACTOR + LAYER_S_FACTOR;
+		if (s_factor > 0) {
+			--s_factor;
+		}
+		linearizeContour(x, y, (static_cast<size_t>(1) << s_factor), 7);
 		ZLDLIM = x.size();
 		for (size_t j = 0; j < ZLDLIM; ++j) {
 			ZLDCO0[j] = x[j];
@@ -1440,6 +1447,10 @@ extern char __GrpNONE__;
 void
 LbGrp_Mdfy(LbBead*Lb, LbBead*TopLb)
 {
+	if (Lb == nullptr) {
+		return;
+	}
+
 	LbBead*LbGrp = Lb->ZLBGrp;
 	LbBead*LbNxt;
 	if (__GrpNONE__)return;
@@ -1527,7 +1538,9 @@ SET_INSIDE_ONE(LvBead*Lv_0, LbBead*TopLb, long MaskCode)
 	do
 	{
 		Vt_1->ZVTStatus|= MaskCode;
-		Vt_2->ZVTStatus|= MaskCode;
+		if (Vt_2 != nullptr) {
+			Vt_2->ZVTStatus |= MaskCode;
+		}
 
 		Lv_0->ZLVAux = TopLb;
 
@@ -1673,6 +1686,10 @@ POINT_VECTOR_CLASS_2(LbBead*LB, long LayerCode, long MaskCode) /*After DUMMYJUNC
 
 	LV = LB->ZLBFirstLvBead;
 	LE = LV;
+
+	if (LV == nullptr) {
+		return;
+	}
 
 	LN = LV->ZLVNextLvBead;
 
@@ -1834,14 +1851,14 @@ iniPvClass(void)
 	if(PTRAux_2Lim>2)Quick_Sort(1, PTRAux_2Lim-1);
 }
 char
-isVtPointUp(VtBead*Vt)
+vtPointsUp(VtBead*Vt)
 {
-	PtBead*i_1;
-	PtBead*i_2;
 	if(!Vt)zabort(fqeval,__LINE__);
-	i_1 = Vt->ZVTCO1;
-	i_2 = Vt->ZVTCO2;
-	if(i_1->ZPTCO2>i_2->ZPTCO2)
+
+	PtBead* i_1 = Vt->ZVTCO1;
+	PtBead* i_2 = Vt->ZVTCO2;
+
+	if(i_1->ZPTCO2 > i_2->ZPTCO2)
 	{
 		return 0;
 	}
@@ -1857,14 +1874,20 @@ iniFiXVt_1(void)
 	{
 		VtBead*Vt = GetVtBead(i);
 		VtBead*Vr = GetVtBead(m);
-		VtBead*VT;
-		VT = isVtPointUp(Vt)? Vt: Vr;
-		if(VT->ZVTMeInreverse) 
-		{
-			PTRAux_1[(PTRAux_1Lim++)] = (void*)VT;
+
+		if (Vt != nullptr) {
+			VtBead* VT = vtPointsUp(Vt) ? Vt : Vr;
+			if (VT != nullptr && VT->ZVTMeInreverse)
+			{
+				PTRAux_1[(PTRAux_1Lim++)] = (void*)VT;
+			}
+
+			Vt->ZVTAux = 0;
 		}
-		Vt->ZVTAux = 0;
-		Vr->ZVTAux = 0;
+
+		if (Vr != nullptr) {
+			Vr->ZVTAux = 0;
+		}
 	}
 }
 void
@@ -2050,7 +2073,7 @@ Class_IX_Status(LbBead*LB, long S_Factor = 0)
 	Find_Ix_Intsect(LB, &rval);
 	if(rval.Vt)
 	{
-		V3 = isVtPointUp(rval.Vt)? rval.Vt: rval.Vt->ZVTMeInreverse;
+		V3 = vtPointsUp(rval.Vt)? rval.Vt: rval.Vt->ZVTMeInreverse;
 	}
 	else
 	{
@@ -2059,7 +2082,7 @@ Class_IX_Status(LbBead*LB, long S_Factor = 0)
 			return 1;
 		}
 		V5 = rval.Ip->ZPTFirstSortedVtBead;
-		if(!isVtPointUp(V5))
+		if(!vtPointsUp(V5))
 		{
 			do
 				V3 = V5, V5 = V5->ZVTNextSortedVtBead;
@@ -2088,9 +2111,10 @@ Class_IX_Status(LbBead*LB, long S_Factor = 0)
 
 	mask = MAKE_MASK(V3->ZVTStatus);
 
-//	if(Target_Function==MFunction_And || Target_Function==MFunction_AndOne) // buildSLine
+	if(Target_Function==MFunction_And || Target_Function==MFunction_AndOne) // buildSLine
 	{
-		rval.Xdir = (long)floor((double)rval.Xdir/(1L<<S_Factor) +0.5);
+		long s_div = 1L << S_Factor;
+		rval.Xdir = (long)floor((double)rval.Xdir  / s_div + 0.5);
 		if(rval.Vt)
 		{
 			PVAStart = ZVTLIM;

@@ -45,7 +45,7 @@ char F_C_Prev;
 
 char __iEx__;
 
-
+long LAYER_S_FACTOR;
 
 extern long Delta_X;
 extern long Delta_Y;
@@ -165,7 +165,11 @@ long UnloadLbVectors(std::vector<std::vector<long>> &Xs, std::vector<std::vector
 				y[j] = ZLDCO1[j];
 			}
 			if (run_linearizer) {
-				linearizeContour(x, y, ((size_t)1) << (S_FACTOR >> 1), 7);
+				long s_factor = S_FACTOR + LAYER_S_FACTOR;
+				if (s_factor > 0) {
+					--s_factor;
+				}
+				linearizeContour(x, y, ((size_t)1) << s_factor, 7);
 			}
 		}
 	}
@@ -346,10 +350,21 @@ char Do_Open_Shapes;
 
 
 
-void
-__READSH__(void)
+void READSHAPE_ANDSETUP_MINMAX(F_SIZE_JOB& JOB)
 {
-	Do_Open_Shapes = MaSCOT_IO.I_READ_P(1,1);
+	__SIZWID__ = JOB.Size;
+	__SISIGN__ = JOB.Sign;
+
+	PYMIN = 0;
+	PXMIN = 0;
+	PYMAX = XBSIZ;
+	PXMAX = YBSIZ;
+
+
+
+	Do_Open_Shapes = MaSCOT_IO.I_READ_P(1, 1/*SetUp_Min_Max*/);
+
+
 	if(ZLDLIM) {
 		if(!Do_Open_Shapes)
 		{
@@ -364,6 +379,49 @@ __READSH__(void)
 		}
 	}
 	PLDLIM = ZLDLIM+1;
+
+	PXMIN -= __SIZWID__;
+	PYMIN -= __SIZWID__;
+	PXMAX += __SIZWID__;
+	PYMAX += __SIZWID__;
+
+	for (long j = 1; j < PLDLIM; ++j)
+	{
+		ZLDCO4[j] -= PXMIN;
+		ZLDCO5[j] -= PYMIN;
+	}
+	PXMAX -= PXMIN;
+	PYMAX -= PYMIN;
+
+	Delta_X_2 = PXMIN;
+	Delta_Y_2 = PYMIN;
+
+	S_FACTOR = LAYER_S_FACTOR = MaSCOT_IO.I_Layer[0]._lIdentity.SCALE_FACTOR;
+
+
+	long maxJ = PYMAX > PXMAX ? PYMAX : PXMAX;
+	do
+	{
+		++S_FACTOR;
+	} while (((maxJ << S_FACTOR) >> S_FACTOR) == maxJ);
+	--S_FACTOR;
+
+	if (S_FACTOR < 0)S_FACTOR = 0;
+	if (S_FACTOR > 12)S_FACTOR = 12;
+
+
+	S_FACTOR -= LAYER_S_FACTOR;
+
+
+	Delta_X_2 <<= LAYER_S_FACTOR;
+	Delta_Y_2 <<= LAYER_S_FACTOR;
+
+	__SIZWID__ *= std::pow(2, LAYER_S_FACTOR);
+
+	PXMAX <<= S_FACTOR;
+	PYMAX <<= S_FACTOR;
+	PXMIN <<= S_FACTOR;
+	PYMIN <<= S_FACTOR;
 }
 
 
@@ -515,23 +573,23 @@ __UNLINTSTD__(std::ostringstream *ostr = 0)
 void
 UNL_TOINTLAYSTANDART(char NO_CONT_2, double*X, double*Y, std::ostringstream* ostr = 0)
 {
+	const long s = 1L << S_FACTOR;
+
 	long J;
 	long I;
 	long L;
-	long s;
 	_sAlong x;
 	_sAlong y;
 	_sAlong*X0 = &ZLDCO0;
 	_sAlong*X1 = &ZLDCO2;
 	_sAlong*Y0 = &ZLDCO1;
 	_sAlong*Y1 = &ZLDCO3;
-	s = 1L<<S_FACTOR;
 	L = 0;
 	for(J = 4; J<9; ++J)
 	{
 		I = L++;
-		x[I] = floor(X[J]*s+0.5);
-		y[I] = floor(Y[J]*s+0.5);
+		x[I] = floor(X[J] * s + 0.5);
+		y[I] = floor(Y[J] * s + 0.5);
 	}
 	J = DETERMINE_CLOCKSTATUS(x, y, L);
 	if(J==0) {
@@ -911,8 +969,7 @@ void GenerateClosedShapes(int log_graph = 0) {
 
 
 
-void
-Shapes_Collar_Generator(int preserve_scaleFactor = 0, int log_graph = 0)
+void Collar_Generator(int preserve_scaleFactor = 0, int log_graph = 0)
 {
 	__iEx__ = 0;
 
@@ -921,40 +978,9 @@ Shapes_Collar_Generator(int preserve_scaleFactor = 0, int log_graph = 0)
 		return;
 	}
 
-	Delta_X_2 = PXMIN -= __SIZWID__;
-	Delta_Y_2 = PYMIN -= __SIZWID__;
-	PXMAX += __SIZWID__;
-	PYMAX += __SIZWID__;
-
-	for (long j = 1; j < PLDLIM; ++j)
-	{
-		ZLDCO4[j] -= PXMIN;
-		ZLDCO5[j] -= PYMIN;
-	}
-	PXMAX -= PXMIN;
-	PYMAX -= PYMIN;
-
-	PXMIN = PYMIN = 0;
+	C_Layer = 1;
 
 	CleanZPTHASH();
-
-	/*BUILD SCALE FACTOR*/
-	long maxJ = PYMAX > PXMAX ? PYMAX : PXMAX;
-	S_FACTOR = 0;
-	do
-	{
-		++S_FACTOR;
-	} while (((maxJ << S_FACTOR) >> S_FACTOR) == maxJ);
-	S_FACTOR--;
-	if (S_FACTOR < 0)S_FACTOR = 0;
-	if (S_FACTOR > 12)S_FACTOR = 12;
-
-	PXMAX <<= S_FACTOR;
-	PYMAX <<= S_FACTOR;
-	PXMIN <<= S_FACTOR;
-	PYMIN <<= S_FACTOR;
-
-	C_Layer = 1;
 
 	if (Do_Open_Shapes) {
 
@@ -1005,11 +1031,15 @@ Shapes_Collar_Generator(int preserve_scaleFactor = 0, int log_graph = 0)
 	if (log_graph) {
 		graph_log_polygons("ShapesCombined", Delta_X_2 << S_FACTOR, Delta_Y_2 << S_FACTOR);
 	}
-		
+	
+
+
 	if (!preserve_scaleFactor) {
 		Back_ScalePoints();
 		S_FACTOR = 0;
 	}
+
+
 
 	count = 0;
 	for (long j = 0; j < 2 && count == 0; ++j) {
@@ -1053,17 +1083,14 @@ void FinishedNormally(void);
 
 void
 F_SIZE_COLLARS(F_SIZE_JOB&JOB) {
-	//fprintf(stderr, "\n!!! Collars Data Base Generater Started on %s !!!\n",JOB.Name);
+	fprintf(stderr, "\n!!! Collars Generater Started on %s !!!\n",JOB.Name);
 
-	__SIZWID__ = JOB.Size;
-	__SISIGN__ = JOB.Sign;
+	OutDeltaX = 0;
+	OutDeltaY = 0;
 
 	memcpy(MaSCOT_IO.I_Layer[0].Name, JOB.Name, 20);
 	MaSCOT_IO.ILayer_Cnt = 1;
 	MaSCOT_IO.Activate_ILayers();
-
-	OutDeltaX = 0;
-	OutDeltaY = 0;
 
 	MaSCOT_IO.INIT_ILayer(0);
 
@@ -1080,22 +1107,21 @@ F_SIZE_COLLARS(F_SIZE_JOB&JOB) {
 	MaSCOT_IO.D_Link(0);
 
 
-	ZPBLIM = 127;
+	ZPBLIM = 127; // defines hash value
 
-	CXMIN=+LONG_MAX;
-	CYMIN=+LONG_MAX;
-	CXMAX=-LONG_MAX;
-	CYMAX=-LONG_MAX;
+
 	IEvaluater.__SetVT0LB0__();
 
 	Total_Shapes = 0; 
 
-	for(__READSH__(); !feof(MaSCOT_IO.I_Layer[0].File); __READSH__()) {
+	for(READSHAPE_ANDSETUP_MINMAX(JOB); !feof(MaSCOT_IO.I_Layer[0].File); READSHAPE_ANDSETUP_MINMAX(JOB)) {
 		if(PLDLIM<2) {
 			continue;
 		}
-		Shapes_Collar_Generator(JOB.Preserve_ScaleFactor, JOB.Do_log_graph);
+
+		Collar_Generator(JOB.Preserve_ScaleFactor, JOB.Do_log_graph);
 	}
+
 
 	ZPBLIM = 8191;
 
@@ -1114,7 +1140,7 @@ F_SIZE_COLLARS(F_SIZE_JOB&JOB) {
 	MaSCOT_IO.O_Layer._lIdentity.XBSIZ = CXMAX-CXMIN;
 	MaSCOT_IO.O_Layer._lIdentity.YBSIZ = CYMAX-CYMIN;
 
-	MaSCOT_IO.O_Layer._lIdentity.SCALE_FACTOR = S_FACTOR;
+	MaSCOT_IO.O_Layer._lIdentity.SCALE_FACTOR = S_FACTOR + LAYER_S_FACTOR;
 
 
 	MaSCOT_IO._fileIdentity.Delta_X = 0; // MaSCOT_IO._header.CXMIN;
@@ -1124,6 +1150,7 @@ F_SIZE_COLLARS(F_SIZE_JOB&JOB) {
 
 
 	S_FACTOR = 0;
+	LAYER_S_FACTOR = 0;
 
 
 	Do_Open_Shapes = 0;

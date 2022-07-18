@@ -68,14 +68,15 @@ bool graph_log_layer(const char* layer_Name, int lb/*optional 0*/, int layer_ind
 			_sAlong& x = lb_x[j];
 			_sAlong& y = lb_y[j];
 
-			long nPoints = MASLayerGetRTPolygon(layer_Name, j + (int)first_polygon_number, x, y);
+			long scale_factor = 0;
+			long nPoints = MASLayerGetRTPolygon(layer_Name, j + (int)first_polygon_number, x, y, scale_factor);
 
 			long n = 0;
 			while (n < nPoints) {
 				if (n > 0) {
 					ostr << ','; 
 				}
-				ostr << (x[n] >> S_FACTOR) << ',' << (y[n] >> S_FACTOR);
+				ostr << (x[n] >> scale_factor) << ',' << (y[n] >> scale_factor);
 				++n;
 			}
 			ostr << std::endl; 
@@ -133,6 +134,94 @@ void zabort(void)
 
 
 
+void LFuInitialize_S_Factor() {
+	S_FACTOR = 0;
+	long n = XBSIZ>YBSIZ? XBSIZ: YBSIZ;
+	if(!n)zabort();
+	do
+	{
+		++S_FACTOR;
+	}
+	while(((n<<S_FACTOR)>>S_FACTOR)==n);
+	S_FACTOR--;
+	S_FACTOR--;
+	if(S_FACTOR<0)S_FACTOR = 0;
+	if(S_FACTOR>9)S_FACTOR = 9;
+}
+void LFuInitialize_OutLayer(const char*outLayer_name = 0) {
+	if(outLayer_name) { 
+		if (MaSCOT_IO.O_Layer.Name != outLayer_name) {
+			memset(MaSCOT_IO.O_Layer.Name, 0, 20);
+#pragma warning(suppress : 4996)
+			strncpy(MaSCOT_IO.O_Layer.Name, outLayer_name, 20);
+		}
+		MaSCOT_IO.INIT_OLayer();
+		MaSCOT_IO.O_Layer._lIdentity.layer_STATUS = 1;
+		MaSCOT_IO.O_Layer._lIdentity.SCALE_FACTOR = 0; 
+
+		IEvaluater.__SetVT0LB0__();
+	} 
+}
+void LFuInitialize_ILayers() {
+	S_FACTOR = 0;
+
+	for(long n = 0; n < MaSCOT_IO.ILayer_Cnt; ++n) {
+		MaSCOT_IO.INIT_ILayer(n);
+		if(SET_Xg_Yg(n))
+		{
+			zabort();
+		}
+
+		auto f = MaSCOT_IO.I_Layer[n]._lIdentity.SCALE_FACTOR; 
+		if (f > S_FACTOR) {
+			S_FACTOR = f; 
+		}
+
+		//memcpy(MaSCOT_IO.O_Layer.Name, MaSCOT_IO.I_Layer[n].Name, 20);
+		//MaSCOT_IO.INIT_OLayer();
+		//FragmPolygons(n);
+		//MaSCOT_IO.Dix_close();
+		//MaSCOT_IO.Close_ILayer(n);
+		//Destroy_GridStorage();
+		////IEvaluater._ReleaseStorage();
+		//memcpy(MaSCOT_IO.O_Layer.PdbN,mg_sort(MaSCOT_IO.O_Layer.PdbN),15);
+		//MaSCOT_IO.O_Layer._lIdentity.layer_STATUS = 0;
+		//MaSCOT_IO.renameoutput();
+		//MaSCOT_IO.INIT_ILayer(n);
+	}
+
+	C_Fragment = 0; 
+}
+void LFuInitialize(const char*outLayer_name = 0) {
+	LFuInitialize_ILayers();
+
+	if (S_FACTOR == 0) {
+		LFuInitialize_S_Factor();
+	}
+
+	LFuInitialize_OutLayer(outLayer_name); 
+}
+
+
+bool LFuEvaluaterLoop(long Function, int log_graph, char classifyType/*0 - main, 1 - light*/, int preserve_scaleFactor)
+{
+	int produced_polygons = 0;
+
+	while(C_Fragment!=LONG_MAX)
+	{
+		CleanZPTHASH();
+		produced_polygons += LFuEvaluater(Function, log_graph, classifyType, preserve_scaleFactor);
+		SetNxtFrag(Function);
+	}
+	S_FACTOR = 0;
+
+	MaSCOT_IO.FCloseAll();
+	//IEvaluater._ReleaseStorage();
+	FinishedNormally();
+
+	return produced_polygons > 0;
+}
+
 void __sizemain__(char Name[20], long Size, char Sign)
 {
 	std::string O_name(MaSCOT_IO.O_Layer.Name, 20);
@@ -158,6 +247,9 @@ void __sizemain__(char Name[20], long Size, char Sign)
 	}
 
 
+	JOB.Preserve_ScaleFactor = 0;
+
+
 	MaSCOT_IO.Setup();
 
 	MaSCOT_IO.ILayer_Cnt = 2;
@@ -165,92 +257,10 @@ void __sizemain__(char Name[20], long Size, char Sign)
 	memcpy(MaSCOT_IO.I_Layer[1].Name, MaSCOT_IO.O_Layer.Name, 20);
 	MaSCOT_IO.Activate_ILayers();
 	LFuInitialize(O_name.c_str());
-	LFuEvaluaterLoop(Sign > 0 ? (long)MAS_Or : (long)MAS_AndNot, JOB.Do_log_graph);
+	LFuEvaluaterLoop(Sign > 0 ? (long)MAS_Or : (long)MAS_AndNot, JOB.Do_log_graph, 0, JOB.Preserve_ScaleFactor);
 }
 
 
-void LFuInitialize_S_Factor() {
-	S_FACTOR = 0;
-	long n = XBSIZ>YBSIZ? XBSIZ: YBSIZ;
-	if(!n)zabort();
-	do
-	{
-		++S_FACTOR;
-	}
-	while(((n<<S_FACTOR)>>S_FACTOR)==n);
-	S_FACTOR--;
-	S_FACTOR--;
-	if(S_FACTOR<0)S_FACTOR = 0;
-	if(S_FACTOR>9)S_FACTOR = 9;
-}
-void LFuInitialize_OutLayer(const char*outLayer_name = 0) {
-	if(outLayer_name) { 
-		if (MaSCOT_IO.O_Layer.Name != outLayer_name) {
-			memset(MaSCOT_IO.O_Layer.Name, 0, 20);
-#pragma warning(suppress : 4996)
-			strncpy(MaSCOT_IO.O_Layer.Name, outLayer_name, 20);
-		}
-		MaSCOT_IO.INIT_OLayer();
-		MaSCOT_IO.O_Layer._lIdentity.layer_STATUS = 1;
-		MaSCOT_IO.O_Layer._lIdentity.SCALE_FACTOR = 0;
-
-		IEvaluater.__SetVT0LB0__();
-	} 
-}
-void LFuInitialize_ILayers() {
-	for(long n = 0; n < MaSCOT_IO.ILayer_Cnt; ++n) {
-		MaSCOT_IO.INIT_ILayer(n);
-		if(SET_Xg_Yg(n))
-		{
-			zabort();
-		}
-
-		auto f = MaSCOT_IO.I_Layer[n]._lIdentity.SCALE_FACTOR; 
-		if (f > S_FACTOR) {
-			S_FACTOR = f; 
-		}
-
-		//memcpy(MaSCOT_IO.O_Layer.Name, MaSCOT_IO.I_Layer[n].Name, 20);
-		//MaSCOT_IO.INIT_OLayer();
-		//FragmPolygons(n);
-		//MaSCOT_IO.Dix_close();
-		//MaSCOT_IO.Close_ILayer(n);
-		//Destroy_GridStorage();
-		////IEvaluater._ReleaseStorage();
-		//memcpy(MaSCOT_IO.O_Layer.PdbN,mg_sort(MaSCOT_IO.O_Layer.PdbN),15);
-		//MaSCOT_IO.O_Layer._lIdentity.layer_STATUS = 0;
-		//MaSCOT_IO.renameoutput();
-		//MaSCOT_IO.INIT_ILayer(n);
-	}
-	C_Fragment = 0; 
-}
-void LFuInitialize(const char*outLayer_name = 0) {
-	LFuInitialize_ILayers();
-
-	if (S_FACTOR == 0) {
-		LFuInitialize_S_Factor();
-	}
-
-	LFuInitialize_OutLayer(outLayer_name); 
-}
-bool LFuEvaluaterLoop(long Function, int log_graph, char classifyType/*0 - main, 1 - light*/)
-{
-	int produced_polygons = 0;
-
-	while(C_Fragment!=LONG_MAX)
-	{
-		CleanZPTHASH();
-		produced_polygons += LFuEvaluater(Function, log_graph, classifyType);
-		SetNxtFrag(Function);
-	}
-	S_FACTOR = 0;
-
-	MaSCOT_IO.FCloseAll();
-	//IEvaluater._ReleaseStorage();
-	FinishedNormally();
-
-	return produced_polygons > 0;
-}
 void Load_Boundary(void)
 {
 	long DX;
@@ -422,7 +432,7 @@ void LFuActivateFirstFragment() {
 	POINT_VECTOR_ANALYSIS();
 }
 
-int LFuEvaluater(long Function, int log_graph, char classifyType/*0 - main, 1 - light*/) {
+int LFuEvaluater(long Function, int log_graph, char classifyType/*0 - main, 1 - light*/, int preserve_scaleFactor) {
 	Target_Function = Function;
 	ZLBLIM = 1;
 	ZLVLIM = 1;
@@ -476,9 +486,12 @@ int LFuEvaluater(long Function, int log_graph, char classifyType/*0 - main, 1 - 
 		ZLVLIM = 1;
 	} 
 
-	Back_ScalePoints();
+	if (!preserve_scaleFactor) {
+		Back_ScalePoints();
+		S_FACTOR = 0;
+	}
 
-	S_FACTOR = 0; 
+	MaSCOT_IO.O_Layer._lIdentity.SCALE_FACTOR = S_FACTOR;
 
 	int cnt = WRITE_C_POLYGONS();
 	return cnt; 

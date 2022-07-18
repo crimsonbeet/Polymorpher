@@ -993,8 +993,8 @@ bool MASGrid(long blocks_count_x, long blocks_count_y) {
 void MASReleaseRTStorage() { 
 	MaSCOT_IO.MASReleaseRTStorage();
 } 
-bool MASLayerCreateDBStorage(const char* name) { 
-	return MaSCOT_IO.MASLayerCreateDBStorage(name);
+bool MASLayerCreateDBStorage(const char* name, long scale_factor) {
+	return MaSCOT_IO.MASLayerCreateDBStorage(name, scale_factor);
 }
 bool MASLayerAddPolygon2DBStorage(const char* inpLayer_name, long* points_x, long* points_y, long points_count) { 
 	return MaSCOT_IO.MASLayerAddPolygon2DBStorage(inpLayer_name, points_x, points_y, points_count);
@@ -1016,11 +1016,11 @@ bool MASSize(const char* inpLayer_name, const char* outLayer_name, int width) {
 long MASLayerCountRTPolygons(const char* outLayer_name, size_t* first_polygon_number) { 
 	return MaSCOT_IO.MASLayerCountRTPolygons(outLayer_name, first_polygon_number);
 } 
-long MASLayerGetRTPolygon(const char* outLayer_name, long polygon_number, long* points_x, long* points_y, long points_count) { 
-	return MaSCOT_IO.MASLayerGetRTPolygon(outLayer_name, polygon_number, points_x, points_y, points_count);
+long MASLayerGetRTPolygon(const char* outLayer_name, long polygon_number, long* points_x, long* points_y, long points_count, long& scale_factor) {
+	return MaSCOT_IO.MASLayerGetRTPolygon(outLayer_name, polygon_number, points_x, points_y, points_count, scale_factor);
 } 
-long MASLayerGetRTPolygon(const char* outLayer_name, long polygon_number, _sAlong& points_x, _sAlong& points_y) { 
-	return MaSCOT_IO.MASLayerGetRTPolygon(outLayer_name, polygon_number, points_x, points_y);
+long MASLayerGetRTPolygon(const char* outLayer_name, long polygon_number, _sAlong& points_x, _sAlong& points_y, long& scale_factor) { 
+	return MaSCOT_IO.MASLayerGetRTPolygon(outLayer_name, polygon_number, points_x, points_y, scale_factor);
 } 
 
 bool MASLogLayer(const char* layer_Name) {
@@ -1139,7 +1139,7 @@ void MASCOT_IO::MASReleaseRTStorage() {
 	IEvaluater._ReleaseStorage();
 } 
 
-bool MASCOT_IO::MASLayerCreateDBStorage(const char* name) { 
+bool MASCOT_IO::MASLayerCreateDBStorage(const char* name, long scale_factor) { 
 	if(iLnames_hash.Exist(name)) { 
 		return false; 
 	} 
@@ -1152,6 +1152,8 @@ bool MASCOT_IO::MASLayerCreateDBStorage(const char* name) {
 
 
 	L._lIdentity.Initialize(); 
+
+	L._lIdentity.SCALE_FACTOR = scale_factor;
 
 	Make_File_Name(L.PdbN, L._lIdentity.PDBI = _header.FiLID);
 	if(ffind(L.PdbN)) { 
@@ -1168,7 +1170,6 @@ bool MASCOT_IO::MASLayerCreateDBStorage(const char* name) {
 	fwrite(&_fileIdentity, sizeof(_fileIdentity), 1, L.File);
 	fclose(L.File); 
 	L.File = 0; 
-
 
 	_dbHeader_FILE = fopen(_dbHeader_NAME);
 	_dbLayers_FILE = fopen(_dbLayers_NAME);
@@ -1242,10 +1243,9 @@ bool MASCOT_IO::MASLayerAddPolygon2DBStorage(const char* inpLayer_name) {
 	O_File = 0; 
 
 	P_Layer._lIdentity.layer_STATUS = 0; 
-	P_Layer._lIdentity.SCALE_FACTOR = 0;
 	P_Layer._lIdentity.lastWrittenFragment = O_Fragment;
 
-	fpos_t I = FPOS_2 + sizeof(LayerIdentity_Struct)*(n - 1);
+	fpos_t I = FPOS_2 + sizeof(LayerIdentity_Struct)*((fpos_t)n - 1);
 	fsetpos(_dbLayers_FILE, &I);
 	fwrite(&P_Layer._lIdentity, sizeof(LayerIdentity_Struct), 1, _dbLayers_FILE);
 
@@ -1302,10 +1302,10 @@ bool MASCOT_IO::MASLayerAddPolygon2DBStorage(const char* inpLayer_name, _sAlong&
 } 
 
 
-bool MASCOT_IO::MASLayerAddRTPolygon(const char* name) { // This can work only with one grid-block. 
+bool MASCOT_IO::MASLayerAddRTPolygon(const char* name, long scale_factor) { // This can work only with one grid-block. 
 	int n = (int)iLnames_hash.Exist(name); 
 	if(n == 0) { 
-		if(MASLayerCreateDBStorage(name)) { 
+		if(MASLayerCreateDBStorage(name, scale_factor)) {
 			n = iLnames_hash.Exist(name); 
 		} 
 	} 
@@ -1338,7 +1338,7 @@ bool MASCOT_IO::MASLayerAddRTPolygon(const char* name) { // This can work only w
 		ZLDCO1[p] <<= S_FACTOR;
 	}
 
-	C_Layer = I_Layer[n].Lcode;
+	C_Layer = n < ARRAY_NUM_ELEMENTS(I_Layer) ? I_Layer[n].Lcode : -1;
 
 	LbBead*Lb = Loadmaster(1); 
 	if(!Lb) { 
@@ -1355,7 +1355,7 @@ bool MASCOT_IO::MASLayerAddRTPolygon(const char* name) { // This can work only w
 	return true; 
 } 
 
-bool MASCOT_IO::MASLayerAddRTPolygon(const char* name, long* points_x, long* points_y, long points_count) { 
+bool MASCOT_IO::MASLayerAddRTPolygon(const char* name, long* points_x, long* points_y, long points_count, long scale_factor) {
 	if(points_x == 0 || points_y == 0 || points_count <= 0) { 
 		return false; 
 	} 
@@ -1365,10 +1365,10 @@ bool MASCOT_IO::MASLayerAddRTPolygon(const char* name, long* points_x, long* poi
 
 	ZLDLIM = points_count; 
 
-	return MASLayerAddRTPolygon(name); 
+	return MASLayerAddRTPolygon(name, scale_factor);
 } 
 
-bool MASCOT_IO::MASLayerAddRTPolygon(const char* inpLayer_name, _sAlong& points_x, _sAlong& points_y) { 
+bool MASCOT_IO::MASLayerAddRTPolygon(const char* inpLayer_name, _sAlong& points_x, _sAlong& points_y, long scale_factor) {
 	long points_count = (long)points_x.Size(); 
 
 	if(points_count == 0 || points_count != (long)points_y.Size()) { 
@@ -1380,7 +1380,7 @@ bool MASCOT_IO::MASLayerAddRTPolygon(const char* inpLayer_name, _sAlong& points_
 
 	ZLDLIM = points_count; 
 
-	return MASLayerAddRTPolygon(inpLayer_name); 
+	return MASLayerAddRTPolygon(inpLayer_name, scale_factor);
 } 
 
 
@@ -1563,7 +1563,7 @@ long copy_inputXY(T& points_x, T& points_y, long points_count, long dx, long dy)
 	Polygon number makes sense only when processing the output layer, i.e. the function has been performed.
 	Otherwise the polygon number has to be known exactly. 
 */
-long MASCOT_IO::MASLayerGetRTPolygon(const char* layer_name, long polygon_number, long* points_x, long* points_y, long points_count) { 
+long MASCOT_IO::MASLayerGetRTPolygon(const char* layer_name, long polygon_number, long* points_x, long* points_y, long points_count, long& scale_factor) {
 	long n = Layer_Name2Pos(layer_name); 
 	if(n < 0) { 
 		return -1; 
@@ -1578,6 +1578,8 @@ long MASCOT_IO::MASLayerGetRTPolygon(const char* layer_name, long polygon_number
 	} 
 
 	LayerDBHeader_Struct& L = n == 0? O_Layer: I_Layer[n - 1]; 
+
+	scale_factor = L._lIdentity.SCALE_FACTOR;
 
 	long dx = L.Delta_X; // -_header.CXMIN; // ANB: TO DO Offset
 	long dy = L.Delta_Y; // -_header.CYMIN;
@@ -1594,7 +1596,7 @@ long MASCOT_IO::MASLayerGetRTPolygon(const char* layer_name, long polygon_number
 	return -1; 
 } 
 
-long MASCOT_IO::MASLayerGetRTPolygon(const char* layer_name, long polygon_number, _sAlong& points_x, _sAlong& points_y) { 
+long MASCOT_IO::MASLayerGetRTPolygon(const char* layer_name, long polygon_number, _sAlong& points_x, _sAlong& points_y, long& scale_factor) {
 	long n = Layer_Name2Pos(layer_name); 
 	if(n < 0) { 
 		return -1; 
@@ -1605,6 +1607,8 @@ long MASCOT_IO::MASLayerGetRTPolygon(const char* layer_name, long polygon_number
 	} 
 
 	LayerDBHeader_Struct& L = n == 0? O_Layer: I_Layer[n - 1]; 
+
+	scale_factor = L._lIdentity.SCALE_FACTOR;
 
 	long dx = L.Delta_X; // -_header.CXMIN; // ANB: TO DO Offset
 	long dy = L.Delta_Y; // -_header.CYMIN;
