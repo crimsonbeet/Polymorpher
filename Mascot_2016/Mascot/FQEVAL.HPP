@@ -106,6 +106,7 @@ extern _IEvaluater IEvaluater;
 /**/
 extern long S_FACTOR;
 extern long LAYER_S_FACTOR;
+extern long SIZE_STEP;
 /**/
 extern _sAlong ZLDCO0; /*X*/
 extern _sAlong ZLDCO1; /*Y*/

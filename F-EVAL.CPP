@@ -235,7 +235,10 @@ bool __sizemain__(char Name[20], long Size, char Sign, bool preserve_scale_facto
 	JOB.Size = Size;
 	JOB.Sign = Sign;
 	JOB.Do_log_graph = 0;
-	JOB.Preserve_ScaleFactor = 1;
+	JOB.Preserve_ScaleFactor = preserve_scale_factor;
+	if (std::abs(Size) == 1) {
+		JOB.Preserve_ScaleFactor = 1;
+	}
 
 	F_SIZE_COLLARS(JOB); // S_FACTOR is set here
 

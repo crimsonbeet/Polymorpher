@@ -1390,7 +1390,8 @@ LbBead_Unload2InputXY(LbBead*LB, char run_linearizer, int log_graph)
 		if (s_factor > 0) {
 			--s_factor;
 		}
-		linearizeContour(x, y, (static_cast<size_t>(1) << s_factor), 7);
+		size_t step_size = SIZE_STEP > 1 ? 2 : 1;
+		linearizeContour(x, y, (step_size << s_factor), 7);
 		ZLDLIM = x.size();
 		for (size_t j = 0; j < ZLDLIM; ++j) {
 			ZLDCO0[j] = x[j];

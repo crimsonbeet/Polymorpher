@@ -46,6 +46,7 @@ char F_C_Prev;
 char __iEx__;
 
 long LAYER_S_FACTOR;
+long SIZE_STEP;
 
 extern long Delta_X;
 extern long Delta_Y;
@@ -169,7 +170,8 @@ long UnloadLbVectors(std::vector<std::vector<long>> &Xs, std::vector<std::vector
 				if (s_factor > 0) {
 					--s_factor;
 				}
-				linearizeContour(x, y, ((size_t)1) << s_factor, 7);
+				size_t step_size = SIZE_STEP > 1 ? 2 : 1;
+				linearizeContour(x, y, step_size << s_factor, 7);
 			}
 		}
 	}
@@ -324,9 +326,9 @@ void OVERLAP_ELIMINATION_SEGMENTS() {
 		}
 	}
 
-	for (long I = 1; I < ZLBLIM; ++I) {
-		DUMMYJUNCTIONANALYSIS(GetLbBead(I));
-	}
+	//for (long I = 1; I < ZLBLIM; ++I) {
+	//	DUMMYJUNCTIONANALYSIS(GetLbBead(I));
+	//}
 }
 
 
@@ -354,6 +356,9 @@ void READSHAPE_ANDSETUP_MINMAX(F_SIZE_JOB& JOB)
 	PXMIN = 0;
 	PYMAX = XBSIZ;
 	PXMAX = YBSIZ;
+
+
+	SIZE_STEP = JOB.Size;
 
 
 
@@ -1153,9 +1158,10 @@ F_SIZE_COLLARS(F_SIZE_JOB&JOB) {
 
 	S_FACTOR = 0;
 	LAYER_S_FACTOR = 0;
-
+	SIZE_STEP = 0;
 
 	Do_Open_Shapes = 0;
+
 
 	MaSCOT_IO.renameoutput();
 	MaSCOT_IO.Close_ILayer(0);
