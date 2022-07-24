@@ -312,9 +312,7 @@ void OVERLAP_ELIMINATION_SEGMENTS() {
 		POINT_VECTOR_ANALYSIS(2);
 
 		for (long I = 1; I < ZLBLIM; ++I) {
-			LbBead* Lb = GetLbBead(I);
-			if (Lb->ZLBFirstLvBead)
-				DUMMYJUNCTIONANALYSIS(Lb);
+			DUMMYJUNCTIONANALYSIS(GetLbBead(I));
 		}
 
 		Classify_Main();
@@ -327,10 +325,7 @@ void OVERLAP_ELIMINATION_SEGMENTS() {
 	}
 
 	for (long I = 1; I < ZLBLIM; ++I) {
-		LbBead* Lb = GetLbBead(I);
-		if (Lb->ZLBFirstLvBead) {
-			DUMMYJUNCTIONANALYSIS(Lb);
-		}
+		DUMMYJUNCTIONANALYSIS(GetLbBead(I));
 	}
 }
 
@@ -848,7 +843,7 @@ DEFINE_SEGMENT(char isNotFirstSegment, long J, long I, long K, std::ostringstrea
 	CAN_Prev = CAN;
 }
 
-void GenerateOpenShapes(int log_graph = 0) {
+void GenerateOpenShapes(int log_graph) {
 
 	long S;
 	long T;
@@ -1017,6 +1012,13 @@ void Collar_Generator(int preserve_scaleFactor = 0, int log_graph = 0)
 
 		if (count == 0) {
 			printf("Shapes_Collar_Generator scaled unload failed\r\nrecovering\r\n");
+			int mergeIterations = 0;
+			bool mergeIsDone = false;
+			while (!mergeIsDone) {
+				mergeIsDone = MergePoints();
+				++mergeIterations;
+			};
+
 			count = UnloadLbVectors(Xs, Ys, __iEx__ ? 2 : 1, true);
 		}
 
@@ -1047,7 +1049,7 @@ void Collar_Generator(int preserve_scaleFactor = 0, int log_graph = 0)
 			LbBead* Lb = GetLbBead(i);
 			if (Lb->ZLBFirstLvBead != 0) {
 				if (!LbBead_Unload2InputXY(Lb, 1, log_graph)) {
-					printf("Shapes_Collar_Generator.LbBead_Unload2InputXY failed\r\n");
+					printf("Collar_Generator.LbBead_Unload2InputXY failed\r\n");
 					continue;
 				}
 
@@ -1064,7 +1066,7 @@ void Collar_Generator(int preserve_scaleFactor = 0, int log_graph = 0)
 			}
 		}
 		if (count == 0) {
-			printf("Shapes_Collar_Generator recovering on unload\r\n\r\n");
+			printf("Collar_Generator recovering on unload\r\n\r\n");
 			count = UnloadLbVectors(Xs, Ys, __iEx__ ? 2 : 1, true);
 			LoadLbVectors(Xs, Ys, count);
 			count = 0; 

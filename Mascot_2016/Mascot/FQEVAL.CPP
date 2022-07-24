@@ -80,7 +80,7 @@ inline LvBead* FetchReverseLv(LvBead* LV) {
 	return lvc;
 }
 
-struct Find_Ix_Intsect_Summary { 
+struct Find_Intersections_Summary { 
 	long Xdir;
 	long Ydir;
 
@@ -1052,31 +1052,36 @@ LvBead*SET_INITIAL_VECTOR(LbBead*LB)
 {
 	LvBead*LE;
 	LvBead*LV;
-	LvBead*LN;
-	LvBead*LZ;
-	LvBead*LM;
-	char badpoly = 0;
-
 	LE = LV = LB->ZLBFirstLvBead;
+	if (LE == nullptr) {
+		return nullptr;
+	}
 
+	LvBead* LN;
+	LvBead* LM;
+	LvBead* LZ = nullptr;
 	LN = FETCHREVERSE(LB, LV);
 	LM = FETCHREVERSE(LB, LZ=LV->ZLVNextLvBead);
 
-	if(LN||LM)
+	bool badpolygon = false;
+
+	if(LN != nullptr || LM != nullptr)
 	do
 	{
 		LN = FETCHREVERSE(LB, LV=LZ->ZLVNextLvBead);
 		LM = FETCHREVERSE(LB, LZ=LV->ZLVNextLvBead);
-	}
-	while((LN||LM)&&!(badpoly=(LV==LE||LZ==LE)));
-	else badpoly = 0;
 
-	if(badpoly)
+		badpolygon = (LV == LE || LZ == LE);
+	}
+	while(!badpolygon && (LN != nullptr || LM != nullptr));
+
+	if(badpolygon)
 	{
 		CLEAR_LB_PTR(LE->ZLVNextLvBead, LE);
 		LB->ZLBFirstLvBead = 0;
 		return 0;
 	}
+
 	return(LB->ZLBFirstLvBead=LZ);
 }
 void
@@ -1311,15 +1316,19 @@ LbBead_Unload2InputXY(LbBead*LB, char run_linearizer, int log_graph)
 	LN = LV->ZLVNextLvBead;
 	V1 = LV->ZLVMyVector->ZVTMeInreverse;
 	V2 = LN->ZLVMyVector->ZVTMeInreverse;
-	if(!V1||!V2) { // ANB: july: error condition
+
+	if(V1 == nullptr || V2 == nullptr) { // ANB: july: error condition
 		return 0; 
 	}
+
 	if(VectorBelongsToLb(LB, V1) || VectorBelongsToLb(LB, V2))
 	{
 		LV = SET_INITIAL_VECTOR(LB);
-		if(!LV)
+		if (!LV) {
 			return 0;
+		}
 	}
+
 	LE = LV;
 	LN = LV->ZLVNextLvBead;
 	A1 = 361.0;
@@ -1344,30 +1353,15 @@ LbBead_Unload2InputXY(LbBead*LB, char run_linearizer, int log_graph)
 		ZLDCO0[LD] = LV->ZLVPoint2->ZPTCO1;
 		ZLDCO1[LD] = LV->ZLVPoint2->ZPTCO2;
 
-		if (run_linearizer || (!FetchReverseLv(LN) || !FetchReverseLv(LV))) {
-		}
-		else 
-		if(FETCHREVERSE(LB, LV) && FETCHREVERSE(LB, LN)) {
-			LV = LN;
-			LN = LV->ZLVNextLvBead;
-			continue;
+		if ((FetchReverseLv(LN) != nullptr && FetchReverseLv(LV) != nullptr)) {
+			if (FETCHREVERSE(LB, LV) != nullptr && FETCHREVERSE(LB, LN) != nullptr) {
+				LV = LN;
+				LN = LV->ZLVNextLvBead;
+				continue;
+			}
 		}
 
 		++ZLDLIM;
-
-		if (run_linearizer) {
-			A2 = COMPLVANGLE(LV);
-			if(LD > 1 && _EQ_(A1, A2, 1E-3))
-			{
-				--ZLDLIM;
-
-				ZLDCO0[LD-1] = ZLDCO0[LD];
-				ZLDCO1[LD-1] = ZLDCO1[LD];
-
-				A2 = COMPLDANGLE(LD - 1);
-			}
-			A1 = A2;
-		}
 
 		LV = LN;
 		LN = LV->ZLVNextLvBead;
@@ -1909,7 +1903,7 @@ inline bool IsOdd(long k) {
 	return (k&1) != 0; 
 } 
 void
-iniFiXStatus(void)
+Init_Find_Intersections(void)
 {
 	long i;
 	if(Classify_Iteration==1)
@@ -1949,7 +1943,7 @@ iniFiXStatus(void)
 	if(PTRAux_2Lim>2)Quick_Sort(1, PTRAux_2Lim-1);
 }
 void
-Find_Ix_Intsect(LbBead*Lb, Find_Ix_Intsect_Summary*rval, long S_Factor = 0)
+Find_Intersections(LbBead*Lb, Find_Intersections_Summary*rval, long S_Factor = 0)
 {
 	long XO, XM, XI, YM;
 	long X3, X4, Y3, Y4, YMIN, YMAX;
@@ -2035,7 +2029,7 @@ Find_Ix_Intsect(LbBead*Lb, Find_Ix_Intsect_Summary*rval, long S_Factor = 0)
 		rval->Au = au;
 		if(XO>=XM)
 		{
-			zabort("Find_Ix_Intsect",__LINE__);
+			zabort("Find_Ix_Intersect",__LINE__);
 		}
 	}
 	rval->Vt = VT;
@@ -2054,7 +2048,7 @@ MAKE_MASK(long S)
 	return(S);
 }
 char
-Class_IX_Status(LbBead*LB, long S_Factor = 0)
+Class_Intersection_Status(LbBead*LB, long S_Factor = 0)
 {
 	VtBead*V3;
 	VtBead*V5;
@@ -2068,9 +2062,10 @@ Class_IX_Status(LbBead*LB, long S_Factor = 0)
 
 	char Up = IsOdd(Classify_Iteration); 
 
-	Find_Ix_Intsect_Summary rval; 
+	Find_Intersections_Summary rval{};
 
-	Find_Ix_Intsect(LB, &rval);
+	Find_Intersections(LB, &rval);
+
 	if(rval.Vt)
 	{
 		V3 = vtPointsUp(rval.Vt)? rval.Vt: rval.Vt->ZVTMeInreverse;
@@ -2091,11 +2086,15 @@ Class_IX_Status(LbBead*LB, long S_Factor = 0)
 		}
 		else V3 = V5;
 	}
+
 	V3->ZVTAux = 1;
+
 	if(!V3->ZVTStatus)
 	{
 		return 0;
 	}
+
+
 
 	for(V5 = V3; 1; V5 = FETCHSUCCESSOR(V5))
 	{
@@ -2105,7 +2104,9 @@ Class_IX_Status(LbBead*LB, long S_Factor = 0)
 			V5 = V5->ZVTMeInreverse;
 			Lv = V5->ZVTFirstCoincident;
 		}
-		if(Lv)break;
+		if (Lv) {
+			break;
+		}
 	}
 	Gr_Com = Lv->ZLVMyLbBead->ZLBGrp;
 
@@ -2188,13 +2189,13 @@ Classify_Main(void)
 	Classify_Iteration = 1;
 	do { 
 		Si = 0;
-		iniFiXStatus();
+		Init_Find_Intersections();
 		for(Lb = 1; Lb<PTRAux_2Lim; ++Lb)
 		{
 			void*&Au = PTRAux_2[Lb];
 			if(Au)
 			{
-				if(Class_IX_Status((LbBead*)Au)==2) 
+				if(Class_Intersection_Status((LbBead*)Au)==2)
 				{ 
 					Si = 1; 
 				} 

@@ -3,13 +3,14 @@
 
 #include "stdafx.h" 
 
+#include <queue>
+
 #include<MATH.H>
 #include<STDIO.H>
 #include "fqeval.hpp"
 /**/
 /**/
-void
-ScalePoints(void)
+void ScalePoints(void)
 {
 	register long p;
 	PtBead*Pt;
@@ -243,15 +244,25 @@ Back_Scale_4(void)
 		while(Lv&&(Le!=Lv));
 	}
 }
-void
-CleanPvBead(void)
+
+
+void CleanPvBead(void)
 {
-	long p;
-	for(p = 1; p<ZPTLIM; ++p) GetPtBead(p)->ZPTAux = 0;
+	for(long p = 1; p<ZPTLIM; ++p) GetPtBead(p)->ZPTAux = 0;
 }
-long
-Back_ScalePoints(void)
+
+
+
+long Back_ScalePoints(void)
 {
+	int mergeIterations = 0;
+	bool mergeIsDone = false;
+	while(!mergeIsDone) {
+		mergeIsDone = MergePoints();
+		++mergeIterations;
+	}; 
+
+
 	CleanPvBead();
 
 	Back_Scale_1();
@@ -260,4 +271,306 @@ Back_ScalePoints(void)
 	CleanPvBead();
 
 	return 0; 
+}
+
+
+
+
+void* bucketsEx;
+
+
+template<typename T, typename I = int>
+void initializeBuckets(const size_t nElem) {
+	numBuckets = nElem + 63;
+	bucketsEx = calloc(numBuckets, sizeof(BucketEx<T, I>));
+}
+
+template<typename T, typename I = int>
+void addBucketsEx(T val, const I index, uint64_t(*hash)(I)) {
+	uint64_t bucketNum = hash(index);
+
+	BucketEx<T>& bucket = ((BucketEx<T>*)bucketsEx)[bucketNum];
+	if (bucket.allocatedSize == bucket.size) {
+		bucket.Reallocate();
+	}
+
+	if (bucket.ptrEntries != NULL) {
+		auto& entry = bucket.ptrEntries[bucket.size++];
+		entry.entry = val;
+		entry.index = index;
+		entry.processed = 0;
+	}
+}
+
+template<typename T, typename I>
+void populateBucketsEx(T ar[], const size_t nElem, uint64_t(*hash)(I)) {
+	initializeBuckets<T, I>(nElem);
+
+	for (int j = 0; j < nElem; ++j) {
+		addBucketsEx((T)ar[j], (I)j, hash);
+	}
+}
+
+template<typename T, typename I = int>
+bool lookupHashEx(I val, uint64_t(*hash)(I)) {
+	BucketEx<T>& bucket = *(((BucketEx<T>*)bucketsEx) + hash(val));
+	return bucket.lookupEx(val);
+}
+
+template<typename T, typename I = int>
+BucketEx<T>::BucketEntry* lookupHashEntryEx(I index, uint64_t(*hash)(I)) {
+	BucketEx<T>& bucket = *(((BucketEx<T>*)bucketsEx) + hash(index));
+	return bucket.lookupIndex(index);
+}
+
+template<typename T, typename I = int>
+BucketEx<T>::BucketEntry* lookupHashNextEntryEx(I index, typename BucketEx<T>::BucketEntry* ptr, uint64_t(*hash)(I)) {
+	BucketEx<T>& bucket = *(((BucketEx<T>*)bucketsEx) + hash(index));
+	return bucket.lookupIndexNext(index, ptr);
+}
+
+
+void populateBuckets(PtBead_Ptr ar[], const size_t nElem, uint64_t(*hash)(int)) {
+	populateBucketsEx(ar, nElem, hash);
+}
+
+
+
+BucketEx<PtBead_Ptr>::BucketEntry* lookupHashEntry(int index, uint64_t(*hash)(int)) {
+	return lookupHashEntryEx<PtBead_Ptr, int>(index, hash);
+}
+
+BucketEx<PtBead_Ptr>::BucketEntry* lookupHashNextEntry(int index, BucketEx<PtBead_Ptr>::BucketEntry* ptr, uint64_t(*hash)(int)) {
+	return lookupHashNextEntryEx<PtBead_Ptr, int>(index, ptr, hash);
+}
+
+
+void addBucketsEntry(PtBead_Ptr val, const int index, uint64_t(*hash)(int)) {
+	addBucketsEx(val, index, hash);
+}
+
+
+
+
+int numBuckets;
+
+
+
+
+static uint64_t hashFunc(int x) {
+	int64_t key = (23 * (int64_t)x + 103 * (int64_t)x + 293 * (int64_t)x + 397 * (int64_t)x) % numBuckets;
+	if (key < 0) {
+		key += numBuckets;
+	}
+	return key;
+}
+
+
+
+
+bool MergePoints() {
+	size_t NXcells = ZPTLIM;
+	size_t NYcells = ZPTLIM;
+
+	long XCellSize = (PXMAX - PXMIN) / (int)NXcells;
+	long YCellSize = (PYMAX - PYMIN) / (int)NYcells;
+
+	size_t NHashEntries = NXcells * NYcells;
+	if (NHashEntries > 1000) {
+		NHashEntries = 1000;
+	}
+
+	initializeBuckets<PtBead_Ptr, int>(NHashEntries);
+
+	for (int p = 1; p < ZPTLIM; ++p) {
+		auto pt = GetPtBead(p);
+
+		int i = pt->ZPTCO1 / XCellSize; 
+		int j = pt->ZPTCO2 / YCellSize;
+
+		addBucketsEntry(pt, i * NXcells + j, hashFunc);
+	}
+
+	const long s_factor = S_FACTOR + LAYER_S_FACTOR;
+
+	const long maxManhDistance = ((1 << s_factor) >> 1);
+	//const long maxManhDistance = std::pow((1 << s_factor) >> 1, 2);
+
+	auto calcManhDistance = [&](double x1, double y1, double x2, double y2) -> double {
+		return std::max(std::abs(x1 - x2), std::abs(y1 - y2));
+		//return std::pow(x1 - x2, 2) + std::pow(y1 - y2, 2);
+	};
+
+
+	struct KruskalEdge {
+		PtBead* v;
+		PtBead* w;
+		long manhDistance;
+	};
+
+	std::vector<KruskalEdge> edges; 
+
+	for (int i = 0; i < NXcells; ++i) {
+		for (int j = 0; j < NYcells; ++j) {
+
+			bool lookRight = (size_t(i) + 1) < NXcells;
+			bool lookDown = (size_t(j) + 1) < NYcells;
+
+			int cellNumber = i * NXcells + j;
+
+			auto entry = lookupHashEntry(cellNumber, hashFunc);
+			while (entry != nullptr) {
+				if (entry->processed == 0) {
+					auto pt = entry->entry;
+
+					int neighboringCells[] = { cellNumber, lookRight ? cellNumber + 1 : -1, lookDown ? cellNumber + NXcells : -1, lookRight && lookDown ? cellNumber + NXcells + 1 : -1 };
+
+					for (auto searchCellNumber : neighboringCells) {
+						if (searchCellNumber > -1) {
+							auto searchEntry = lookupHashEntry(searchCellNumber, hashFunc);
+							while (searchEntry != nullptr) {
+								auto searchPt = searchEntry->entry;
+
+								if (pt != searchPt) {
+									auto manhDistance = calcManhDistance(pt->ZPTCO1, pt->ZPTCO2, searchPt->ZPTCO1, searchPt->ZPTCO2);
+									if (manhDistance && manhDistance <= maxManhDistance) {
+										edges.push_back({ pt, searchPt, (long)manhDistance });
+									}
+								}
+
+								searchEntry = lookupHashNextEntry(searchCellNumber, searchEntry, hashFunc);
+							}
+						}
+					}
+
+					entry->processed = 1;
+				}
+
+				entry = lookupHashNextEntry(cellNumber, entry, hashFunc);
+			}
+		}
+	}
+
+	if (edges.size() == 0) {
+		return true;
+	}
+
+
+
+
+	struct customLess {
+		bool operator()(const KruskalEdge& a, const KruskalEdge& b) const { return a.manhDistance < b.manhDistance; }
+	};
+
+	auto quickSort = [&]() {
+		std::sort(edges.begin(), edges.end(), customLess());
+	};
+
+	quickSort();
+
+
+
+
+	struct UnionNode {
+		int t; // target, it is the parent of the node
+		int w; // it is a rank of the node
+
+		double avg_x;
+		double avg_y;
+	};
+
+	std::vector<UnionNode> unionNodes(ZPTLIM); 
+	std::queue<int> unionFindQueue;
+
+	for (int p = 1; p < ZPTLIM; ++p) {
+		auto pt = GetPtBead(p);
+
+		unionNodes[p].t = p;
+		unionNodes[p].w = 0;
+
+		pt->ZPTAux = (PtBead_Ptr)p;
+
+		unionNodes[p].avg_x = pt->ZPTCO1;
+		unionNodes[p].avg_y = pt->ZPTCO2;
+	}
+
+
+
+	auto unionFind = [&](int a) {
+		int p = unionNodes[a].t;
+		while (p != a) {
+			int x = a;
+			a = p;
+			p = unionNodes[p].t;
+			if (p != a) {
+				unionFindQueue.push(x);
+			}
+			else {
+				break;
+			}
+		}
+		while (!unionFindQueue.empty()) {
+			int x = unionFindQueue.front();
+			unionFindQueue.pop();
+
+			unionNodes[x].t = p;
+		}
+
+		return p;
+	};
+
+	auto unionJoin = [&](UnionNode& s, UnionNode& t) -> UnionNode& {
+		if (s.w > t.w) {
+			t.t = s.t;
+			return t;
+		}
+		else if (s.w == t.w) {
+			++s.w;
+			t.t = s.t;
+			return t;
+		}
+
+		s.t = t.t;
+		return s;
+	};
+
+
+	bool isDone = true;
+
+
+	for (auto& edge : edges) {
+		int s_p = unionFind((size_t)edge.v->ZPTAux);
+		int t_p = unionFind((size_t)edge.w->ZPTAux);
+		if (s_p == t_p) {
+			continue;
+		}
+
+		auto& s = unionNodes[s_p];
+		auto& t = unionNodes[t_p];
+
+		double manhDistance = (double)calcManhDistance(s.avg_x, s.avg_y, t.avg_x, t.avg_y);
+		if (manhDistance <= maxManhDistance) {
+			auto r = unionJoin(s, t);
+
+			r.avg_x = (s.avg_x + t.avg_x) / 2;
+			r.avg_y = (s.avg_y + t.avg_y) / 2;
+		}
+		else {
+			isDone = false;
+		}
+	}
+
+	for (int p = 1; p < ZPTLIM; ++p) {
+		auto pt = GetPtBead(p);
+
+		int clusterIndex = (int)pt->ZPTAux;
+
+		auto& clusterRoot = unionNodes[unionFind((size_t)pt->ZPTAux)];
+
+		pt->ZPTCO1 = std::floor(clusterRoot.avg_x + 0.5);
+		pt->ZPTCO2 = std::floor(clusterRoot.avg_y + 0.5);
+	}
+
+
+	return isDone;
 }

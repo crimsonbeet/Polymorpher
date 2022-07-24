@@ -222,8 +222,10 @@ bool LFuEvaluaterLoop(long Function, int log_graph, char classifyType/*0 - main,
 	return produced_polygons > 0;
 }
 
-void __sizemain__(char Name[20], long Size, char Sign)
+bool __sizemain__(char Name[20], long Size, char Sign, bool preserve_scale_factor)
 {
+	bool rc = false;
+
 	std::string O_name(MaSCOT_IO.O_Layer.Name, 20);
 	std::string I_name(Name, 20);
 
@@ -247,7 +249,7 @@ void __sizemain__(char Name[20], long Size, char Sign)
 	}
 
 
-	JOB.Preserve_ScaleFactor = 0;
+	JOB.Preserve_ScaleFactor = preserve_scale_factor;
 
 
 	MaSCOT_IO.Setup();
@@ -257,7 +259,9 @@ void __sizemain__(char Name[20], long Size, char Sign)
 	memcpy(MaSCOT_IO.I_Layer[1].Name, MaSCOT_IO.O_Layer.Name, 20);
 	MaSCOT_IO.Activate_ILayers();
 	LFuInitialize(O_name.c_str());
-	LFuEvaluaterLoop(Sign > 0 ? (long)MAS_Or : (long)MAS_AndNot, JOB.Do_log_graph, 0, JOB.Preserve_ScaleFactor);
+	rc = LFuEvaluaterLoop(Sign > 0 ? (long)MAS_Or : (long)MAS_AndNot, JOB.Do_log_graph, 0, JOB.Preserve_ScaleFactor);
+
+	return rc;
 }
 
 
@@ -472,8 +476,7 @@ int LFuEvaluater(long Function, int log_graph, char classifyType/*0 - main, 1 - 
 		FORCE_C_POLYGONS();
 
 		for(long I = 1; I<ZLBLIM; ++I) {
-			LbBead*Lb = GetLbBead(I);
-			if(Lb->ZLBFirstLvBead)DUMMYJUNCTIONANALYSIS(Lb);
+			DUMMYJUNCTIONANALYSIS(GetLbBead(I));
 		}
 
 		if(log_graph) {

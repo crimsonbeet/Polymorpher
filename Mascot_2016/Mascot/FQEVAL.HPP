@@ -248,6 +248,137 @@ void F_SIZE_COLLARS(F_SIZE_JOB& JOB);
 
 void linearizeContour(std::vector<long>& x, std::vector<long>& y, double stepSize, const size_t maxSegmentSize); // external
 
+bool MergePoints();
+
+
+typedef PtBead* PtBead_Ptr;
+
+
+
+template<typename T, typename I = int>
+struct BucketEx {
+public:
+	struct BucketEntry {
+		T entry;
+		I index;
+
+		uint8_t processed;
+	};
+	size_t size;
+	BucketEntry* ptrEntries;
+	size_t allocatedSize;
+
+	void Reallocate() {
+		BucketEntry* prevPtr = ptrEntries;
+		ptrEntries = (BucketEntry*)calloc(1 + (allocatedSize = (size + 1) * 2), sizeof(BucketEntry));
+		if (prevPtr) {
+			ptrEntries? memcpy(ptrEntries, prevPtr, size * sizeof(BucketEntry)) : 0;
+			free(prevPtr);
+		}
+	}
+
+	bool lookupEx(T val) {
+		if (size > 0) {
+			BucketEntry* ptr = ptrEntries;
+			BucketEntry* ptr_end = ptr + size;
+			while (ptr->entry != val) {
+				if (++ptr == ptr_end) {
+					return false;
+				}
+			}
+			return true;
+		}
+
+		return false;
+	}
+
+	BucketEntry* lookup(T val) {
+		if (size > 0) {
+			BucketEntry* ptr = ptrEntries;
+			BucketEntry* ptr_end = ptr + size;
+			while (ptr->entry != val) {
+				if (++ptr == ptr_end) {
+					return nullptr;
+				}
+			}
+			return ptr;
+		}
+
+		return nullptr;
+	}
+
+	BucketEntry* lookupIndex(I index) {
+		if (size > 0) {
+			BucketEntry* ptr = ptrEntries;
+			BucketEntry* ptr_end = ptr + size;
+			while (ptr->index != index) {
+				if (++ptr == ptr_end) {
+					return nullptr;
+				}
+			}
+			return ptr;
+		}
+
+		return nullptr;
+	}
+
+	BucketEntry* lookupNext(T val, BucketEntry* ptr) {
+		if (ptr != nullptr) {
+			BucketEntry* ptr_end = ptrEntries + size;
+			while (++ptr != ptr_end) {
+				if (ptr->entry == val) {
+					return ptr;
+				}
+			}
+		}
+
+		return nullptr;
+	}
+
+	BucketEntry* lookupIndexNext(I index, BucketEntry* ptr) {
+		if (ptr != nullptr) {
+			BucketEntry* ptr_end = ptrEntries + size;
+			while (++ptr != ptr_end) {
+				if (ptr->index == index) {
+					return ptr;
+				}
+			}
+		}
+
+		return nullptr;
+	}
+};
+
+extern void* bucketsEx;
+extern int numBuckets;
+
+template<typename T>
+void initializeBuckets(const size_t nElem);
+
+template<typename T, typename I = int>
+void addBucketsEx(T val, const I index, uint64_t(*hash)(I));
+
+
+template<typename T, typename I = int>
+void populateBucketsEx(T ar[], const size_t nElem, uint64_t(*hash)(I));
+	
+
+template<typename T, typename I = int>
+BucketEx<T>::BucketEntry* lookupHashEntryEx(I val, uint64_t(*hash)(I));
+
+template<typename T, typename I = int>
+BucketEx<T>::BucketEntry* lookupHashNextEntryEx(I val, typename BucketEx<T>::BucketEntry* ptr, uint64_t(*hash)(I));
+
+
+
+
+BucketEx<PtBead_Ptr>::BucketEntry* lookupHashEntry(int val, uint64_t(*hash)(int));
+BucketEx<PtBead_Ptr>::BucketEntry* lookupHashNextEntry(int val, BucketEx<PtBead_Ptr>::BucketEntry* ptr, uint64_t(*hash)(int));
+
+void populateBuckets(PtBead_Ptr ar[], const size_t nElem, uint64_t(*hash)(int));
+
+void addBucketsEntry(PtBead_Ptr val, const int index, uint64_t(*hash)(int));
+
 
 
 #endif

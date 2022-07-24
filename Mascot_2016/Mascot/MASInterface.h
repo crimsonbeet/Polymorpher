@@ -29,21 +29,21 @@ bool MASLayerCreateDBStorage(const char* inpLayer_name, long scale_factor);
 
 bool MASLayerAddPolygon2DBStorage(const char* inpLayer_name, long* points_x, long* points_y, long points_count); 
 
-bool MASEvaluate1(MAS_Function action, const char* inpLayer_name, const char* outLayer_name = 0); /*if outLayer_name==0 then input layer becomes output*/
+bool MASEvaluate1(MAS_Function action, const char* inpLayer_name, const char* outLayer_name = 0, bool preserve_scale_factor = false); /*if outLayer_name==0 then input layer becomes output*/
 
-bool MASEvaluate2(MAS_Function action, const char** inpLayers, long inpLayers_count, const char* outLayer_name); 
+bool MASEvaluate2(MAS_Function action, const char** inpLayers, long inpLayers_count, const char* outLayer_name, bool preserve_scale_factor = false);
 
-bool MASSize(const char* inpLayer_name, const char* outLayer_name, int width); /*if outLayer_name==0 then input layer becomes output*/
+bool MASSize(const char* inpLayer_name, const char* outLayer_name, int width, bool preserve_scale_factor = false); /*if outLayer_name==0 then input layer becomes output*/
 
 void MASReleaseRTStorage();
 
 long MASLayerCountRTPolygons(const char* outLayer_name, size_t* first_polygon_number = 0); 
 
-long MASLayerGetRTPolygonPointsCount(const char* outLayer_name, long polygon_number); 
+//long MASLayerGetRTPolygonPointsCount(const char* outLayer_name, long polygon_number); 
 
 long MASLayerGetRTPolygon(const char* outLayer_name, long polygon_number, long* points_x, long* points_y, long points_count, long& scale_factor);
 
-long MASLayerRTPolygonLocate(const char* outLayer_name, long x, long y); /*returns polygon number or -1*/
+//long MASLayerRTPolygonLocate(const char* outLayer_name, long x, long y); /*returns polygon number or -1*/
 
 bool MASLogLayer(const char* layer_Name);
 
