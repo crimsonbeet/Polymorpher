@@ -283,7 +283,7 @@ public:
 	void Close_ILayer(long n);
 	void FCloseAll(void);
 
-	bool MASEvaluateMain(long Function, const char* outLayer_name, int size_param = 0, bool preserve_scale_factor = false);
+	bool MASEvaluateMain(long Function, const char* outLayer_name, int size_param = 0, int log_graph = 0, bool preserve_scale_factor = false);
 	bool MASLayerAddPolygon2DBStorage(const char* inpLayer_name); 
 
 	bool MASInitialize(long blocks_count_x, long blocks_count_y); 
@@ -292,8 +292,8 @@ public:
 	bool MASLayerCreateDBStorage(const char* inpLayer_name, long scale_factor);
 	bool MASLayerAddPolygon2DBStorage(const char* inpLayer_name, long* points_x, long* points_y, long points_count); 
 	bool MASLayerAddPolygon2DBStorage(const char* inpLayer_name, _sAlong& points_x, _sAlong& points_y); 
-	bool MASEvaluate1(MAS_Function action, const char* inpLayer_name, const char* outLayer_name, bool preserve_scale_factor = false);
-	bool MASEvaluate2(MAS_Function action, const char** inpLayers, long inpLayers_count, const char* outLayer_name, int size_param = 0, bool preserve_scale_factor = false);
+	bool MASEvaluate1(MAS_Function action, const char* inpLayer_name, const char* outLayer_name, int log_graph = 0, bool preserve_scale_factor = false);
+	bool MASEvaluate2(MAS_Function action, const char** inpLayers, long inpLayers_count, const char* outLayer_name, int size_param = 0, int log_graph = 0, bool preserve_scale_factor = false);
 	void MASReleaseRTStorage();
 	long MASLayerCountRTPolygons(const char* outLayer_name, size_t* first_polygon_number = 0); 
 

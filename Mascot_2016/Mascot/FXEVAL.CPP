@@ -23,7 +23,7 @@ const char*fxeval="fxeval";
 const char*OvrlpMstPrf="\n!!! NOTE! OVERLAP ELIMINATION MUST BE PERFORMED.";
 
 
-bool __sizemain__(char Name[20], long Size, char Sign, bool preserve_scale_factor);
+bool __sizemain__(char Name[20], long Size, char Sign, int log_graph, bool preserve_scale_factor);
 
 
 
@@ -231,6 +231,7 @@ extern long __ZLDLA__;
 
 void MASCOT_IO::Dix_output(char do_change_chip_dimensions, LayerIdentity_Struct*lDim, char open_shape)
 {
+	const long s_factor = S_FACTOR + LAYER_S_FACTOR;
 	long LD;
 	long dx;
 	long dy;
@@ -326,10 +327,10 @@ void MASCOT_IO::Dix_output(char do_change_chip_dimensions, LayerIdentity_Struct*
 		ZX = ZLDCO0[LD];
 		ZY = ZLDCO1[LD];
 
-		long ZXMin = ZX;// -20;
-		long ZXMax = ZX;// +20;
-		long ZYMin = ZY;// -20;
-		long ZYMax = ZY;// +20;
+		long ZXMin = ZX >> s_factor;// -20;
+		long ZXMax = ZX >> s_factor;// +20;
+		long ZYMin = ZY >> s_factor;// -20;
+		long ZYMax = ZY >> s_factor;// +20;
 
 		if(do_change_chip_dimensions)
 		{
@@ -338,18 +339,20 @@ void MASCOT_IO::Dix_output(char do_change_chip_dimensions, LayerIdentity_Struct*
 			if(ZYMin<CYMIN)CYMIN = ZYMin;
 			if(ZYMax>CYMAX)CYMAX = ZYMax;
 		}
+		if (lDim)
+		{
+			if (ZXMin < lDim->CXMIN)lDim->CXMIN = ZXMin;
+			if (ZXMax > lDim->CXMAX)lDim->CXMAX = ZXMax;
+			if (ZYMin < lDim->CYMIN)lDim->CYMIN = ZYMin;
+			if (ZYMax > lDim->CYMAX)lDim->CYMAX = ZYMax;
+		}
+
 		if(add_dl)
 		{
 			ZX += dx;
 			ZY += dy;
 		}
-		if(lDim)
-		{
-			if(ZXMin<lDim->CXMIN)lDim->CXMIN = ZXMin;
-			if(ZXMax>lDim->CXMAX)lDim->CXMAX = ZXMax;
-			if(ZYMin<lDim->CYMIN)lDim->CYMIN = ZYMin;
-			if(ZYMax>lDim->CYMAX)lDim->CYMAX = ZYMax;
-		}
+
 		DX = ZX - OX;
 		DY = ZY - OY;
 
@@ -1002,15 +1005,15 @@ bool MASLayerAddPolygon2DBStorage(const char* inpLayer_name, long* points_x, lon
 bool MASLayerAddPolygon2DBStorage(const char* inpLayer_name, _sAlong& points_x, _sAlong& points_y) { 
 	return MaSCOT_IO.MASLayerAddPolygon2DBStorage(inpLayer_name, points_x, points_y);
 } 
-bool MASEvaluate1(MAS_Function action, const char* inpLayer_name, const char* outLayer_name, bool preserve_scale_factor) {
-	return MaSCOT_IO.MASEvaluate1(action, inpLayer_name, outLayer_name, preserve_scale_factor);
+bool MASEvaluate1(MAS_Function action, const char* inpLayer_name, const char* outLayer_name, int log_graph, bool preserve_scale_factor) {
+	return MaSCOT_IO.MASEvaluate1(action, inpLayer_name, outLayer_name, log_graph, preserve_scale_factor);
 } 
-bool MASEvaluate2(MAS_Function action, const char** inpLayers, long inpLayers_count, const char* outLayer_name, bool preserve_scale_factor) {
-	return MaSCOT_IO.MASEvaluate2(action, inpLayers, inpLayers_count, outLayer_name, preserve_scale_factor);
+bool MASEvaluate2(MAS_Function action, const char** inpLayers, long inpLayers_count, const char* outLayer_name, int log_graph, bool preserve_scale_factor) {
+	return MaSCOT_IO.MASEvaluate2(action, inpLayers, inpLayers_count, outLayer_name, 0, log_graph, preserve_scale_factor);
 } 
-bool MASSize(const char* inpLayer_name, const char* outLayer_name, int width, bool preserve_scale_factor) {
+bool MASSize(const char* inpLayer_name, const char* outLayer_name, int width, int log_graph, bool preserve_scale_factor) {
 	const char* in_layers[2] = { inpLayer_name, 0 };
-	return MaSCOT_IO.MASEvaluate2(MAS_Size, in_layers, 1, outLayer_name, width, preserve_scale_factor);
+	return MaSCOT_IO.MASEvaluate2(MAS_Size, in_layers, 1, outLayer_name, width, log_graph, preserve_scale_factor);
 }
 
 long MASLayerCountRTPolygons(const char* outLayer_name, size_t* first_polygon_number) { 
@@ -1385,7 +1388,7 @@ bool MASCOT_IO::MASLayerAddRTPolygon(const char* inpLayer_name, _sAlong& points_
 
 
 
-bool MASCOT_IO::MASEvaluateMain(long Function, const char* outLayer_name, int w, bool preserve_scale_factor) {
+bool MASCOT_IO::MASEvaluateMain(long Function, const char* outLayer_name, int w, int log_graph, bool preserve_scale_factor) {
 	bool rc  = true; 
 	try {
 		if(_dbHeader_Changed) {
@@ -1414,16 +1417,16 @@ bool MASCOT_IO::MASEvaluateMain(long Function, const char* outLayer_name, int w,
 			LFuActivateFirstFragment();
 			break;
 		case MFunction_OverlapElim:
-			rc = LFuEvaluaterLoop(MFunction_OverlapElim, 0, 0/*classifyType is main*/, preserve_scale_factor);
+			rc = LFuEvaluaterLoop(MFunction_OverlapElim, log_graph, 0/*classifyType is main*/, preserve_scale_factor);
 			break;
 		case MFunction_Size:
-			rc = __sizemain__(I_Layer[0].Name, w < 0 ? -w : w, w < 0 ? -1 : 1, preserve_scale_factor);
+			rc = __sizemain__(I_Layer[0].Name, w < 0 ? -w : w, w < 0 ? -1 : 1, log_graph, preserve_scale_factor);
 			break;
 		case MFunction_Area:
 			F_AREA_MAIN(I_Layer[0].Name);
 			break; 
 		default: 
-			rc = LFuEvaluaterLoop(Function, 0, 0/*classifyType is main*/, preserve_scale_factor);
+			rc = LFuEvaluaterLoop(Function, log_graph, 0/*classifyType is main*/, preserve_scale_factor);
 			break; 
 		} 
 	} 
@@ -1449,12 +1452,12 @@ bool MASCOT_IO::MASEvaluateMain(long Function, const char* outLayer_name, int w,
 } 
 
 
-bool MASCOT_IO::MASEvaluate1(MAS_Function action, const char* inpLayer_name, const char* outLayer_name, bool preserve_scale_factor) {
+bool MASCOT_IO::MASEvaluate1(MAS_Function action, const char* inpLayer_name, const char* outLayer_name, int log_graph, bool preserve_scale_factor) {
 	const char* in_layers[2] = {inpLayer_name, 0}; 
-	return MASEvaluate2(action, in_layers, 1, outLayer_name, preserve_scale_factor);
+	return MASEvaluate2(action, in_layers, 1, outLayer_name, 0, log_graph, preserve_scale_factor);
 } 
 
-bool MASCOT_IO::MASEvaluate2(MAS_Function action, const char** inpLayers, long inpLayers_count, const char* outLayer_name, int size_param, bool preserve_scale_factor) {
+bool MASCOT_IO::MASEvaluate2(MAS_Function action, const char** inpLayers, long inpLayers_count, const char* outLayer_name, int size_param, int log_graph, bool preserve_scale_factor) {
 	int Function = action; 
 
 	if(inpLayers == 0 || inpLayers_count <= 0) {
@@ -1503,7 +1506,7 @@ bool MASCOT_IO::MASEvaluate2(MAS_Function action, const char** inpLayers, long i
 
 
 
-	return MASEvaluateMain(Function, outLayer_name, size_param, preserve_scale_factor);
+	return MASEvaluateMain(Function, outLayer_name, size_param, log_graph, preserve_scale_factor);
 } 
 
 

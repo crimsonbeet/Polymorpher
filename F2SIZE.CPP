@@ -198,7 +198,7 @@ void LoadLbVectors(std::vector<std::vector<long>>& Xs, std::vector<std::vector<l
 			ZLDCO1[j] = y[j];
 		}
 		if (log_graph) {
-			graph_log_ZLDLIM("LoadmasterPhaseX", 0, 0);
+			graph_log_ZLDLIM("LoadmasterPhaseX", Delta_X_2 << S_FACTOR, Delta_Y_2 << S_FACTOR);
 		}
 		STATUS = 1;
 		char check_closure = 1;
@@ -326,9 +326,9 @@ void OVERLAP_ELIMINATION_SEGMENTS() {
 		}
 	}
 
-	//for (long I = 1; I < ZLBLIM; ++I) {
-	//	DUMMYJUNCTIONANALYSIS(GetLbBead(I));
-	//}
+	for (long I = 1; I < ZLBLIM; ++I) {
+		DUMMYJUNCTIONANALYSIS(GetLbBead(I));
+	}
 }
 
 
@@ -365,6 +365,8 @@ void READSHAPE_ANDSETUP_MINMAX(F_SIZE_JOB& JOB)
 	Do_Open_Shapes = MaSCOT_IO.I_READ_P(1, 1/*SetUp_Min_Max*/);
 
 
+	LAYER_S_FACTOR = MaSCOT_IO.I_Layer[0]._lIdentity.SCALE_FACTOR;
+
 	if(ZLDLIM) {
 		if(!Do_Open_Shapes)
 		{
@@ -378,12 +380,25 @@ void READSHAPE_ANDSETUP_MINMAX(F_SIZE_JOB& JOB)
 			}
 		}
 	}
+	else {
+		PYMAX <<= LAYER_S_FACTOR;
+		PXMAX <<= LAYER_S_FACTOR;
+	}
+
 	PLDLIM = ZLDLIM+1;
+
+
+
+	__SIZWID__ *= std::pow(2, LAYER_S_FACTOR);
 
 	PXMIN -= __SIZWID__;
 	PYMIN -= __SIZWID__;
 	PXMAX += __SIZWID__;
 	PYMAX += __SIZWID__;
+
+	Delta_X_2 = PXMIN;
+	Delta_Y_2 = PYMIN;
+
 
 	for (long j = 1; j < PLDLIM; ++j)
 	{
@@ -393,35 +408,27 @@ void READSHAPE_ANDSETUP_MINMAX(F_SIZE_JOB& JOB)
 	PXMAX -= PXMIN;
 	PYMAX -= PYMIN;
 
-	Delta_X_2 = PXMIN;
-	Delta_Y_2 = PYMIN;
 
-	S_FACTOR = LAYER_S_FACTOR = MaSCOT_IO.I_Layer[0]._lIdentity.SCALE_FACTOR;
+	if (ZLDLIM) {
+		long maxJ = PYMAX > PXMAX ? PYMAX : PXMAX;
+		do
+		{
+			++S_FACTOR;
+		} while (((maxJ << S_FACTOR) >> S_FACTOR) == maxJ);
+		--S_FACTOR;
 
-
-	long maxJ = PYMAX > PXMAX ? PYMAX : PXMAX;
-	do
-	{
-		++S_FACTOR;
-	} while (((maxJ << S_FACTOR) >> S_FACTOR) == maxJ);
-	--S_FACTOR;
-
-	if (S_FACTOR < 0)S_FACTOR = 0;
-	if (S_FACTOR > 12)S_FACTOR = 12;
+		if (S_FACTOR < 0)S_FACTOR = 0;
+		if (S_FACTOR > 12)S_FACTOR = 12;
 
 
-	S_FACTOR -= LAYER_S_FACTOR;
+		S_FACTOR -= LAYER_S_FACTOR;
 
 
-	Delta_X_2 <<= LAYER_S_FACTOR;
-	Delta_Y_2 <<= LAYER_S_FACTOR;
-
-	__SIZWID__ *= std::pow(2, LAYER_S_FACTOR);
-
-	PXMAX <<= S_FACTOR;
-	PYMAX <<= S_FACTOR;
-	PXMIN <<= S_FACTOR;
-	PYMIN <<= S_FACTOR;
+		PXMAX <<= S_FACTOR;
+		PYMAX <<= S_FACTOR;
+		PXMIN <<= S_FACTOR;
+		PYMIN <<= S_FACTOR;
+	}
 }
 
 
@@ -1020,7 +1027,7 @@ void Collar_Generator(int preserve_scaleFactor = 0, int log_graph = 0)
 			int mergeIterations = 0;
 			bool mergeIsDone = false;
 			while (!mergeIsDone) {
-				mergeIsDone = MergePoints();
+				mergeIsDone = MergePoints(S_FACTOR + LAYER_S_FACTOR);
 				++mergeIterations;
 			};
 
@@ -1065,7 +1072,7 @@ void Collar_Generator(int preserve_scaleFactor = 0, int log_graph = 0)
 					ZLDCO0[j] += offsX;
 					ZLDCO1[j] += offsY;
 				}
-				char do_change_chip_dimensions = 1;
+				char do_change_chip_dimensions = 0;
 				MaSCOT_IO.Dix_output(do_change_chip_dimensions, 0, Do_Open_Shapes);
 				++count;
 			}

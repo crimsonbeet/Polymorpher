@@ -258,7 +258,7 @@ long Back_ScalePoints(void)
 	int mergeIterations = 0;
 	bool mergeIsDone = false;
 	while(!mergeIsDone) {
-		mergeIsDone = MergePoints();
+		mergeIsDone = MergePoints(S_FACTOR);
 		++mergeIterations;
 	}; 
 
@@ -368,7 +368,7 @@ static uint64_t hashFunc(int x) {
 
 
 
-bool MergePoints() {
+bool MergePoints(const long s_factor) {
 	size_t NXcells = ZPTLIM;
 	size_t NYcells = ZPTLIM;
 
@@ -390,8 +390,6 @@ bool MergePoints() {
 
 		addBucketsEntry(pt, i * NXcells + j, hashFunc);
 	}
-
-	const long s_factor = S_FACTOR + LAYER_S_FACTOR;
 
 	const long maxManhDistance = ((1 << s_factor) >> 1);
 	//const long maxManhDistance = std::pow((1 << s_factor) >> 1, 2);
@@ -429,9 +427,8 @@ bool MergePoints() {
 						if (searchCellNumber > -1) {
 							auto searchEntry = lookupHashEntry(searchCellNumber, hashFunc);
 							while (searchEntry != nullptr) {
-								auto searchPt = searchEntry->entry;
-
-								if (pt != searchPt) {
+								if (searchEntry->processed == 0) {
+									auto searchPt = searchEntry->entry;
 									auto manhDistance = calcManhDistance(pt->ZPTCO1, pt->ZPTCO2, searchPt->ZPTCO1, searchPt->ZPTCO2);
 									if (manhDistance && manhDistance <= maxManhDistance) {
 										edges.push_back({ pt, searchPt, (long)manhDistance });

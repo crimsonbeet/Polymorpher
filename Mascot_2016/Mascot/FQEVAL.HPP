@@ -249,7 +249,7 @@ void F_SIZE_COLLARS(F_SIZE_JOB& JOB);
 
 void linearizeContour(std::vector<long>& x, std::vector<long>& y, double stepSize, const size_t maxSegmentSize); // external
 
-bool MergePoints();
+bool MergePoints(const long s_factor);
 
 
 typedef PtBead* PtBead_Ptr;

@@ -1501,19 +1501,33 @@ LbBead*LbGrp_FiMin(LbBead*LbGr)
 			pMin = p;
 			LbMi = l;
 		}
+		if(l == l->ZLBNxt) {
+			l->ZLBNxt = nullptr;
+		}
 	}
 	return LbMi;
 }
 void
 SET_LbGrp(LvBead*Lv, LbBead*TopLb)
 {
-	while(Lv)
+	LvBead* LvBegin = Lv;
+	while(Lv && Lv->ZLVAux != TopLb)
 	{
 		if(Lv->ZLVMyLbBead!=TopLb)
 		{
 			LbGrp_Mdfy(Lv->ZLVMyLbBead, TopLb);
 		}
+		Lv->ZLVAux = TopLb;
 		Lv = Lv->ZLVNextConcident;
+	}
+
+	if (Lv != nullptr) {
+		Lv->ZLVNextConcident = nullptr;
+	}
+	Lv = LvBegin;
+	while (Lv && Lv->ZLVAux != TopLb)
+	{
+		Lv->ZLVAux = nullptr;
 	}
 }
 void
@@ -1876,10 +1890,11 @@ iniFiXVt_1(void)
 			{
 				PTRAux_1[(PTRAux_1Lim++)] = (void*)VT;
 			}
-
-			Vt->ZVTAux = 0;
 		}
 
+		if (Vt != nullptr) {
+			Vt->ZVTAux = 0;
+		}
 		if (Vr != nullptr) {
 			Vr->ZVTAux = 0;
 		}
@@ -1906,7 +1921,7 @@ inline bool IsOdd(long k) {
 void
 Init_Find_Intersections(void)
 {
-	long i;
+	size_t i;
 	if(Classify_Iteration==1)
 	{
 		iniFiXVt_1();
@@ -1944,7 +1959,7 @@ Init_Find_Intersections(void)
 	if(PTRAux_2Lim>2)Quick_Sort(1, PTRAux_2Lim-1);
 }
 void
-Find_Intersections(LbBead*Lb, Find_Intersections_Summary*rval, long S_Factor = 0)
+Find_Intersections(LbBead*Lb, Find_Intersections_Summary*rval)
 {
 	long XO, XM, XI, YM;
 	long X3, X4, Y3, Y4, YMIN, YMAX;
@@ -1971,8 +1986,8 @@ Find_Intersections(LbBead*Lb, Find_Intersections_Summary*rval, long S_Factor = 0
 	IP = 0;
 	xo = XO = rval->Xdir = 0;
 
-	XM = (rval->LowerLeftPt->ZPTCO1)<<S_Factor;
-	YM = (rval->Ydir)<<S_Factor;
+	XM = (rval->LowerLeftPt->ZPTCO1);
+	YM = (rval->Ydir);
 
 	vp = &INDAux_3[0];
 	for(v3 = (*vp); v3; vp = vn, v3 = (*vn))
@@ -1989,8 +2004,8 @@ Find_Intersections(LbBead*Lb, Find_Intersections_Summary*rval, long S_Factor = 0
 		P3 = V3->ZVTCO1;
 		P4 = V3->ZVTCO2;
 
-		Y3 = P3->ZPTCO2<<S_Factor;
-		Y4 = P4->ZPTCO2<<S_Factor;
+		Y3 = P3->ZPTCO2;
+		Y4 = P4->ZPTCO2;
 
 		YMIN = Y3>Y4? (YMAX=Y3, Y4): (YMAX=Y4, Y3);
 
@@ -2002,8 +2017,9 @@ Find_Intersections(LbBead*Lb, Find_Intersections_Summary*rval, long S_Factor = 0
 		}
 		if(Up? YMIN>YM: YMAX<YM)break;
 
-		X3 = P3->ZPTCO1<<S_Factor;
-		X4 = P4->ZPTCO1<<S_Factor;
+		X3 = P3->ZPTCO1;
+		X4 = P4->ZPTCO1;
+
 		if(X4<XO||X3>=XM)continue;
 
 		if(YMIN==YMAX) XO = X4, VT = 0, IP = P4;
@@ -2030,7 +2046,7 @@ Find_Intersections(LbBead*Lb, Find_Intersections_Summary*rval, long S_Factor = 0
 		rval->Au = au;
 		if(XO>=XM)
 		{
-			zabort("Find_Ix_Intersect",__LINE__);
+			zabort("Find_Intersections",__LINE__);
 		}
 	}
 	rval->Vt = VT;

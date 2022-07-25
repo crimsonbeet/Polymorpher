@@ -29,11 +29,11 @@ bool MASLayerCreateDBStorage(const char* inpLayer_name, long scale_factor);
 
 bool MASLayerAddPolygon2DBStorage(const char* inpLayer_name, long* points_x, long* points_y, long points_count); 
 
-bool MASEvaluate1(MAS_Function action, const char* inpLayer_name, const char* outLayer_name = 0, bool preserve_scale_factor = false); /*if outLayer_name==0 then input layer becomes output*/
+bool MASEvaluate1(MAS_Function action, const char* inpLayer_name, const char* outLayer_name = 0, int log_graph = 0, bool preserve_scale_factor = false); /*if outLayer_name==0 then input layer becomes output*/
 
-bool MASEvaluate2(MAS_Function action, const char** inpLayers, long inpLayers_count, const char* outLayer_name, bool preserve_scale_factor = false);
+bool MASEvaluate2(MAS_Function action, const char** inpLayers, long inpLayers_count, const char* outLayer_name, int log_graph = 0, bool preserve_scale_factor = false);
 
-bool MASSize(const char* inpLayer_name, const char* outLayer_name, int width, bool preserve_scale_factor = false); /*if outLayer_name==0 then input layer becomes output*/
+bool MASSize(const char* inpLayer_name, const char* outLayer_name, int width, int log_graph = 0, bool preserve_scale_factor = false); /*if outLayer_name==0 then input layer becomes output*/
 
 void MASReleaseRTStorage();
 

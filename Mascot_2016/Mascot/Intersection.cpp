@@ -438,8 +438,8 @@ char Find_Intersections(unsigned short Lf) // returns 1, if coincidence was foun
 		H314 = S314 >D43 ? 1 : S314 <-D43 ? -1 : 0;
 		H324 = S324 >D43 ? 1 : S324 <-D43 ? -1 : 0;
 
-		DF21 = (H132==-H142)&&(H132);
-		DF43 = (H324==-H314)&&(H324);
+		DF21 = (H132==-H142)&&(H132!=0);
+		DF43 = (H324==-H314)&&(H324!=0);
 
 		if(DF21&&DF43)I_Type = 5;
 		else
@@ -736,7 +736,7 @@ void Initiate_Intersect_Lv(LvBead*Lv) {
 
 	Lv_isHorizontal = Lv_Ymin==Lv_Ymax;
 	Lv_isVertical = Lv_Xmin==Lv_Xmax;
-	Lv_isOrtogonal = Lv_isVertical || Lv_isHorizontal;
+	Lv_isOrtogonal = Lv_isVertical != 0 || Lv_isHorizontal != 0;
 
 	_Lf_ = -1;
 } 
@@ -783,7 +783,7 @@ void Lf_MergeChains() {
 	for(long j = 0; j<Lf_AddedChainsLim; ++j)
 	{
 		long Lf = Lf_AddedChains[j];
-
+#pragma warning(disable : 6011)
 		Lf_VtChainLast[Lf]->ZVTNextInTreeVtBead = Lf_First[Lf];
 		Lf_First[Lf] = Lf_VtChainFirst[Lf];
 
