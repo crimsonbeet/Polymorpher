@@ -288,10 +288,14 @@ COMBINE_C_POLYGONS(void)
 /**/
 void CleanZPTHASH()
 {
-	memset(ZPTHASH, 0, (ZPBLIM+1)*sizeof(PtBead*));
+	memset(ZPTHASH, 0, ((size_t)ZPBLIM+1)*sizeof(PtBead*));
+	for (long p = 1; p < ZPTLIM; ++p) {
+		auto pt = GetPtBead(p);
+		pt->ZPTNxt = 0;
+	}
 }
 
-inline long int GetHashNumber(long int S) { 
+long int GetPointHashNumber(long int S) { 
 	long h = S & ZPBLIM;
 	if(!h) {
 		if(S) {
@@ -332,7 +336,7 @@ PtBead*IPOINT4(long X, long Y)
 	long S;
 	long h;
 	S = X+Y;
-	h = GetHashNumber(S);
+	h = GetPointHashNumber(S);
 	P = ZPTHASH[h];
 	while(P)
 	{
@@ -356,7 +360,7 @@ PtBead*IPOINT5(long X, long Y)
 	long S;
 	long h;
 	S = (X+Y)>>S_FACTOR;
-	h = GetHashNumber(S);
+	h = GetPointHashNumber(S);
 	P = ZPTHASH[h];
 	while(P)
 	{
@@ -764,7 +768,7 @@ POINT_VECTOR_ANALYSIS(long first, char F_EVAL_INPROGRESS, char F_FULLANALYSIS_IN
 	for(Vt=first; Vt<ZVTLIM; ++Vt)
 	{
 		VT = GetVtBead(Vt);
-
+#pragma warning(disable:6011)
 		if(!VT->ZVTMeInreverse)
 		{
 			continue;
@@ -832,9 +836,12 @@ POINT_VECTOR_ANALYSIS(long first, char F_EVAL_INPROGRESS, char F_FULLANALYSIS_IN
 
 		if(ER==0)
 		{
-			VT->ZVTNextSortedVtBead = PV;
-			if(PS)PS->ZVTNextSortedVtBead = VT;
-			else  PT->ZPTFirstSortedVtBead = VT;
+			if (VT)
+				VT->ZVTNextSortedVtBead = PV;
+			if(PS)
+				PS->ZVTNextSortedVtBead = VT;
+			else
+				PT->ZPTFirstSortedVtBead = VT;
 			continue;
 		}
 		else
@@ -1350,8 +1357,15 @@ LbBead_Unload2InputXY(LbBead*LB, char run_linearizer, int log_graph)
 		} 
 		LD = ZLDLIM;
 
-		ZLDCO0[LD] = LV->ZLVPoint2->ZPTCO1;
-		ZLDCO1[LD] = LV->ZLVPoint2->ZPTCO2;
+		auto pt1 = LV->ZLVPoint1;
+		auto pt2 = LV->ZLVPoint2;
+
+		if (pt1 != pt2 || pt2->ZPTCO1 != pt1->ZPTCO1 || pt2->ZPTCO2 != pt1->ZPTCO2) {
+			++ZLDLIM;
+		}
+
+		ZLDCO0[LD] = pt2->ZPTCO1;
+		ZLDCO1[LD] = pt2->ZPTCO2;
 
 		if ((FetchReverseLv(LN) != nullptr && FetchReverseLv(LV) != nullptr)) {
 			if (FETCHREVERSE(LB, LV) != nullptr && FETCHREVERSE(LB, LN) != nullptr) {
@@ -1360,8 +1374,6 @@ LbBead_Unload2InputXY(LbBead*LB, char run_linearizer, int log_graph)
 				continue;
 			}
 		}
-
-		++ZLDLIM;
 
 		LV = LN;
 		LN = LV->ZLVNextLvBead;
@@ -1407,6 +1419,7 @@ LbBead_Unload2InputXY(LbBead*LB, char run_linearizer, int log_graph)
 	DETERMINE_CLOCKSTATUS(ZLDCO0, ZLDCO1, ZLDLIM, &A);
 	if (STATUS != 1) {
 		printf("LbBead_Unload2InputXY: total angle %f with %d points\r\n", A, ZLDLIM);
+		log_graph = 1;
 	}
 
 	if (log_graph) {
@@ -2081,7 +2094,7 @@ Class_Intersection_Status(LbBead*LB, long S_Factor = 0)
 
 	Find_Intersections_Summary rval{};
 
-	Find_Intersections(LB, &rval);
+	//Find_Intersections(LB, &rval);
 
 	if(rval.Vt)
 	{

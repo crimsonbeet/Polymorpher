@@ -196,6 +196,7 @@ extern ipoint*IPOINT;
 PtBead*IPOINT0(long X, long Y);
 PtBead*IPOINT4(long X, long Y);
 PtBead*IPOINT5(long X, long Y);
+long int GetPointHashNumber(long int S);
 void l_swap(long&A, long&B);
 void COMBINE_C_POLYGONS(void);
 void CleanZPTHASH();

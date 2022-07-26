@@ -28,6 +28,7 @@ void ScalePoints(void)
 }
 
 void ScalePoints(_sAlong& x, _sAlong& y, long lim, long s_factor) {
+	IPOINT = IPOINT5;
 	for (long j = 0; j < lim; ++j) {
 		x[j] <<= s_factor;
 		y[j] <<= s_factor;
@@ -40,10 +41,12 @@ Back_Scale_1(void)
 	register long p, l;
 	PtBead*Pt;
 
-	double sf = ((int64_t)1L)<<S_FACTOR;
+	const double sf = ((int64_t)1L)<<S_FACTOR;
 
 	for(p = 1; p<ZPTLIM; ++p) {
 		Pt = GetPtBead(p);
+		//Pt->ZPTCO1 >>= S_FACTOR;
+		//Pt->ZPTCO2 >>= S_FACTOR;
 		Pt->ZPTCO1 = (long)floor((double)Pt->ZPTCO1/sf +0.5);
 		Pt->ZPTCO2 = (long)floor((double)Pt->ZPTCO2/sf +0.5);
 	}
@@ -51,18 +54,19 @@ Back_Scale_1(void)
 	PYMIN >>= S_FACTOR;
 	PXMAX >>= S_FACTOR;
 	PYMAX >>= S_FACTOR;
+
+	IPOINT = IPOINT4;
 }
 void
 Back_Scale_2(void)
 {
 	register long X;
 	register long Y;
-	register long S;
 	register long h;
+
 	PtBead*Pt;
 	PtBead*PT;
 
-	CleanZPTHASH();
 	for(long p = 1; p<ZPTLIM; ++p)
 	{
 		Pt = GetPtBead(p);
@@ -71,23 +75,16 @@ Back_Scale_2(void)
 		}
 		if(Pt->ZPTAux) {
 			/* 
-				Residual after the previous iteration. 
+				Residual from previous iteration. 
 				Skip it. 
 			*/
 			continue;
 		}
 		Y = Pt->ZPTCO2;
 		X = Pt->ZPTCO1;
-		S = X+Y;
-		h = S&ZPBLIM;
-		if(!h)
-		{
-			if(S)
-			{
-				do S>>=1; while(!(S&1));
-				h = S&ZPBLIM;
-			}
-		}
+
+		h = GetPointHashNumber(X + Y);
+
 		PT = ZPTHASH[h];
 		while(PT)
 		{
@@ -105,33 +102,12 @@ Back_Scale_2(void)
 			Pt->ZPTAux = PT;
 		} 
 	}
-	IPOINT = IPOINT4;
-}
-
-void
-Back_Scale_5(void)
-{
-	register long lv;
-	LvBead* Lv;
-	PtBead* Pt;
-	for (lv = 1; lv < ZLVLIM; lv++)
-	{
-		Lv = GetLvBead(lv);
-		PtBead*& P1 = Lv->ZLVPoint1;
-		PtBead*& P2 = Lv->ZLVPoint2;
-
-		Pt = (PtBead*)P1->ZPTAux;
-		if (Pt)P1 = Pt;
-
-		Pt = (PtBead*)P2->ZPTAux;
-		if (Pt)P2 = Pt;
-	}
 }
 
 void
 Back_Scale_3(void)
 {
-	VtBead*V4;
+	VtBead*Vr;
 	VtBead*Vt;
 	PtBead*Pt;
 	PtBead*P1;
@@ -144,8 +120,8 @@ Back_Scale_3(void)
 		FA = FB = 0;
 		Vt = GetVtBead(vt);
 
-		V4 = Vt->ZVTMeInreverse;
-		if(!V4)
+		Vr = Vt->ZVTMeInreverse;
+		if(!Vr)
 		{
 			continue;
 		}
@@ -155,19 +131,19 @@ Back_Scale_3(void)
 		Pt = (PtBead*)P1->ZPTAux;
 		if(Pt)
 		{
-			Vt->ZVTCO1 = V4->ZVTCO2 = Pt;
+			Vt->ZVTCO1 = Vr->ZVTCO2 = Pt;
 			FA = 1;
 		}
 		Pt = (PtBead*)P2->ZPTAux;
 		if(Pt)
 		{
-			Vt->ZVTCO2 = V4->ZVTCO1 = Pt;
+			Vt->ZVTCO2 = Vr->ZVTCO1 = Pt;
 			FB = 1;
 		}
 		if(FA||FB)
 		{
 			Relink_Lv_Pt(Vt);
-			Relink_Lv_Pt(V4);
+			Relink_Lv_Pt(Vr);
 		}
 	}
 }
@@ -246,9 +222,25 @@ Back_Scale_4(void)
 }
 
 
-void CleanPvBead(void)
+void CleanPvBeads()
 {
-	for(long p = 1; p<ZPTLIM; ++p) GetPtBead(p)->ZPTAux = 0;
+	for (long p = 1; p < ZPTLIM; ++p) {
+		auto pt = GetPtBead(p);
+		pt->ZPTAux = 0;
+	}
+}
+
+void CleanPvTable() {
+	for (long p = 1; p < ZPTLIM; ++p) {
+		auto pt = GetPtBead(p);
+
+		for (auto vt = pt->ZPTFirstSortedVtBead; vt; ) {
+			auto vn = vt->ZVTNextSortedVtBead;
+			vt->ZVTNextSortedVtBead = 0;
+			vt = vn;
+		}
+		pt->ZPTFirstSortedVtBead = 0;
+	}
 }
 
 
@@ -263,12 +255,19 @@ long Back_ScalePoints(void)
 	}; 
 
 
-	CleanPvBead();
+	CleanZPTHASH();
+	CleanPvBeads();
 
 	Back_Scale_1();
 	Back_Scale_2();
+	Back_Scale_3();
+	Back_Scale_4();
 
-	CleanPvBead();
+	CleanPvTable();
+	POINT_VECTOR_ANALYSIS();
+
+
+	CleanPvBeads();
 
 	return 0; 
 }
@@ -393,6 +392,7 @@ bool MergePoints(const long s_factor) {
 
 	const long maxManhDistance = ((1 << s_factor) >> 1);
 	//const long maxManhDistance = std::pow((1 << s_factor) >> 1, 2);
+	//const long maxManhDistance = std::pow((1 << s_factor), 2);
 
 	auto calcManhDistance = [&](double x1, double y1, double x2, double y2) -> double {
 		return std::max(std::abs(x1 - x2), std::abs(y1 - y2));
@@ -419,6 +419,8 @@ bool MergePoints(const long s_factor) {
 			auto entry = lookupHashEntry(cellNumber, hashFunc);
 			while (entry != nullptr) {
 				if (entry->processed == 0) {
+					entry->processed = 1;
+
 					auto pt = entry->entry;
 
 					int neighboringCells[] = { cellNumber, lookRight ? cellNumber + 1 : -1, lookDown ? cellNumber + NXcells : -1, lookRight && lookDown ? cellNumber + NXcells + 1 : -1 };
@@ -439,8 +441,6 @@ bool MergePoints(const long s_factor) {
 							}
 						}
 					}
-
-					entry->processed = 1;
 				}
 
 				entry = lookupHashNextEntry(cellNumber, entry, hashFunc);
@@ -472,6 +472,8 @@ bool MergePoints(const long s_factor) {
 		int t; // target, it is the parent of the node
 		int w; // it is a rank of the node
 
+		int f; // flag whether it was merged
+
 		double avg_x;
 		double avg_y;
 	};
@@ -484,6 +486,7 @@ bool MergePoints(const long s_factor) {
 
 		unionNodes[p].t = p;
 		unionNodes[p].w = 0;
+		unionNodes[p].f = 0;
 
 		pt->ZPTAux = (PtBead_Ptr)p;
 
@@ -551,6 +554,10 @@ bool MergePoints(const long s_factor) {
 
 			r.avg_x = (s.avg_x + t.avg_x) / 2;
 			r.avg_y = (s.avg_y + t.avg_y) / 2;
+
+			r.f = 1;
+			s.f = 1;
+			t.f = 1;
 		}
 		else {
 			isDone = false;
@@ -559,13 +566,20 @@ bool MergePoints(const long s_factor) {
 
 	for (int p = 1; p < ZPTLIM; ++p) {
 		auto pt = GetPtBead(p);
+		pt->ZPTAux = 0;
 
-		int clusterIndex = (int)pt->ZPTAux;
+		if (unionNodes[p].f == 0) {
+			continue;
+		}
 
-		auto& clusterRoot = unionNodes[unionFind((size_t)pt->ZPTAux)];
+		auto& clusterRoot = unionNodes[unionFind(p)];
 
 		pt->ZPTCO1 = std::floor(clusterRoot.avg_x + 0.5);
 		pt->ZPTCO2 = std::floor(clusterRoot.avg_y + 0.5);
+
+		//if (clusterRoot.t != p) {
+		//	pt->ZPTAux = GetPtBead(clusterRoot.t);
+		//}
 	}
 
 

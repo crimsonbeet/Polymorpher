@@ -1009,7 +1009,7 @@ void Collar_Generator(int preserve_scaleFactor = 0, int log_graph = 0)
 
 		for (long i = __iEx__ ? 2 : 1; i < ZLBLIM; ++i) {
 			LbBead* Lb = GetLbBead(i);
-			if (Lb->ZLBFirstLvBead != 0 && LbBead_Unload2InputXY(Lb, 1, log_graph)) {
+			if (Lb->ZLBFirstLvBead != 0 && LbBead_Unload2InputXY(Lb, 0, log_graph)) {
 				std::vector<long> &x = Xs[count];
 				std::vector<long> &y = Ys[count];
 				++count; 

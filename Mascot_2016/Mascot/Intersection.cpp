@@ -292,7 +292,7 @@ char Find_Intersections(unsigned short Lf) // returns 1, if coincidence was foun
 {
 	double&X21=Lv_X21;
 	double&Y21=Lv_Y21;
-	double&D21=Lv_D21;
+	double&D21=Lv_D21; //(1<<(S_FACTOR+LAYER_S_FACTOR))*(1<<(S_FACTOR+LAYER_S_FACTOR))/2
 
 	long A;
 	long B;
@@ -427,7 +427,10 @@ char Find_Intersections(unsigned short Lf) // returns 1, if coincidence was foun
 		Y23 = _Y2_-Y3;
 		X43 = X4-X3;
 		Y43 = Y4-Y3;
-		D43 = ((Vt_Ymax-Vt_Ymin)+X43)/(2.0);
+
+		//D43 = ((double)(Vt_Ymax-Vt_Ymin)+(X43))/(2.0);
+		D43 = std::sqrt(std::pow(Vt_Ymax - Vt_Ymin, 2) + std::pow(X43, 2)); // Intersection sensitivity; look for same comment: ANB-25-JUL-2022
+
 		S132 = X31 *Y21 - Y31 *X21;
 		S142 = X41 *Y21 - Y41 *X21;
 		S314 = X43 *Y31 - Y43 *X31;
@@ -669,7 +672,8 @@ IntCoincidentVectors:
 
 		Lv_isInreverse = (_X1_>_X2_)||((_X1_==_X2_)&&(_Y1_>_Y2_));
 
-		D21 = ((double)(Lv_Ymax-Lv_Ymin)+(Lv_Xmax-Lv_Xmin))/(2.0);
+		//D21 = ((double)(Lv_Ymax-Lv_Ymin)+(Lv_Xmax-Lv_Xmin))/(2.0);
+		D21 = std::sqrt(std::pow(Lv_Ymax - Lv_Ymin, 2) + std::pow(Lv_Xmax - Lv_Xmin, 2)); // ANB-25-JUL-2022
 	}
 
 	return 0; 
@@ -732,7 +736,8 @@ void Initiate_Intersect_Lv(LvBead*Lv) {
 	Lv_Y21 = _Y2_ - _Y1_;
 	Lv_X21 = _X2_ - _X1_;
 
-	Lv_D21 = ((double)(Lv_Ymax-Lv_Ymin)+(Lv_Xmax-Lv_Xmin))/(2.0);
+	//Lv_D21 = ((double)(Lv_Ymax-Lv_Ymin)+(Lv_Xmax-Lv_Xmin))/(2.0);
+	Lv_D21 = std::sqrt((double)std::pow(Lv_Ymax - Lv_Ymin, 2) + std::pow(Lv_Xmax - Lv_Xmin, 2)); // ANB-25-JUL-2022
 
 	Lv_isHorizontal = Lv_Ymin==Lv_Ymax;
 	Lv_isVertical = Lv_Xmin==Lv_Xmax;
