@@ -99,7 +99,7 @@ void Unload_LV_Polygons(long Xg, long Yg)
 		{
 			continue;
 		}
-		if(LbBead_Unload2InputXY(Lb))
+		if(LbBead_Unload2InputXY(Lb), 0)
 		{
 			++fZiOutT;
 			MaSCOT_IO.Dix_output();

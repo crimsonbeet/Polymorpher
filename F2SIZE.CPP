@@ -309,7 +309,7 @@ void OVERLAP_ELIMINATION_SEGMENTS() {
 
 		// here: unload all polygons to vectors; reload vectors on next iteration.
 
-		originalLbCount = UnloadLbVectors(Xs, Ys, 1, c < 99);
+		originalLbCount = UnloadLbVectors(Xs, Ys, 0, c < 99);
 
 		POINT_VECTOR_ANALYSIS(2);
 
@@ -1060,7 +1060,7 @@ void Collar_Generator(int preserve_scaleFactor = 0, int log_graph = 0)
 		for (long i = 1; i < ZLBLIM; ++i) {
 			LbBead* Lb = GetLbBead(i);
 			if (Lb->ZLBFirstLvBead != 0) {
-				if (!LbBead_Unload2InputXY(Lb, 1, log_graph)) {
+				if (!LbBead_Unload2InputXY(Lb, 0, log_graph)) {
 					printf("Collar_Generator.LbBead_Unload2InputXY failed\r\n");
 					continue;
 				}

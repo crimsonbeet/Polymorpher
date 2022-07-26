@@ -2094,7 +2094,7 @@ Class_Intersection_Status(LbBead*LB, long S_Factor = 0)
 
 	Find_Intersections_Summary rval{};
 
-	//Find_Intersections(LB, &rval);
+	Find_Intersections(LB, &rval);
 
 	if(rval.Vt)
 	{

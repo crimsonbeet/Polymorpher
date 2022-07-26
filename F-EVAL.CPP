@@ -434,7 +434,7 @@ int WRITE_C_POLYGONS() {
 		if(!Lb->ZLBFirstLvBead) {
 			continue;
 		}
-		if(!LbBead_Unload2InputXY(Lb)) {
+		if(!LbBead_Unload2InputXY(Lb, 0)) {
 			continue;
 		}
 		if(MaSCOT_IO.O_Layer.File) { 
