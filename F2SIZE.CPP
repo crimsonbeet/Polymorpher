@@ -309,7 +309,7 @@ void OVERLAP_ELIMINATION_SEGMENTS() {
 
 		// here: unload all polygons to vectors; reload vectors on next iteration.
 
-		originalLbCount = UnloadLbVectors(Xs, Ys, 0, c < 99);
+		originalLbCount = UnloadLbVectors(Xs, Ys, c < 99, c < 99);
 
 		POINT_VECTOR_ANALYSIS(2);
 
