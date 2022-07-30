@@ -57,8 +57,8 @@ Back_Scale_1(void)
 
 	IPOINT = IPOINT4;
 }
-void
-Back_Scale_2(void)
+
+bool Back_Scale_2(void)
 {
 	register long X;
 	register long Y;
@@ -66,6 +66,9 @@ Back_Scale_2(void)
 
 	PtBead*Pt;
 	PtBead*PT;
+
+	bool pv_analysis_isNeeded = false;
+
 
 	for(long p = 1; p<ZPTLIM; ++p)
 	{
@@ -100,12 +103,14 @@ Back_Scale_2(void)
 		else 
 		{ 
 			Pt->ZPTAux = PT;
+			pv_analysis_isNeeded = true;
 		} 
 	}
+
+	return pv_analysis_isNeeded; 
 }
 
-void
-Back_Scale_3(void)
+void Back_Scale_3(void)
 {
 	VtBead*Vr;
 	VtBead*Vt;
@@ -215,14 +220,14 @@ Back_Scale_4(void)
 				Lo->ZLVNextLvBead = Lv->ZLVNextLvBead;
 			}
 			else Lo = Lv;
-			Lv = Lv->ZLVNextLvBead;
+			Lv = Lv->ZLVNextLvBead; 
 		}
 		while(Lv&&(Le!=Lv));
 	}
 }
 
 
-void CleanPvBeads()
+void CleanPTLinks()
 {
 	for (long p = 1; p < ZPTLIM; ++p) {
 		auto pt = GetPtBead(p);
@@ -233,13 +238,11 @@ void CleanPvBeads()
 void CleanPvTable() {
 	for (long p = 1; p < ZPTLIM; ++p) {
 		auto pt = GetPtBead(p);
-
-		for (auto vt = pt->ZPTFirstSortedVtBead; vt; ) {
-			auto vn = vt->ZVTNextSortedVtBead;
-			vt->ZVTNextSortedVtBead = 0;
-			vt = vn;
-		}
 		pt->ZPTFirstSortedVtBead = 0;
+	}
+	for (long v = 2; v < ZVTLIM; ++v) {
+		auto vt = GetVtBead(v);
+		vt->ZVTNextSortedVtBead = 0;
 	}
 }
 
@@ -256,18 +259,20 @@ long Back_ScalePoints(void)
 
 
 	CleanZPTHASH();
-	CleanPvBeads();
+	CleanPTLinks();
 
 	Back_Scale_1();
-	Back_Scale_2();
+	bool pv_analysis_isNeeded = Back_Scale_2();
 	Back_Scale_3();
 	Back_Scale_4();
 
-	CleanPvTable();
-	POINT_VECTOR_ANALYSIS();
+	if (pv_analysis_isNeeded) {
+		CleanPvTable();
+		POINT_VECTOR_ANALYSIS();
+	}
 
 
-	CleanPvBeads();
+	CleanPTLinks();
 
 	return 0; 
 }

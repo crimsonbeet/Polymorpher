@@ -204,6 +204,7 @@ void Relink_Lv_Pt(VtBead*v);
 double Eval_Angle(double DX, double DY);
 void REMOVE_FROM_VT_CHAIN(LvBead*LV);
 LvBead*CLEAR_LB_PTR(LvBead*Lv, LvBead*Ln)/*From Lv To Ln*/; 
+void CLEAR_LB_PTR(LbBead* Lb);
 double COMPLVANGLE(LvBead*L);
 double COMPLDANGLE(long L);
 double COMPANGLE(long*x, long*y, long L);

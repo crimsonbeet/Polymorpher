@@ -1142,7 +1142,7 @@ F_SIZE_COLLARS(F_SIZE_JOB&JOB) {
 
 	MaSCOT_IO.SetMinMax();
 
-	MaSCOT_IO.O_Layer._lIdentity.layer_STATUS = Total_Shapes <= 1;
+	MaSCOT_IO.O_Layer._lIdentity.layer_STATUS = Total_Shapes > 0;
 
 	MaSCOT_IO.O_Layer._lIdentity.CXMIN = CXMIN;
 	MaSCOT_IO.O_Layer._lIdentity.CXMAX = CXMAX;

@@ -255,7 +255,8 @@ COMBINE(LbBead*LB)
 		L2->ZLVNextLvBead = L4;
 		L5->ZLVNextLvBead = L9;
 	}
-	B3->ZLBFirstLvBead = 0L;
+	CLEAR_LB_PTR(B3);
+	B3->ZLBFirstLvBead = 0L; // remove all references to this Lb from Vt table: ZVTFirstCoincident/ZLVNextConcident, and also clean ZLVMyVector
 	LB->ZLBFirstLvBead = L2; /*Set New Origin*/
 	return(1);
 }
@@ -1016,6 +1017,17 @@ LvBead*CLEAR_LB_PTR(LvBead*Lv, LvBead*Ln)/*From Lv To Ln*/
 
 	Ln->ZLVNextLvBead = Lv; // make circular reference. 
 	return LE;
+}
+void CLEAR_LB_PTR(LbBead* Lb)
+{
+	for (int lv = 1; lv < ZLVLIM; ++lv) {
+		auto Lv = GetLvBead(lv);
+		if (Lv->ZLVMyLbBead == Lb) {
+			REMOVE_FROM_VT_CHAIN(Lv);
+			Lv->ZLVMyLbBead = nullptr;
+			Lv->ZLVNextLvBead = nullptr;
+		}
+	}
 }
 long
 DUMMYJUNCTION(LbBead*LB, LvBead*LV, LvBead**ptrLV_Frist, LvBead**ptrLv_Reverse)
@@ -2142,7 +2154,7 @@ Class_Intersection_Status(LbBead*LB, long S_Factor = 0)
 
 	mask = MAKE_MASK(V3->ZVTStatus);
 
-	if(Target_Function==MFunction_And || Target_Function==MFunction_AndOne) // buildSLine
+	if(Target_Function == MFunction_Or || Target_Function==MFunction_And || Target_Function==MFunction_AndOne) // buildSLine
 	{
 		long s_div = 1L << S_Factor;
 		rval.Xdir = (long)floor((double)rval.Xdir  / s_div + 0.5);
