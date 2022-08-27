@@ -311,7 +311,10 @@ void OVERLAP_ELIMINATION_SEGMENTS() {
 
 		originalLbCount = UnloadLbVectors(Xs, Ys, c < 99, c < 99);
 
-		POINT_VECTOR_ANALYSIS(2);
+		char PV_Error = POINT_VECTOR_ANALYSIS(2);
+		//if (PV_Error) {
+		//	continue;
+		//}
 
 		for (long I = 1; I < ZLBLIM; ++I) {
 			DUMMYJUNCTIONANALYSIS(GetLbBead(I));
@@ -445,7 +448,7 @@ DEFINE_CSLOPE(long K, long I, long J)
 	A = Eval_Angle(X, Y);
 	X = ZLDCO4[K]-ZLDCO4[I];
 	Y = ZLDCO5[K]-ZLDCO5[I];
-	A = A + 360-Eval_Angle(X, Y);
+	A += 360-Eval_Angle(X, Y);
 	if(A>360)A-=360;
 	return(A);
 }
@@ -691,8 +694,6 @@ DEFINE_SEGMENT(char isNotFirstSegment, long J, long I, long K, std::ostringstrea
 	long SPT = 0; /*spline type*/
 	static long CANLess180Prev = 0;
 
-	//long SW1 = 0, SW2 = 0, SW3 = 0;
-
 
 	auto swap_X1Y1 = [&X1, &Y1]() {
 		d_swap(X1 + 4, X1 + 7);
@@ -750,7 +751,7 @@ DEFINE_SEGMENT(char isNotFirstSegment, long J, long I, long K, std::ostringstrea
 	Y1[6] = ((size_t)Yi<<1)-Y1[1];
 	switch(SPT)
 	{
-		case 0: /*GORIZONTAL!NEEDED-BOX-GENERATING*/
+		case 0: /*HORIZONTAL! IT NEEDS A BOX to BE GENERATED*/
 		XELBOW = X1[2]*__SIZWID__;
 		YELBOW = Y1[2]*__SIZWID__;
 		if (CANLess180)
@@ -793,25 +794,30 @@ DEFINE_SEGMENT(char isNotFirstSegment, long J, long I, long K, std::ostringstrea
 		if(!DEFINE_INTERSECTION(X1, Y1, X2, Y2, X1 + 3, Y1 + 3))
 			zabort(f2size,__LINE__);
 
-		//SW1 = POINTONSEGMENT(X1, Y1, X1[3], Y1[3]);
-		//SW2 = POINTONSEGMENT(X2, Y2, X1[3], Y1[3]);
-		//if(SPT == 3 && SW1&&SW2)
 		//{
-		//	XELBOW = IX;
-		//	YELBOW = IY;
-		//	DEFINE_ELBOW(X1, Y1, I);
-		//	if (CANLess180)
-		//		XELBOW = -XELBOW, YELBOW = -YELBOW;
+		//	double d = std::pow(X1[0] - X1[3], 2.0) + std::pow(Y1[0] - Y1[3], 2.0);
+		//	if (d < 1) {
+		//		X1[0] = X2[0];
+		//		Y1[0] = Y2[0];
+		//	}
+		//}
 
-		//	if(CANLess180Prev&&!CANLess180)CAN_Prev -= 360;
-		//	if(!CANLess180Prev&& CANLess180)CAN_Prev *=-1.0;
+		//{
+		//	long Xj = ZLDCO4[J];
+		//	long Yj = ZLDCO5[J];
+		//	long TX[4] = { Xj, X1[0], X2[0], Xj };
+		//	long TY[4] = { Yj, Y1[0], Y2[0], Yj };
 
-		//	if (F_C_Prev == 0)
-		//		if ((MAN + CAN_Prev) < 0)
-		//		{
-		//			swap_X1Y1();
-		//		}
-		//	break;
+		//	double A;
+
+		//	long* tx = TX + 0;
+		//	long* ty = TY + 0;
+
+		//	long s = DETERMINE_CLOCKSTATUS(tx, ty, 4, &A);
+		//	if (s != 1) {
+		//		X1[0] = X2[0];
+		//		Y1[0] = Y2[0];
+		//	}
 		//}
 
 		X2[2] =-X2[2];

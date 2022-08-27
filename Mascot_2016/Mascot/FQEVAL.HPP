@@ -207,12 +207,13 @@ LvBead*CLEAR_LB_PTR(LvBead*Lv, LvBead*Ln)/*From Lv To Ln*/;
 void CLEAR_LB_PTR(LbBead* Lb);
 double COMPLVANGLE(LvBead*L);
 double COMPLDANGLE(long L);
-double COMPANGLE(long*x, long*y, long L);
 long DETERMINE_CLOCKSTATUS(LbBead*B, double*A = nullptr);
-long DETERMINE_CLOCKSTATUS(_sAlong& x, _sAlong& y, long lim, double* A = nullptr);
+template<typename AR>
+long
+DETERMINE_CLOCKSTATUS(AR& x, AR& y, long lim, double* A = nullptr); // see zabort() to add materialization with a specific signature
 VtBead*SPLITVT(VtBead*V3, PtBead*IP);
 VtBead*INSERTV(PtBead*P1, PtBead*P2, LvBead*LV);
-void Classify_Polygons(char classifyType = 0); 
+void Classify_Polygons(char classifyType = 0, bool traceClassification = false);
 void INTERSECTION_ANALYSIS(bool preloaded = false, int first_lb = 1);
 char POINT_VECTOR_ANALYSIS(long first = 2, char F_EVAL_INPROGRESS = 1, char F_FULLANALYSIS_INPROGRESS = 0);
 void DUMMYJUNCTIONANALYSIS(LbBead*LB);
@@ -233,7 +234,7 @@ long LbBead_Unload2InputXY(LbBead*LB, char run_linearizer = 1, int log_graph = 0
 LbBead*Loadmaster(char check_closure = 0, char open_shape = 0);
 char POINT_VECTOR_CLASS_1(LbBead*LB);
 void POINT_VECTOR_CLASS_2(LbBead*LB, long LayerCode, long MaskCode/*when and or xor on itself*/);
-void Classify_Main(void);
+void Classify_Main(bool traceClassification = false);
 void Set_Rstat(LbBead*I, char call_flavor);
 void F_AREA_MAIN(const char* Name);
 

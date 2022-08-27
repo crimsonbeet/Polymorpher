@@ -102,22 +102,6 @@ LvBead*COMPSPLITLV_M(LvBead*L3, VtBead*V3, VtBead*V4, PtBead*IP);
 compsplitlv*COMPSPLITLV = COMPSPLITLV_M;
 splitlv*SPLITLV = SPLITLV_M;
 /**/
-void
-zabort(const char*ids, long lin)
-{
-	MASLog("\nModule %s: %ld", ids, lin);
-	if(zabort_proc)zabort_proc();
-	zabort();
-}
-void
-__FINISHEDNORMALLY__(void) {
-	//MASLog("\n!!! FINISHED NORMALLY. !!!\n");
-}
-void
-FinishedNormally(void){
-	__FINISHEDNORMALLY__();
-}
-/**/
 PtBead*GetPtBead(long Pt)
 {
 	PtBead*pt = &ZPtTBl[Pt];
@@ -433,12 +417,14 @@ COMPLDANGLE(long L)
 	}
 	return(Eval_Angle(X, Y));
 }
+template<typename Along>
 double
-COMPANGLE(_sAlong& x, _sAlong& y, long L)
+COMPANGLE(Along& x, Along& y, long L)
 {
 	double X, Y;
-	X = (double)(x[L]-x[L-1]);
-	Y = (double)(y[L]-y[L-1]);
+	const long l = L - 1;
+	X = (double)(x[L]-x[l]);
+	Y = (double)(y[L]-y[l]);
 	if(X==0&&Y==0)
 	{
 		SS_Fl = 1;
@@ -446,8 +432,9 @@ COMPANGLE(_sAlong& x, _sAlong& y, long L)
 	}
 	return(Eval_Angle(X, Y));
 }
+template<typename Along>
 long
-DETERMINE_CLOCKSTATUS(_sAlong& x, _sAlong& y, long lim, double* A)
+DETERMINE_CLOCKSTATUS(Along& x, Along& y, long lim, double* A)
 {
 	long S, D;
 	double F, L, C, T;
@@ -737,6 +724,9 @@ PVTable_ERASE_RedundantVTBead(VtBead*VT/*to be erased, must not be in PVTable*/,
 	VT->ZVTMeInreverse = 0;
 	Vt? Vt->ZVTMeInreverse = 0: 0;
 
+	VT->ZVTFirstCoincident = 0;
+	Vt? Vt->ZVTFirstCoincident = 0: 0;
+
 	//memset(VT, 0, sizeof(VtBead));
 	//if (Vt) {
 	//	memset(Vt, 0, sizeof(VtBead));
@@ -848,7 +838,8 @@ POINT_VECTOR_ANALYSIS(long first, char F_EVAL_INPROGRESS, char F_FULLANALYSIS_IN
 		else
 		if(ER==1)
 		{
-			if(VT!=PV)PVTable_ERASE_RedundantVTBead(VT, PV, F_EVAL_INPROGRESS, F_FULLANALYSIS_INPROGRESS);
+			if(VT!=PV)
+				PVTable_ERASE_RedundantVTBead(VT, PV, F_EVAL_INPROGRESS, F_FULLANALYSIS_INPROGRESS);
 			continue;
 		}
 
@@ -1563,7 +1554,8 @@ SET_INSIDE_ONE(LvBead*Lv_0, LbBead*TopLb, long MaskCode)
 	VtBead*Vt_1;
 	VtBead*Vt_2;
 	VtBead*Vt_3;
-	long Js;
+
+	long totalMarked = 0;
 
 	LbGrp_Mdfy(Lv_0->ZLVMyLbBead, TopLb);
 
@@ -1576,12 +1568,14 @@ SET_INSIDE_ONE(LvBead*Lv_0, LbBead*TopLb, long MaskCode)
 			Vt_2->ZVTStatus |= MaskCode;
 		}
 
+		++totalMarked;
+
 		Lv_0->ZLVAux = TopLb;
 
 		Lv_0 = Lv_0->ZLVNextLvBead;
 		Vt_1 = Lv_0->ZLVMyVector;
 
-		Js = PTRAux_1Lim;
+		long aux_1Lim = PTRAux_1Lim;
 		for(Vt_3 = Vt_1->ZVTCO1->ZPTFirstSortedVtBead; Vt_3; Vt_3 = Vt_3->ZVTNextSortedVtBead)
 		{
 			Lv_1 = Vt_3->ZVTFirstCoincident;
@@ -1598,9 +1592,12 @@ SET_INSIDE_ONE(LvBead*Lv_0, LbBead*TopLb, long MaskCode)
 			if(Vt_3==Vt_2)continue;
 			if(Vt_3==Vt_1)continue;
 
-			if(Lv_1->ZLVAux!=TopLb)PTRAux_1[++Js] = (void*)Lv_1;
+			if (Lv_1->ZLVAux != TopLb) {
+				PTRAux_1[++aux_1Lim] = (void*)Lv_1;
+			}
 		}
-		PTRAux_1Lim = Js;
+		PTRAux_1Lim = aux_1Lim;
+
 		Vt_2 = Vt_1->ZVTMeInreverse;
 	}
 	while(Lv_0->ZLVAux!=TopLb);
@@ -1725,16 +1722,19 @@ POINT_VECTOR_CLASS_2(LbBead*LB, long LayerCode, long MaskCode) /*After DUMMYJUNC
 		return;
 	}
 
-	LN = LV->ZLVNextLvBead;
+	Si_LbGrp = LB->ZLBGrp;
+	Si_LbNxt = Si_LbGrp!=LB||LB->ZLBNxt!=0;
+
+
+	int c = ZLVLIM * 10;
+
+
+	/*For Each LV*/
 
 	V3 = LV->ZLVMyVector;
 	V4 = V3->ZVTMeInreverse;
 
-	Si_LbGrp = LB->ZLBGrp;
-	Si_LbNxt = Si_LbGrp!=LB||LB->ZLBNxt!=0;
-
-	/*For Each LV*/
-	int c = ZLVLIM*10; 
+	LN = LV->ZLVNextLvBead;
 	do
 	{
 		SET_LbGrp(V3->ZVTFirstCoincident, LB);
@@ -1774,6 +1774,9 @@ POINT_VECTOR_CLASS_2(LbBead*LB, long LayerCode, long MaskCode) /*After DUMMYJUNC
 		if(Target_Function<0/*and or xor on itself*/&&(V3->ZVTStatus & LayerCode))V3->ZVTStatus |= MaskCode;
 
 		V3->ZVTStatus |= LayerCode;
+		if (VectorBelongsToLb(LB, V4)) {
+			V4->ZVTStatus |= LayerCode;
+		}
 
 		if(SI_Error)
 		{
@@ -1781,14 +1784,15 @@ POINT_VECTOR_CLASS_2(LbBead*LB, long LayerCode, long MaskCode) /*After DUMMYJUNC
 			{
 				LV = LN;
 				LN = LV->ZLVNextLvBead;
+
 				V3 = LV->ZLVMyVector;
 				V4 = V3->ZVTMeInreverse;
-			}
-			while(VectorBelongsToLb(LB, V4));
+			} while (VectorBelongsToLb(LB, V4));
 		}
 		else V3 = V5, V4 = V6, LV = LN, LN = LV->ZLVNextLvBead;
 	}
 	while(LV!=LE && c--); // ANB: july: error condition
+
 	if(c < 0) {
 		printf("POINT_VECTOR_CLASS_2 error condition 2\r\n");
 	}
@@ -2179,15 +2183,16 @@ Class_Intersection_Status(LbBead*LB, long S_Factor = 0)
 
 		LB->ZLBGrp = Gr_Com;
 		Lv = LB->ZLBFirstLvBead;
-		Le = Lv;
-		do
-		{
-			(V3=Lv->ZLVMyVector)->ZVTStatus |=mask;
-			(V3=V3->ZVTMeInreverse)->ZVTStatus |=mask;
+		if (Lv != nullptr) {
+			Le = Lv;
+			do
+			{
+				(V3 = Lv->ZLVMyVector)->ZVTStatus |= mask;
+				(V3 = V3->ZVTMeInreverse)->ZVTStatus |= mask;
 
-			Lv = Lv->ZLVNextLvBead;
+				Lv = Lv->ZLVNextLvBead;
+			} while (Lv != Le);
 		}
-		while(Lv!=Le);
 	}
 	while(Nx);
 	LB->ZLBNxt = Gr_Com->ZLBNxt;
@@ -2212,50 +2217,99 @@ Classify_Light(void)
 	}
 }
 void
-Classify_Main(void)
+Classify_Main(bool traceClassification)
 {
-	long Lb;
-	char Si;
 	LbGrp_Init();
 	iniPvClass();
-	for(Lb = 1; Lb<ZLBLIM; ++Lb)
+	for(long Lb = 1; Lb<ZLBLIM; ++Lb)
 	{
 		long L;
 		long M;
 		LbBead*LB = (LbBead*)PTRAux_2[Lb];
+
 		M = (L = LB->ZLBLayer)<<1;
 
 		POINT_VECTOR_CLASS_2(LB, L, M);
 	}
 
 	Classify_Iteration = 1;
-	do { 
-		Si = 0;
+	char notDone;
+	do {
+		notDone = 0;
+
 		Init_Find_Intersections();
-		for(Lb = 1; Lb<PTRAux_2Lim; ++Lb)
+		for(long Lb = 1; Lb<PTRAux_2Lim; ++Lb)
 		{
 			void*&Au = PTRAux_2[Lb];
 			if(Au)
 			{
 				if(Class_Intersection_Status((LbBead*)Au)==2)
 				{ 
-					Si = 1; 
+					notDone = 1;
 				} 
 			}
 		}
+
 		++Classify_Iteration;
-	} while(Si); 
+
+	} while(notDone);
+
 	--Classify_Iteration;
+
+	if (!traceClassification) {
+		return;
+	}
+
+
+	std::map<std::string, std::ostringstream> streams;
+
+	for (long vt = 2; vt < ZVTLIM; ++vt) {
+		VtBead* v1 = GetVtBead(vt);
+		if (!v1->ZVTMeInreverse) {
+			v1->ZVTStatus = -1;
+		}
+		long st = v1->ZVTStatus;
+
+		std::string key;
+		if (st == 0) {
+			key = '0';
+		}
+		else {
+			for (int s = 0; s < 32; ++s) {
+				int b = 1 << s;
+				if ((st & b) == b) {
+					char buffer[_MAX_U64TOSTR_BASE2_COUNT];
+					key += _itoa(b, buffer, 32);
+				}
+			}
+		}
+
+		std::map<std::string, std::ostringstream>::iterator iter = streams.find(key);
+		if (iter == streams.end()) {
+			streams[key] = std::ostringstream();
+		}
+
+		std::ostringstream& ostr = streams[key];
+
+		ostr << v1->ZVTCO1->ZPTCO1 << ',' << v1->ZVTCO1->ZPTCO2 << ',' << v1->ZVTCO2->ZPTCO1 << ',' << v1->ZVTCO2->ZPTCO2 << std::endl;
+	}
+
+	std::map<std::string, std::ostringstream>::iterator iter = streams.begin();
+	while (iter != streams.end()) {
+		WriteStream2file(&iter->second, "ClassifyBits" + iter->first);
+		++iter;
+	}
+
 }
 void
-Classify_Polygons(char lightclassify) { 
+Classify_Polygons(char lightclassify, bool traceClassification) {
 	if(lightclassify)
 	{ 
 		Classify_Light();
 	} 
 	else 
 	{ 
-		Classify_Main(); 
+		Classify_Main(traceClassification);
 	}
 } 
 
@@ -2351,5 +2405,22 @@ Set_Rstat(LbBead*Lb, char call_flavor)
 }
 
 
-
+void
+zabort(const char* ids, long lin)
+{
+	MASLog("\nModule %s: %ld", ids, lin);
+	if (zabort_proc)zabort_proc();
+	zabort();
+	long* tx = nullptr;
+	long* ty = nullptr;
+	DETERMINE_CLOCKSTATUS<long*>(tx, ty, 3);
+}
+void
+__FINISHEDNORMALLY__(void) {
+	//MASLog("\n!!! FINISHED NORMALLY. !!!\n");
+}
+void
+FinishedNormally(void) {
+	__FINISHEDNORMALLY__();
+}
 

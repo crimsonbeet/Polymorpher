@@ -42,7 +42,7 @@ char Vt_isInreverse;
 
 char Lv_isVertical;
 char Lv_isHorizontal;
-char Lv_isOrtogonal;
+char Lv_isOrthogonal;
 
 double Lv_Y21;
 double Lv_X21;
@@ -341,6 +341,13 @@ char Find_Intersections(unsigned short Lf) // returns 1, if coincidence was foun
 	double S314;
 	double S324;
 
+	bool p1_eq_p3;
+	bool p2_eq_p4;
+	bool p1_eq_p4;
+	bool p2_eq_p3;
+
+
+
 	memset(__VT0__, 0, sizeof(VtBead)<<1);
 
 	Vt = *(Lf_First+Lf);
@@ -404,17 +411,22 @@ char Find_Intersections(unsigned short Lf) // returns 1, if coincidence was foun
 		Vt_isVertical = 0;
 		Vt_isHorizontal = 0;
 
-		if(Lv_isOrtogonal)
+		p1_eq_p3 = _P1_ == P3;
+		p2_eq_p4 = _P2_ == P4;
+		p1_eq_p4 = _P1_ == P4;
+		p2_eq_p3 = _P2_ == P3;
+
+		if(Lv_isOrthogonal)
 		{
 			Vt_isVertical = X3==X4;
 			Vt_isHorizontal = Y3==Y4;
 			if(Vt_isVertical&&Lv_isVertical)goto IntCoincidentVectors;
 			if(Vt_isHorizontal&&Lv_isHorizontal)goto IntCoincidentVectors;
-			if(_P1_==P3||_P2_==P3)
+			if(p1_eq_p3 || p2_eq_p3)
 			{
 				continue;
 			}
-			if(_P1_==P4||_P2_==P4)
+			if(p1_eq_p4 || p2_eq_p4)
 			{
 				continue;
 			}
@@ -444,6 +456,7 @@ char Find_Intersections(unsigned short Lf) // returns 1, if coincidence was foun
 		DF21 = (H132==-H142)&&(H132!=0);
 		DF43 = (H324==-H314)&&(H324!=0);
 
+
 		if(DF21&&DF43)I_Type = 5;
 		else
 		if(!H314&&!H324&&!H132&&!H142)
@@ -451,13 +464,13 @@ char Find_Intersections(unsigned short Lf) // returns 1, if coincidence was foun
 IntCoincidentVectors:
 			if(Lv_isInreverse!=Vt_isInreverse)
 			{
-				if(_P1_==P3||_P2_==P4)continue;
-				if(_P1_==P4&&_P2_==P3)I_Type = 6;
+				if(p1_eq_p3 || p2_eq_p4)continue;
+				if(p1_eq_p4 && p2_eq_p3)I_Type = 6;
 			}
 			else
 			{
-				if(_P1_==P4||_P2_==P3)continue;
-				if(_P1_==P3&&_P2_==P4)I_Type = 7;
+				if(p1_eq_p4 || p2_eq_p3)continue;
+				if(p1_eq_p3 && p2_eq_p4)I_Type = 7;
 			}
 			switch(I_Type)
 			{
@@ -471,22 +484,45 @@ IntCoincidentVectors:
 		}
 		else
 		{
-			char Int_0;
-			char Int_1;
-			char Int_2;
-			char Int_3;
-			char Int_4;
+			char Int_0 = 0;
+			char Int_1 = 0;
+			char Int_2 = 0;
+			char Int_3 = 0;
+			char Int_4 = 0;
+
 			DF21 = ((S132>0)&&(S142<0))||((S132<0)&&(S142>0));
 			DF43 = ((S324>0)&&(S314<0))||((S324<0)&&(S314>0));
-			Int_0 = 0;
-			if(DF21 && !H314) I_Type = 1, ++Int_0, Int_1 = 1;
-			else Int_1 = 0;
-			if(DF21 && !H324) I_Type = 2, ++Int_0, Int_2 = 1;
-			else Int_2 = 0;
-			if(DF43 && !H132) I_Type = 3, ++Int_0, Int_3 = 1;
-			else Int_3 = 0;
-			if(DF43 && !H142) I_Type = 4, ++Int_0, Int_4 = 1;
-			else Int_4 = 0;
+
+			//if (D43 < D21) {
+			//	if ((p2_eq_p4) && !H132) I_Type = 3, ++Int_0, Int_3 = 1;
+			//	else
+			//	if ((p1_eq_p4) && !H132) I_Type = 3, ++Int_0, Int_3 = 1;
+
+			//	if ((p1_eq_p3) && !H142) I_Type = 4, ++Int_0, Int_4 = 1;
+			//	else
+			//	if ((p2_eq_p3) && !H142) I_Type = 4, ++Int_0, Int_4 = 1;
+			//}
+			//else {
+			//	if ((p2_eq_p3) && !H314) I_Type = 1, ++Int_0, Int_1 = 1;
+			//	else
+			//	if ((p2_eq_p4) && !H314) I_Type = 1, ++Int_0, Int_1 = 1;
+
+			//	if ((p1_eq_p3) && !H324) I_Type = 2, ++Int_0, Int_2 = 1;
+			//	else
+			//	if ((p1_eq_p4) && !H324) I_Type = 2, ++Int_0, Int_2 = 1;
+			//}
+
+			//if (Int_0 > 1) {
+			//	Int_0 = 0;
+			//}
+
+			if (Int_0 == 0) {
+				if ((DF21) && !H314) I_Type = 1, ++Int_0, Int_1 = 1;
+				if ((DF21) && !H324) I_Type = 2, ++Int_0, Int_2 = 1;
+				if ((DF43) && !H132) I_Type = 3, ++Int_0, Int_3 = 1;
+				if ((DF43) && !H142) I_Type = 4, ++Int_0, Int_4 = 1;
+			}
+
 			if(Int_0==0)
 			{
 				if(DF21&&DF43) I_Type = 9;
@@ -741,7 +777,7 @@ void Initiate_Intersect_Lv(LvBead*Lv) {
 
 	Lv_isHorizontal = Lv_Ymin==Lv_Ymax;
 	Lv_isVertical = Lv_Xmin==Lv_Xmax;
-	Lv_isOrtogonal = Lv_isVertical != 0 || Lv_isHorizontal != 0;
+	Lv_isOrthogonal = Lv_isVertical != 0 || Lv_isHorizontal != 0;
 
 	_Lf_ = -1;
 } 
