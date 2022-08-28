@@ -623,17 +623,22 @@ VtBead*INSERTV(PtBead*P1, PtBead*P2, LvBead*LV)
 void
 PVTable_MERGE_LVChain(VtBead*VT, VtBead*PV)
 {
-	LvBead*LQ;
-	LvBead*LS;
-	LvBead*LH;
-	LvBead*LM;
-	LH = VT->ZVTFirstCoincident;
-	LM = PV->ZVTFirstCoincident;
-	for(LS = LQ = LH; LQ; LQ = LQ->ZLVNextConcident)
+	LvBead* const LH = VT->ZVTFirstCoincident;
+
+	LvBead* Lvtail = nullptr;
+	for(LvBead* LQ = LH; LQ != nullptr; LQ = LQ->ZLVNextConcident)
 	{
-		LS = LQ, LQ->ZLVMyVector = PV;
+		LQ->ZLVMyVector = PV;
+		Lvtail = LQ;
 	}
-	if(LS && LH != LM)LS->ZLVNextConcident = LM, PV->ZVTFirstCoincident = LH; 
+
+	LvBead* const LM = PV->ZVTFirstCoincident;
+
+	if (Lvtail && Lvtail != LM) {
+		Lvtail->ZLVNextConcident = LM;
+
+		PV->ZVTFirstCoincident = LH;
+	}
 }
 void
 PVTable_REPLACE_PVBead(VtBead*ptrOld, VtBead*ptrNew, char inherit_tail)
@@ -727,10 +732,11 @@ PVTable_ERASE_RedundantVTBead(VtBead*VT/*to be erased, must not be in PVTable*/,
 	VT->ZVTFirstCoincident = 0;
 	Vt? Vt->ZVTFirstCoincident = 0: 0;
 
-	//memset(VT, 0, sizeof(VtBead));
-	//if (Vt) {
-	//	memset(Vt, 0, sizeof(VtBead));
-	//}
+	VT->ZVTCO1 = 0;
+	Vt ? Vt->ZVTCO1 = 0 : 0;
+
+	VT->ZVTCO2 = 0;
+	Vt ? Vt->ZVTCO2 = 0 : 0;
 }
 void
 split_vt_pv
@@ -820,7 +826,7 @@ POINT_VECTOR_ANALYSIS(long first, char F_EVAL_INPROGRESS, char F_FULLANALYSIS_IN
 			}
 			if(DONext)PS = PV, PV = PV->ZVTNextSortedVtBead;
 			else 
-			if(ER)PV_Error = 1;
+			if(ER==1)PV_Error = 1;
 		}
 
 
@@ -859,7 +865,8 @@ POINT_VECTOR_ANALYSIS(long first, char F_EVAL_INPROGRESS, char F_FULLANALYSIS_IN
 			split_vt_pv(VT, PV, Y2, Y4, P2, P4);
 		} 
 	} /*END LOOP FOR EACH VECTOR*/
-	return PV_Error; 
+
+	return PV_Error;
 }
 
 
@@ -1549,11 +1556,8 @@ SET_LbGrp(LvBead*Lv, LbBead*TopLb)
 void
 SET_INSIDE_ONE(LvBead*Lv_0, LbBead*TopLb, long MaskCode)
 {
-	LvBead*Lv_1;
-	LvBead*Lv_2;
 	VtBead*Vt_1;
 	VtBead*Vt_2;
-	VtBead*Vt_3;
 
 	long totalMarked = 0;
 
@@ -1576,18 +1580,23 @@ SET_INSIDE_ONE(LvBead*Lv_0, LbBead*TopLb, long MaskCode)
 		Vt_1 = Lv_0->ZLVMyVector;
 
 		long aux_1Lim = PTRAux_1Lim;
-		for(Vt_3 = Vt_1->ZVTCO1->ZPTFirstSortedVtBead; Vt_3; Vt_3 = Vt_3->ZVTNextSortedVtBead)
+		for(VtBead* Vt_3 = Vt_1->ZVTCO1->ZPTFirstSortedVtBead; Vt_3; Vt_3 = Vt_3->ZVTNextSortedVtBead)
 		{
-			Lv_1 = Vt_3->ZVTFirstCoincident;
-			if(!Lv_1)continue;
+			LvBead* Lv_1 = Vt_3->ZVTFirstCoincident;
+			if (!Lv_1) {
+				continue;
+			}
 
-			Lv_2 = Lv_1;
+			LvBead* Lv_2 = Lv_1;
 			do
-				if(TopLb==Lv_2->ZLVMyLbBead)
-				{ 
+			{
+				if (TopLb == Lv_2->ZLVMyLbBead)
+				{
 					return;
 				}
-			while((Lv_2 = Lv_2->ZLVNextConcident)!=0);
+				Lv_2 = Lv_2->ZLVNextConcident;
+			}
+			while(Lv_2 != nullptr);
 
 			if(Vt_3==Vt_2)continue;
 			if(Vt_3==Vt_1)continue;
@@ -1913,7 +1922,7 @@ iniFiXVt_1(void)
 		VtBead*Vt = GetVtBead(i);
 		VtBead*Vr = GetVtBead(m);
 
-		if (Vt != nullptr) {
+		if (Vt != nullptr && Vt->ZVTCO1 != nullptr) {
 			VtBead* VT = vtPointsUp(Vt) ? Vt : Vr;
 			if (VT != nullptr && VT->ZVTMeInreverse)
 			{
@@ -2265,8 +2274,8 @@ Classify_Main(bool traceClassification)
 
 	for (long vt = 2; vt < ZVTLIM; ++vt) {
 		VtBead* v1 = GetVtBead(vt);
-		if (!v1->ZVTMeInreverse) {
-			v1->ZVTStatus = -1;
+		if (v1->ZVTMeInreverse == nullptr) {
+			continue;
 		}
 		long st = v1->ZVTStatus;
 

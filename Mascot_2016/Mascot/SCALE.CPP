@@ -378,6 +378,12 @@ bool MergePoints(const long s_factor) {
 
 	long XCellSize = (PXMAX - PXMIN) / (int)NXcells;
 	long YCellSize = (PYMAX - PYMIN) / (int)NYcells;
+	if (XCellSize == 0) {
+		XCellSize = 1;
+	}
+	if (YCellSize == 0) {
+		YCellSize = 1;
+	}
 
 	size_t NHashEntries = NXcells * NYcells;
 	if (NHashEntries > 1000) {

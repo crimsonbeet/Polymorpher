@@ -563,8 +563,8 @@ IntCoincidentVectors:
 				B2 = +X43;
 				C2 = (double)X3*Y4 - (double)X4*Y3;
 				DL = A1*B2 - B1*A2;
-				Int_X = (long)floor((B1*C2-B2*C1)/DL +0.5 -0.5E-7);
-				Int_Y = (long)floor((A2*C1-A1*C2)/DL +0.5 -0.5E-7);
+				Int_X = (long)floor((B1 * C2 - B2 * C1) / DL +0.5);// -0.5E-7);
+				Int_Y = (long)floor((A2 * C1 - A1 * C2) / DL +0.5);// -0.5E-7);
 				Int_P = IPOINT(Int_X, Int_Y);
 				I_Type = 9;
 			}
@@ -710,6 +710,15 @@ IntCoincidentVectors:
 
 		//D21 = ((double)(Lv_Ymax-Lv_Ymin)+(Lv_Xmax-Lv_Xmin))/(2.0);
 		D21 = std::sqrt(std::pow(Lv_Ymax - Lv_Ymin, 2) + std::pow(Lv_Xmax - Lv_Xmin, 2)) / 2.0; // ANB-25-JUL-2022
+
+		if (Lv_Xmin < threshold_xmin) {
+			threshold_xmin = Lv_Xmin;
+		}
+
+
+		//reiterate the intersections as the orientation of the vector has possibly changed
+		__VT0__->ZVTNextInTreeVtBead = *(Lf_First + Lf);
+		Vt = __VT0__;
 	}
 
 	return 0; 

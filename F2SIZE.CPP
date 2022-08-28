@@ -300,12 +300,13 @@ void OVERLAP_ELIMINATION_SEGMENTS() {
 
 	int c = 100;
 	while (!done && (c--)>=0) {
-		long prevVTcount = ZVTLIM; 
 		if (c < 99) {
 			LoadLbVectors(Xs, Ys, originalLbCount); 
 		}
 
 		INTERSECTION_ANALYSIS();
+
+		long prevVTcount = ZVTLIM;
 
 		// here: unload all polygons to vectors; reload vectors on next iteration.
 

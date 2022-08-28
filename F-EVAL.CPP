@@ -498,6 +498,7 @@ int LFuEvaluater(long Function, int log_graph, char classifyType/*0 - main, 1 - 
 
 	//if (Function == 1) {
 	//	LoadFragment(log_graph);
+	//	log_graph = 1;
 	//}
 	//else {
 	//	LoadTestFragment(); // use Test contours: ANB-24-JUL-2022
