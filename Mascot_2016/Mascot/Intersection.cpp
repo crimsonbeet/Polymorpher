@@ -253,6 +253,15 @@ void H_Insert(unsigned short Lf, VtBead*Vt)
 		} 
 	}
 
+	//if (Lf_VtChainFirst[Lf] == 0)
+	//{
+	//	Lf_VtChainFirst[Lf] = Vt;
+	//	Lf_AddedChains[Lf_AddedChainsLim++] = Lf;
+	//}
+
+	//Vt->ZVTNextInTreeVtBead = Lf_VtChainLast[Lf];
+	//Lf_VtChainLast[Lf] = Vt;
+
 	if(Lf_VtChainLast[Lf]==0)
 	{
 		Lf_VtChainLast[Lf] = Vt;
@@ -829,11 +838,13 @@ void Intersect_Lv(LvBead*Lv)
 
 	H_Insert((unsigned short)(_Lf_< 0? 0: _Lf_), _Vt_);
 }
-void Lf_MergeChains() { 
-	for(long j = 0; j<Lf_AddedChainsLim; ++j)
+
+#pragma warning(disable : 6011)
+
+void Lf_MergeChains() {
+	for(long j = 0; j < Lf_AddedChainsLim; ++j)
 	{
 		long Lf = Lf_AddedChains[j];
-#pragma warning(disable : 6011)
 		Lf_VtChainLast[Lf]->ZVTNextInTreeVtBead = Lf_First[Lf];
 		Lf_First[Lf] = Lf_VtChainFirst[Lf];
 
@@ -841,7 +852,19 @@ void Lf_MergeChains() {
 	}
 
 	Lf_AddedChainsLim = 0;
-} 
+
+	//for (long j = Lf_AddedChainsLim - 1; j >= 0; --j)
+	//{
+	//	long Lf = Lf_AddedChains[j];
+	//	Lf_VtChainFirst[Lf]->ZVTNextInTreeVtBead = Lf_First[Lf];
+	//	Lf_First[Lf] = Lf_VtChainLast[Lf];
+
+	//	Lf_VtChainLast[Lf] = Lf_VtChainFirst[Lf] = 0;
+	//}
+
+	//Lf_AddedChainsLim = 0;
+}
+
 void INTERSECTION_ANALYSIS(bool preloaded, int first_lb)
 {
 	if(!preloaded) { 

@@ -4,7 +4,7 @@
 #ifndef _SCALE_
 #define _SCALE_ 1
 /**/
-void ScalePoints(void);
+void ScalePoints(long s_factor);
 void ScalePoints(_sAlong& x, _sAlong& y, long lim, long s_factor);
-long Back_ScalePoints(void);
+long Back_ScalePoints(long s_factor);
 #endif

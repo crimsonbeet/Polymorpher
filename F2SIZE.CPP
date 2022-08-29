@@ -317,6 +317,12 @@ void OVERLAP_ELIMINATION_SEGMENTS() {
 		//	continue;
 		//}
 
+		//if (S_FACTOR > 2) {
+		//	Back_ScalePoints(1);
+		//	ScalePoints(1);
+		//}
+
+
 		for (long I = 1; I < ZLBLIM; ++I) {
 			DUMMYJUNCTIONANALYSIS(GetLbBead(I));
 		}
@@ -422,7 +428,7 @@ void READSHAPE_ANDSETUP_MINMAX(F_SIZE_JOB& JOB)
 		--S_FACTOR;
 
 		if (S_FACTOR < 0)S_FACTOR = 0;
-		if (S_FACTOR > 12)S_FACTOR = 12;
+		if (S_FACTOR > 10)S_FACTOR = 10;
 
 
 		S_FACTOR -= LAYER_S_FACTOR;
@@ -1056,7 +1062,7 @@ void Collar_Generator(int preserve_scaleFactor = 0, int log_graph = 0)
 
 
 	if (!preserve_scaleFactor) {
-		Back_ScalePoints();
+		Back_ScalePoints(S_FACTOR);
 		S_FACTOR = 0;
 	}
 

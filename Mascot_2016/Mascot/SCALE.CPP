@@ -10,7 +10,7 @@
 #include "fqeval.hpp"
 /**/
 /**/
-void ScalePoints(void)
+void ScalePoints(long s_factor)
 {
 	register long p;
 	PtBead*Pt;
@@ -18,13 +18,9 @@ void ScalePoints(void)
 	for(p = 1; p<ZPTLIM; ++p)
 	{
 		Pt = GetPtBead(p);
-		Pt->ZPTCO1 <<= S_FACTOR;
-		Pt->ZPTCO2 <<= S_FACTOR;
+		Pt->ZPTCO1 <<= s_factor;
+		Pt->ZPTCO2 <<= s_factor;
 	}
-	PXMIN <<= S_FACTOR;
-	PYMIN <<= S_FACTOR;
-	PXMAX <<= S_FACTOR;
-	PYMAX <<= S_FACTOR;
 }
 
 void ScalePoints(_sAlong& x, _sAlong& y, long lim, long s_factor) {
@@ -248,12 +244,12 @@ void CleanPvTable() {
 
 
 
-long Back_ScalePoints(void)
+long Back_ScalePoints(long s_factor)
 {
 	int mergeIterations = 0;
 	bool mergeIsDone = false;
 	while(!mergeIsDone) {
-		mergeIsDone = MergePoints(S_FACTOR);
+		mergeIsDone = MergePoints(s_factor);
 		++mergeIterations;
 	}; 
 

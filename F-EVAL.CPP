@@ -536,7 +536,7 @@ int LFuEvaluater(long Function, int log_graph, char classifyType/*0 - main, 1 - 
 	} 
 
 	if (!preserve_scaleFactor) {
-		Back_ScalePoints();
+		Back_ScalePoints(S_FACTOR);
 		S_FACTOR = 0;
 	}
 
