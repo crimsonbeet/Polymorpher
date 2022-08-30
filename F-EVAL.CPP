@@ -146,7 +146,7 @@ void LFuInitialize_S_Factor() {
 	S_FACTOR--;
 	S_FACTOR--;
 	if(S_FACTOR<0)S_FACTOR = 0;
-	if(S_FACTOR>7)S_FACTOR = 7;
+	if(S_FACTOR>10)S_FACTOR = 10;
 }
 void LFuInitialize_OutLayer(const char*outLayer_name = 0) {
 	if(outLayer_name) { 

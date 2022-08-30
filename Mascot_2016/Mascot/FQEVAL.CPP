@@ -51,10 +51,10 @@ PtBead**ZPTHASH; // a hash table of points from ZPtTBl.
 PtBead**ZPTHASH_Static; // a hash table of points from ZPtTBl. 
 long ZPBLIM = 8191;
 /**/
-PtBead*IPOINT0(long X, long Y); // Gets a point from ZPtTBl; creates a new point if x,y does not exist. 
-PtBead*IPOINT4(long X, long Y); // Gets a point from ZPtTBl using hash table ZPTHASH. 
-PtBead*IPOINT5(long X, long Y);
-typedef PtBead*ipoint(long, long);
+PtBead*IPOINT0(long& X, long &Y); // Gets a point from ZPtTBl; creates a new point if x,y does not exist. 
+PtBead*IPOINT4(long& X, long &Y); // Gets a point from ZPtTBl using hash table ZPTHASH. 
+PtBead*IPOINT5(long& X, long &Y);
+typedef PtBead*ipoint(long&, long&);
 ipoint*IPOINT = IPOINT4;
 /**/
 unsigned long LYCODE[16]; /*LAYER-CODE*/
@@ -315,7 +315,7 @@ PtBead*IPOINT0(long X, long Y)
 	if(i==ZPTLIM)GetPtBead(ZPTLIM++)->ZPTFirstSortedVtBead = 0;
 	return P;
 }
-PtBead*IPOINT4(long X, long Y)
+PtBead*IPOINT4(long& X, long& Y)
 {
 	PtBead*P;
 	long S;
@@ -339,7 +339,7 @@ PtBead*IPOINT4(long X, long Y)
 	P->ZPTFirstSortedVtBead = 0;
 	return(P);
 }
-PtBead*IPOINT5(long X, long Y)
+PtBead*IPOINT5(long& X, long& Y)
 {
 	PtBead*P;
 	long S;
@@ -349,9 +349,13 @@ PtBead*IPOINT5(long X, long Y)
 	P = ZPTHASH[h];
 	while(P)
 	{
-		if(P->ZPTCO1!=X||P->ZPTCO2!=Y)P = P->ZPTNxt;
+		const long x = P->ZPTCO1;
+		const long y = P->ZPTCO2;
+		if((std::abs(x-X) + std::abs(y-Y)) > 1)P = P->ZPTNxt;
 		else
 		{
+			X = x;
+			Y = y;
 			return(P);
 		}
 	}

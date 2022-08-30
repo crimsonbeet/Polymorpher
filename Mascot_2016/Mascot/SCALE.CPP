@@ -32,25 +32,18 @@ void ScalePoints(_sAlong& x, _sAlong& y, long lim, long s_factor) {
 }
 
 void
-Back_Scale_1(void)
+Back_Scale_1(long s_factor)
 {
 	register long p, l;
 	PtBead*Pt;
 
-	const double sf = ((int64_t)1L)<<S_FACTOR;
+	const double sf = ((int64_t)1L)<< s_factor;
 
 	for(p = 1; p<ZPTLIM; ++p) {
 		Pt = GetPtBead(p);
-		//Pt->ZPTCO1 >>= S_FACTOR;
-		//Pt->ZPTCO2 >>= S_FACTOR;
 		Pt->ZPTCO1 = (long)floor((double)Pt->ZPTCO1/sf +0.5);
 		Pt->ZPTCO2 = (long)floor((double)Pt->ZPTCO2/sf +0.5);
 	}
-	PXMIN >>= S_FACTOR;
-	PYMIN >>= S_FACTOR;
-	PXMAX >>= S_FACTOR;
-	PYMAX >>= S_FACTOR;
-
 	IPOINT = IPOINT4;
 }
 
@@ -257,7 +250,7 @@ long Back_ScalePoints(long s_factor)
 	CleanZPTHASH();
 	CleanPTLinks();
 
-	Back_Scale_1();
+	Back_Scale_1(s_factor);
 	bool pv_analysis_isNeeded = Back_Scale_2();
 	Back_Scale_3();
 	Back_Scale_4();
