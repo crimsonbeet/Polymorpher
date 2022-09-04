@@ -351,7 +351,7 @@ PtBead*IPOINT5(long& X, long& Y)
 	{
 		const long x = P->ZPTCO1;
 		const long y = P->ZPTCO2;
-		if((std::abs(x-X) + std::abs(y-Y)) > 1)P = P->ZPTNxt;
+		if((std::abs(x-X) > 1) || (std::abs(y-Y) > 1))P = P->ZPTNxt;
 		else
 		{
 			X = x;
@@ -929,10 +929,14 @@ char
 VectorBelongsToLb(LbBead*LB, VtBead*VT)
 {
 	LvBead*LE;
-	LE = VT->ZVTFirstCoincident;
+	LvBead*le;
+	LE = le = VT->ZVTFirstCoincident;
 	while(LE&&(LE->ZLVMyLbBead!=LB))
 	{
 		LE = LE->ZLVNextConcident;
+		if (LE == le) { // ANB error 3 Sep. 2022
+			LE = 0;
+		}
 	}
 	return LE!=0;
 }
