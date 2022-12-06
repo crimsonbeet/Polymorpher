@@ -311,13 +311,13 @@ bool lookupHashEx(I val, uint64_t(*hash)(I)) {
 }
 
 template<typename T, typename I = int>
-BucketEx<T>::BucketEntry* lookupHashEntryEx(I index, uint64_t(*hash)(I)) {
+BucketEx<T>::BucketEntryPtr lookupHashEntryEx(I index, uint64_t(*hash)(I)) {
 	BucketEx<T>& bucket = *(((BucketEx<T>*)bucketsEx) + hash(index));
 	return bucket.lookupIndex(index);
 }
 
 template<typename T, typename I = int>
-BucketEx<T>::BucketEntry* lookupHashNextEntryEx(I index, typename BucketEx<T>::BucketEntry* ptr, uint64_t(*hash)(I)) {
+BucketEx<T>::BucketEntryPtr lookupHashNextEntryEx(I index, typename BucketEx<T>::BucketEntryPtr ptr, uint64_t(*hash)(I)) {
 	BucketEx<T>& bucket = *(((BucketEx<T>*)bucketsEx) + hash(index));
 	return bucket.lookupIndexNext(index, ptr);
 }
@@ -329,11 +329,11 @@ void populateBuckets(PtBead_Ptr ar[], const size_t nElem, uint64_t(*hash)(int)) 
 
 
 
-BucketEx<PtBead_Ptr>::BucketEntry* lookupHashEntry(int index, uint64_t(*hash)(int)) {
+BucketEx<PtBead_Ptr>::BucketEntryPtr lookupHashEntry(int index, uint64_t(*hash)(int)) {
 	return lookupHashEntryEx<PtBead_Ptr, int>(index, hash);
 }
 
-BucketEx<PtBead_Ptr>::BucketEntry* lookupHashNextEntry(int index, BucketEx<PtBead_Ptr>::BucketEntry* ptr, uint64_t(*hash)(int)) {
+BucketEx<PtBead_Ptr>::BucketEntryPtr lookupHashNextEntry(int index, BucketEx<PtBead_Ptr>::BucketEntryPtr ptr, uint64_t(*hash)(int)) {
 	return lookupHashNextEntryEx<PtBead_Ptr, int>(index, ptr, hash);
 }
 

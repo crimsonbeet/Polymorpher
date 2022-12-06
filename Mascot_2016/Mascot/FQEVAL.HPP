@@ -262,12 +262,13 @@ typedef PtBead* PtBead_Ptr;
 template<typename T, typename I = int>
 struct BucketEx {
 public:
-	struct BucketEntry {
+	typedef struct BucketEntry {
 		T entry;
 		I index;
 
 		uint8_t processed;
-	};
+	} *BucketEntryPtr;
+
 	size_t size;
 	BucketEntry* ptrEntries;
 	size_t allocatedSize;
@@ -368,16 +369,16 @@ void populateBucketsEx(T ar[], const size_t nElem, uint64_t(*hash)(I));
 	
 
 template<typename T, typename I = int>
-BucketEx<T>::BucketEntry* lookupHashEntryEx(I val, uint64_t(*hash)(I));
+BucketEx<T>::BucketEntryPtr lookupHashEntryEx(I val, uint64_t(*hash)(I));
 
 template<typename T, typename I = int>
-BucketEx<T>::BucketEntry* lookupHashNextEntryEx(I val, typename BucketEx<T>::BucketEntry* ptr, uint64_t(*hash)(I));
+BucketEx<T>::BucketEntryPtr lookupHashNextEntryEx(I val, typename BucketEx<T>::BucketEntryPtr ptr, uint64_t(*hash)(I));
 
 
 
 
-BucketEx<PtBead_Ptr>::BucketEntry* lookupHashEntry(int val, uint64_t(*hash)(int));
-BucketEx<PtBead_Ptr>::BucketEntry* lookupHashNextEntry(int val, BucketEx<PtBead_Ptr>::BucketEntry* ptr, uint64_t(*hash)(int));
+BucketEx<PtBead_Ptr>::BucketEntryPtr lookupHashEntry(int val, uint64_t(*hash)(int));
+BucketEx<PtBead_Ptr>::BucketEntryPtr lookupHashNextEntry(int val, BucketEx<PtBead_Ptr>::BucketEntryPtr ptr, uint64_t(*hash)(int));
 
 void populateBuckets(PtBead_Ptr ar[], const size_t nElem, uint64_t(*hash)(int));
 
