@@ -269,11 +269,20 @@ long Back_ScalePoints(long s_factor)
 
 
 
-void* bucketsEx;
+void* bucketsEx = nullptr;
 
 
 template<typename T, typename I = int>
 void initializeBuckets(const size_t nElem) {
+	if (bucketsEx != nullptr) {
+		for (size_t b = 0; b < numBuckets; ++b) {
+			BucketEx<T>& bucket = ((BucketEx<T>*)bucketsEx)[b];
+			if (bucket.ptrEntries != nullptr) {
+				free(bucket.ptrEntries);
+			}
+		}
+		free(bucketsEx);
+	}
 	numBuckets = nElem + 63;
 	bucketsEx = calloc(numBuckets, sizeof(BucketEx<T, I>));
 }
