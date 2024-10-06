@@ -219,6 +219,16 @@ public:
 	fpos_t FPOS_2;
 	fpos_t FPOS_3;
 
+	std::string _strStartTime;
+	std::string _strIndexFileName;
+
+	long INITIAL_SCALE_FACTOR;
+
+	std::ostringstream _ostrGraphLog;
+	void PRINT_LOG(const char* func, int line, const std::string& text, const std::string& text2 = "", const std::string& text3 = "");
+	bool _graphLog;
+
+
 	char _dbHeader_Changed;
 
 	XMemoryFile* xfiles[256]; 
@@ -286,7 +296,7 @@ public:
 	bool MASEvaluateMain(long Function, const char* outLayer_name, int size_param = 0, int log_graph = 0, bool preserve_scale_factor = false);
 	bool MASLayerAddPolygon2DBStorage(const char* inpLayer_name); 
 
-	bool MASInitialize(long blocks_count_x, long blocks_count_y); 
+	bool MASInitialize(long blocks_count_x, long blocks_count_y);
 	bool MASGrid(long blocks_count_x, long blocks_count_y); 
 
 	bool MASLayerCreateDBStorage(const char* inpLayer_name, long scale_factor);

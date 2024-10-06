@@ -19,6 +19,7 @@ struct PtBead
 {
 	long ZPTCO1;/*x*/
 	long ZPTCO2;/*y*/
+	long ZPTPos;/*pos in ZPtTBl.*/
 
 	VtBead*ZPTFirstSortedVtBead;/*first Vt bead for this point(chain head).*/
 	PtBead*ZPTNxt;/*next Pt Bead in the hash class.*/
@@ -201,7 +202,7 @@ void l_swap(long&A, long&B);
 void COMBINE_C_POLYGONS(void);
 void CleanZPTHASH();
 void Relink_Lv_Pt(VtBead*v); 
-double Eval_Angle(double DX, double DY);
+double Eval_Angle(long DX, long DY);
 void REMOVE_FROM_VT_CHAIN(LvBead*LV);
 LvBead*CLEAR_LB_PTR(LvBead*Lv, LvBead*Ln)/*From Lv To Ln*/; 
 void CLEAR_LB_PTR(LbBead* Lb);
@@ -241,7 +242,7 @@ void F_AREA_MAIN(const char* Name);
 void LFuInitialize(const char*outLayer_name);
 int LFuEvaluater(long Function, int log_graph = 0, char classifyType = 0/*0 - main, 1 - light*/, int preserve_scaleFactor = 0);
 bool LFuEvaluaterLoop(long Function, int log_graph = 0, char classifyType = 0, int preserve_scaleFactor = 0);
-void LFuActivateFirstFragment();
+void LFuActivateFirstFragment(int log_graph);
 void SetNxtFrag(long Function);
 void LoadFragment(int log_graph = 0);
 

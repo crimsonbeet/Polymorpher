@@ -68,6 +68,10 @@ long PXMIN;
 long PYMIN;
 /**/
 
+extern long Delta_X_2;
+extern long Delta_Y_2;
+
+
 inline LvBead* FetchReverseLv(LvBead* LV) {
 	LvBead* lvc = 0; 
 	auto vt = LV->ZLVMyVector->ZVTMeInreverse;
@@ -203,7 +207,7 @@ COMBINE(LbBead*LB)
 	while((B3==LB)&&(L1!=L0)&&c--); 
 	/*NON-COINCIDENT?*/
 	if(c < 0) { // ANB: july: error condition
-		printf("COMBINE error condition 1\r\n");
+		MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, "error condition 1");
 	} 
 	if(L1==L0||c<0)return(0); 
 	do /*FIND-LAST-COINCIDENT-WITH-B3(L6)*/
@@ -214,12 +218,12 @@ COMBINE(LbBead*LB)
 		L8 = FetchReverseLv(L0);
 		B1 = L8? L8->ZLVMyLbBead: 0;
 		if(B1!=B3)break;
-		L8 = L8->ZLVNextLvBead;
+		L8 = L8? L8->ZLVNextLvBead: 0;
 		if(L8!=L7)break;
 	}
 	while(1);
 	L9 = L6->ZLVNextLvBead;
-	L4 = L3->ZLVNextLvBead;
+	L4 = L3? L3->ZLVNextLvBead: 0;
 	L0 = L4;
 	L5 = L0;
 	c = ZLVLIM*10; 
@@ -230,7 +234,7 @@ COMBINE(LbBead*LB)
 		L0 = L0->ZLVNextLvBead;
 	}
 	if(c < 0) { // ANB: july: error condition
-		printf("COMBINE error condition 2\r\n");
+		MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, "error condition 2");
 	}
 	if(c<0)return(0); 
 	if(L4==L7) L2->ZLVNextLvBead = L9;
@@ -294,6 +298,14 @@ long int GetPointHashNumber(long int S) {
 	return h; 
 } 
 
+long int GetPointHashNumber(long int x, long int y) {
+	long int key = (23 * (int64_t)x + 103 * (int64_t)y + 293 * (int64_t)x + 397 * (int64_t)y) % ZPBLIM;
+	if (key < 0) {
+		key += ZPBLIM;
+	}
+	return key;
+}
+
 void Relink_Lv_Pt(VtBead*v) {
 	for(LvBead*l = v->ZVTFirstCoincident; l; l = l->ZLVNextConcident) {
 		l->ZLVPoint1 = v->ZVTCO1;
@@ -303,9 +315,10 @@ void Relink_Lv_Pt(VtBead*v) {
 PtBead*IPOINT0(long X, long Y)
 {
 	PtBead*P;
-	register long i;
+	long i;
 	GetPtBead(ZPTLIM)->ZPTCO1 = X;
 	GetPtBead(ZPTLIM)->ZPTCO2 = Y;
+	GetPtBead(ZPTLIM)->ZPTPos = ZPTLIM;
 
 	P = GetPtBead(i=1);
 	while(P->ZPTCO1!=X||P->ZPTCO2!=Y)
@@ -318,10 +331,8 @@ PtBead*IPOINT0(long X, long Y)
 PtBead*IPOINT4(long& X, long& Y)
 {
 	PtBead*P;
-	long S;
 	long h;
-	S = X+Y;
-	h = GetPointHashNumber(S);
+	h = GetPointHashNumber(X, Y);
 	P = ZPTHASH[h];
 	while(P)
 	{
@@ -331,21 +342,21 @@ PtBead*IPOINT4(long& X, long& Y)
 			return(P);
 		}
 	}
-	P = GetPtBead(ZPTLIM++);
+	P = GetPtBead(ZPTLIM);
 	P->ZPTNxt = ZPTHASH[h];
 	ZPTHASH[h] = P;
 	P->ZPTCO1 = X;
 	P->ZPTCO2 = Y;
+	P->ZPTPos = ZPTLIM;
+	++ZPTLIM;
 	P->ZPTFirstSortedVtBead = 0;
 	return(P);
 }
 PtBead*IPOINT5(long& X, long& Y)
 {
 	PtBead*P;
-	long S;
 	long h;
-	S = (X+Y)>>S_FACTOR;
-	h = GetPointHashNumber(S);
+	h = GetPointHashNumber(X >> S_FACTOR, Y >> S_FACTOR);
 	P = ZPTHASH[h];
 	while(P)
 	{
@@ -359,25 +370,27 @@ PtBead*IPOINT5(long& X, long& Y)
 			return(P);
 		}
 	}
-	P = GetPtBead(ZPTLIM++);
+	P = GetPtBead(ZPTLIM);
 	P->ZPTNxt = ZPTHASH[h];
 	ZPTHASH[h] = P;
 	P->ZPTCO1 = X;
 	P->ZPTCO2 = Y;
+	P->ZPTPos = ZPTLIM;
+	++ZPTLIM;
 	P->ZPTFirstSortedVtBead = 0;
 	return(P);
 }
-double Eval_Angle(double DX, double DY)
+double Eval_Angle(long DX, long DY)
 {
 	double AN;
-	if(DX==0.0)	AN = DY>0.0? 90.0: DY<0.0? 270.0: 0.0;
+	if(DX==0)	AN = DY>0? 90.0: DY<0.0? 270.0: 0.0;
 	else
-	if(DY==0.0)	AN = DX>0.0? 0.0: 180.0;
+	if(DY==0)	AN = DX>0? 0.0: 180.0;
 	else
 	{
-		AN = atan(DY/DX)*(180.0/M_PI);
-		if(DX<0.0) AN = 180.0+AN;
-		else if(!(DY>0.0)) AN = 360.0+AN;
+		AN = atan((double)DY/(double)DX)*(180.0/M_PI);
+		if(DX<0) AN = 180.0+AN;
+		else if(!(DY>0)) AN = 360.0+AN;
 	}
 	return(AN);
 }
@@ -396,7 +409,7 @@ COMPLVANGLE(LvBead*L)
 {
 	PtBead*A;
 	PtBead*B;
-	double X, Y;
+	long X, Y;
 	A = L->ZLVPoint1;
 	B = L->ZLVPoint2;
 	X = B->ZPTCO1-A->ZPTCO1;
@@ -411,7 +424,7 @@ COMPLVANGLE(LvBead*L)
 double
 COMPLDANGLE(long L)
 {
-	double X, Y;
+	long X, Y;
 	X = ZLDCO0[L]-ZLDCO0[L-1];
 	Y = ZLDCO1[L]-ZLDCO1[L-1];
 	if(X==0&&Y==0)
@@ -425,10 +438,10 @@ template<typename Along>
 double
 COMPANGLE(Along& x, Along& y, long L)
 {
-	double X, Y;
+	long X, Y;
 	const long l = L - 1;
-	X = (double)(x[L]-x[l]);
-	Y = (double)(y[L]-y[l]);
+	X = (x[L]-x[l]);
+	Y = (y[L]-y[l]);
 	if(X==0&&Y==0)
 	{
 		SS_Fl = 1;
@@ -569,7 +582,7 @@ VtBead*SPLITVT(VtBead*V3, PtBead*IP)
 	LvBead*L6;
 	V4 = V3->ZVTMeInreverse;
 	if(!V4) { // ANB: july: error condition
-		printf("SPLITVT error condition 1\r\n");
+		MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, "error condition 1");
 	}
 	if(!V4) { 
 		return 0;
@@ -674,7 +687,7 @@ PVTable_REPLACE_PVBead(VtBead*ptrOld, VtBead*ptrNew, char inherit_tail)
 		return;
 	}
 	if(c<=0) { 
-		printf("PVTable_REPLACE_PVBead error condition 1\r\n");
+		MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, "error condition 1");
 	}
 }
 void
@@ -685,7 +698,7 @@ PVTable_ERASE_RedundantVTBead(VtBead*VT/*to be erased, must not be in PVTable*/,
 	Vt = VT->ZVTMeInreverse;
 	Pv = PV->ZVTMeInreverse;
 	if(!Pv) { 
-		printf("PVTable_ERASE_RedundantVTBead error condition 1\r\n");
+		MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, "error condition 1");
 	}
 	//if(!Pv) {
 	//	return; // ANB: july: error condition
@@ -712,7 +725,7 @@ PVTable_ERASE_RedundantVTBead(VtBead*VT/*to be erased, must not be in PVTable*/,
 
 	PVTable_MERGE_LVChain(VT, PV);
 	if(!Vt || !Pv) { 
-		printf("PVTable_ERASE_RedundantVTBead error condition 2\r\n");
+		MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, "error condition 2");
 	}
 	if(Vt && Pv) { // ANB: july: error condition
 		PVTable_MERGE_LVChain(Vt, Pv);
@@ -752,6 +765,8 @@ split_vt_pv
 char
 POINT_VECTOR_ANALYSIS(long first, char F_EVAL_INPROGRESS, char F_FULLANALYSIS_INPROGRESS)
 {
+	MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, "enter.");
+
 	char ER, H24, H42;
 	VtBead*VT;
 	PtBead*PT;
@@ -797,7 +812,7 @@ POINT_VECTOR_ANALYSIS(long first, char F_EVAL_INPROGRESS, char F_FULLANALYSIS_IN
 		for(char DONext = 1; PV!=0 && DONext; ++POINT_VECTOR_ANALYSIS_Pass_Count)
 		{
 			if(POINT_VECTOR_ANALYSIS_Pass_Count > (ZPTLIM << 8)) { // ANB: july: error condition
-				printf("POINT_VECTOR_ANALYSIS error condition 1\r\n");
+				MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, "error condition 1");
 				break;
 			}
 			P4 = PV->ZVTCO2;
@@ -870,6 +885,7 @@ POINT_VECTOR_ANALYSIS(long first, char F_EVAL_INPROGRESS, char F_FULLANALYSIS_IN
 		} 
 	} /*END LOOP FOR EACH VECTOR*/
 
+	MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, "exit.", PV_Error? "PV_Error": "");
 	return PV_Error;
 }
 
@@ -965,7 +981,7 @@ LvBead*FETCHREVERSE(LbBead*LB, LvBead*LV)
 		LS = LS->ZLVNextConcident;
 	}
 	if(c<0) { 
-		printf("FETCHREVERSE error condition 1\r\n");
+		MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, "error condition 1");
 	}
 	if (c < 0)return nullptr; // ANB: july: error condition
 	if (EC <= 1)return LR;
@@ -1005,7 +1021,7 @@ REMOVE_FROM_VT_CHAIN(LvBead*LV)
 		Lv = Lv->ZLVNextConcident;
 	}
 	if(c<0) { 
-		printf("REMOVE_FROM_VT_CHAIN error condition 1\r\n");
+		MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, "error condition 1");
 	}
 }
 LvBead*CLEAR_LB_PTR(LvBead*Lv, LvBead*Ln)/*From Lv To Ln*/
@@ -1173,7 +1189,7 @@ char AND_1(unsigned char S)
 }
 char AN_D(unsigned char S)
 {
-	register short I;
+	short I;
 	for(I=0; I < MaSCOT_IO.ILayer_Cnt; ++I)	if(!(S&LYMASK[I]))return(0);
 	return(1);
 }
@@ -1197,7 +1213,7 @@ char OVR_ELIM(unsigned char S)
 }
 char X_OR(unsigned char S)
 {
-	register short I;
+	short I;
 	if(!S)return(0);
 	for(I=0; I<MaSCOT_IO.ILayer_Cnt; ++I)	if((S|LYMASK[I])==LYMASK[I])return(1);
 	return(0);
@@ -1247,7 +1263,7 @@ TRAVERSE(VtBead*VT, char F_EVAL_INPROGRESS)
 				DJ = 1;
 		}
 		else {
-			printf("TRAVERSE error condition 1\r\n");
+			MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, "error condition 1. breaking loop");
 			break;
 		}
 	}
@@ -1282,6 +1298,9 @@ FORCE_C_POLYGONS(char F_EVAL_INPROGRESS) {
 	VtBead*Vt;
 	long V;
 
+	MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, "enter.");
+
+
 	ZLBLIM = 1;
 	ZLVLIM = 1;
 	for(Vt=GetVtBead(V=0); V<ZVTLIM; Vt=GetVtBead(++V))
@@ -1313,10 +1332,13 @@ FORCE_C_POLYGONS(char F_EVAL_INPROGRESS) {
 			continue;
 		}
 		if (!TRAVERSE(Vt, F_EVAL_INPROGRESS)) {
-			rc = false; 
+			MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, "TRAVERSE returned false.");
+			rc = false;
 		}
 	}
 	COMBINE_C_POLYGONS();
+
+	MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, "exit");
 	return rc; 
 }
 long
@@ -1401,7 +1423,7 @@ LbBead_Unload2InputXY(LbBead*LB, char run_linearizer, int log_graph)
 	while(LV!=LE&&c--); // ANB: july: error condition
 
 	if(c<0) {
-		printf("LbBead_Unload2InputXY error condition 1\r\n");
+		MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, "error condition 1. exit function");
 		return 0;
 	}
 
@@ -1436,16 +1458,17 @@ LbBead_Unload2InputXY(LbBead*LB, char run_linearizer, int log_graph)
 	double A; 
 	DETERMINE_CLOCKSTATUS(ZLDCO0, ZLDCO1, ZLDLIM, &A);
 	if (STATUS != 1) {
-		printf("LbBead_Unload2InputXY: total angle %f with %d points\r\n", A, ZLDLIM);
-		log_graph = 1;
+		char buf[8];
+		MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, "total angle", _itoa(A, buf, 10));
 	}
 
 	if (log_graph) {
+		long s_factor = S_FACTOR + LAYER_S_FACTOR;
 		if (STATUS != 1) {
-			graph_log_ZLDLIM("LbBead_UnloadFailed", 0, 0);
+			graph_log_ZLDLIM("LbBead_UnloadFailed", Delta_X_2 << s_factor, Delta_Y_2 << s_factor);
 		}
 		else {
-			graph_log_ZLDLIM("LbBead_Unload", 0, 0);
+			graph_log_ZLDLIM("LbBead_Unload", Delta_X_2 << s_factor, Delta_Y_2 << s_factor);
 		}
 	}
 
@@ -1630,7 +1653,7 @@ char SET_INSIDE_ALL(VtBead*VtBegin, VtBead*VtEnd, LbBead*TopLb, long MaskCode)
 		LS = PV->ZVTFirstCoincident;
 
 		if (!VR) { // ANB: july: error condition
-			printf("SET_INSIDE_ALL error condition 1\r\n");
+			MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, "error condition 1");
 			break;
 		}
 
@@ -1784,7 +1807,7 @@ POINT_VECTOR_CLASS_2(LbBead*LB, long LayerCode, long MaskCode) /*After DUMMYJUNC
 				SET_LbGrp(PV->ZVTFirstCoincident, LB);
 			}
 			if(c < 0) {
-				printf("POINT_VECTOR_CLASS_2 error condition 1\r\n");
+				MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, "error condition 1");
 			}
 		}
 
@@ -1811,7 +1834,7 @@ POINT_VECTOR_CLASS_2(LbBead*LB, long LayerCode, long MaskCode) /*After DUMMYJUNC
 	while(LV!=LE && c--); // ANB: july: error condition
 
 	if(c < 0) {
-		printf("POINT_VECTOR_CLASS_2 error condition 2\r\n");
+		MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, "error condition 2");
 	}
 }
 LbBead*Loadmaster(char check_closure, char open_shape)
@@ -2308,7 +2331,7 @@ Classify_Main(bool traceClassification)
 
 		std::ostringstream& ostr = streams[key];
 
-		ostr << v1->ZVTCO1->ZPTCO1 << ',' << v1->ZVTCO1->ZPTCO2 << ',' << v1->ZVTCO2->ZPTCO1 << ',' << v1->ZVTCO2->ZPTCO2 << std::endl;
+		ostr << v1->ZVTCO1->ZPTCO1 << ',' << v1->ZVTCO1->ZPTCO2 << ',' << "P1.V" << v1->ZVTPos << ',' << v1->ZVTCO2->ZPTCO1 << ',' << v1->ZVTCO2->ZPTCO2 << ',' << "P2.V" << v1->ZVTPos << std::endl;
 	}
 
 	std::map<std::string, std::ostringstream>::iterator iter = streams.begin();
@@ -2362,7 +2385,7 @@ static void setChainStat(VtBead* R, VtBead* V, char call_flavor) {
 			--c; 
 		}
 		if (c <= 0) { // ANB: july: error condition
-			printf("setChainStat error condition\r\n");
+			MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, "error condition 1");
 		}
 	}
 };
@@ -2430,7 +2453,10 @@ zabort(const char* ids, long lin)
 	zabort();
 	long* tx = nullptr;
 	long* ty = nullptr;
+	long ax[9];
+	long ay[9];
 	DETERMINE_CLOCKSTATUS<long*>(tx, ty, 3);
+	DETERMINE_CLOCKSTATUS<long[9]>(ax, ay, 3);
 }
 void
 __FINISHEDNORMALLY__(void) {

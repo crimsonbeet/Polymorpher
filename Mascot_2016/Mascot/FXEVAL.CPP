@@ -58,7 +58,39 @@ int feof(XMemoryFile*xfile) {
 
 
 
-XMemoryFile* MASCOT_IO::ffind(const char*name) { 
+static std::string stringify_currentTime(bool file_mode) {
+	std::ostringstream ostr;
+	ostr.fill('0');
+	if (file_mode) {
+		auto t = std::time(nullptr);
+		const auto tm = *std::localtime(&t);
+
+		const auto now = std::chrono::system_clock::now();
+		const auto seconds = std::chrono::time_point_cast<std::chrono::seconds>(now);
+		const auto fraction = now - seconds;
+		const auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(fraction);
+
+		ostr << std::put_time(&tm, "%Y-%m-%d.%H-%M-%S.") << std::setw(6) << microseconds.count();
+	}
+	else {
+		struct _timeb t;
+		_ftime(&t);
+		std::istringstream istrTime(ctime(&t.time));
+		std::string sWeekDay, sMonth;
+		int iDay, iHour, iMinutes, iSeconds, iYear;
+		char cSColmn;
+		istrTime >> sWeekDay >> sMonth >> iDay >> iHour >> cSColmn >> iMinutes >> cSColmn >> iSeconds >> iYear;
+
+		ostr << std::setw(2) << iHour << ':' << std::setw(2) << iMinutes << ':' << std::setw(2) << iSeconds << '_' << std::setw(3) << (int)t.millitm;
+	}
+
+	return ostr.str();
+}
+
+
+
+
+XMemoryFile* MASCOT_IO::ffind(const char*name) {
 	XMemoryFile *xfile = 0; 
 	for(int j = 0; j < xfiles_max && !xfile; ++j) { 
 		if(xfiles[j]) { 
@@ -820,7 +852,21 @@ void MASCOT_IO::operator delete(void *p) {
 	free(p); 
 } 
 
-MASCOT_IO::MASCOT_IO(): strbuf(), iLnames_hash(strbuf) 
+void MASCOT_IO::PRINT_LOG(const char* func, int line, const std::string& text, const std::string& text2, const std::string& text3)
+{
+	if (_graphLog) {
+		_ostrGraphLog << '\"' << func << ":line " << line << ':' << text;
+		if (!text2.empty()) {
+			_ostrGraphLog << ' ' << text2;
+		}
+		if (!text3.empty()) {
+			_ostrGraphLog << ' ' << text3;
+		}
+		_ostrGraphLog << '\"' << std::endl;
+	}
+}
+
+MASCOT_IO::MASCOT_IO(): strbuf(), iLnames_hash(strbuf)
 {
 	_dbHeader_Changed = 0; 
 
@@ -986,9 +1032,32 @@ MASCOT_IO::FCloseAll(void)
 
 
 
-bool MASInitialize(long blocks_count_x, long blocks_count_y) { 
+bool MASInitializeStarttime(bool log_graph) {
+	MaSCOT_IO._strStartTime = stringify_currentTime(true);
+	MaSCOT_IO._strIndexFileName = "VSStatistics\\mas_index_" + MaSCOT_IO._strStartTime + ".txt";
+
+	MaSCOT_IO.INITIAL_SCALE_FACTOR = 0;
+
+	MaSCOT_IO._graphLog = log_graph;
+
+	MaSCOT_IO._ostrGraphLog.str("");
+	MaSCOT_IO._ostrGraphLog.str().clear();
+
+	if (log_graph) {
+		HANDLE index_file = OSWRONLYOpenFile("VSStatistics\\mas_index.txt", 1);
+		if (index_file != (HANDLE)-1) {
+			OSAppendStringToFile(index_file, MaSCOT_IO._strStartTime + "\r\n");
+			OSCloseFile(index_file);
+		}
+	}
+	return true;
+}
+bool MASInitialize(long blocks_count_x, long blocks_count_y) {
+	if (MaSCOT_IO._strIndexFileName.empty()) {
+		MASInitializeStarttime();
+	}
 	return MaSCOT_IO.MASInitialize(blocks_count_x, blocks_count_y); 
-} 
+}
 bool MASGrid(long blocks_count_x, long blocks_count_y) { 
 	return MaSCOT_IO.MASGrid(blocks_count_x, blocks_count_y); 
 }
@@ -1030,6 +1099,10 @@ bool MASLogLayer(const char* layer_Name) {
 	return graph_log_layer(layer_Name);
 }
 
+bool MASAddLogGraphMessage(const char* func, int line, const std::string& msg, const std::string& qulifier) {
+	MaSCOT_IO.PRINT_LOG(func, line, msg, qulifier);
+	return MaSCOT_IO._graphLog;
+}
 
 bool MASCOT_IO::MASInitialize(long blocks_count_x, long blocks_count_y) { 
 	bool ok = false; 
@@ -1143,12 +1216,16 @@ void MASCOT_IO::MASReleaseRTStorage() {
 } 
 
 bool MASCOT_IO::MASLayerCreateDBStorage(const char* name, long scale_factor) { 
-	if(iLnames_hash.Exist(name)) { 
-		return false; 
+	MASAddLogGraphMessage(__FUNCTION__, __LINE__, "enter.", name);
+
+	if(iLnames_hash.Exist(name)) {
+		MASAddLogGraphMessage(__FUNCTION__, __LINE__, name, "exists. exit");
+		return false;
 	} 
 
 	if(strlen(name) >= ARRAY_NUM_ELEMENTS(I_Layer[0].Name)) { 
-		return false; 
+		MASAddLogGraphMessage(__FUNCTION__, __LINE__, name, "too long. exit");
+		return false;
 	} 
 
 	LayerDBHeader_Struct L;
@@ -1192,6 +1269,8 @@ bool MASCOT_IO::MASLayerCreateDBStorage(const char* name, long scale_factor) {
 
 	fclose(_dbHeader_FILE); 
 	fclose(_dbLayers_FILE); 
+
+	MASAddLogGraphMessage(__FUNCTION__, __LINE__, "exit.", name);
 
 	return true;
 } 
@@ -1389,7 +1468,8 @@ bool MASCOT_IO::MASLayerAddRTPolygon(const char* inpLayer_name, _sAlong& points_
 
 
 bool MASCOT_IO::MASEvaluateMain(long Function, const char* outLayer_name, int w, int log_graph, bool preserve_scale_factor) {
-	bool rc  = true; 
+	bool rc  = true;
+	MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, "enter.");
 	try {
 		if(_dbHeader_Changed) {
 			if(_dbHeader_FILE == 0) { 
@@ -1414,7 +1494,7 @@ bool MASCOT_IO::MASEvaluateMain(long Function, const char* outLayer_name, int w,
 		case MFunction_Nothing: 
 			break; 
 		case MFunction_ActivateLayer:
-			LFuActivateFirstFragment();
+			LFuActivateFirstFragment(log_graph);
 			break;
 		case MFunction_OverlapElim:
 			rc = LFuEvaluaterLoop(MFunction_OverlapElim, log_graph, 0/*classifyType is main*/, preserve_scale_factor);
@@ -1431,7 +1511,8 @@ bool MASCOT_IO::MASEvaluateMain(long Function, const char* outLayer_name, int w,
 		} 
 	} 
 	catch(char*excpt_msg) { 
-		MASLog(excpt_msg); 
+		MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, excpt_msg);
+		MASLog(excpt_msg);
 		rc = false; 
 	} 
 
@@ -1439,16 +1520,13 @@ bool MASCOT_IO::MASEvaluateMain(long Function, const char* outLayer_name, int w,
 		FCloseAll(); 
 	} 
 	catch(char*excpt_msg) { 
-		MASLog(excpt_msg); 
+		MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, excpt_msg);
+		MASLog(excpt_msg);
 		rc = false; 
 	} 
 
-	if (MASLogbuffer && MASLogbuffer[0]) {
-		printf(MASLogbuffer);
-		MASLogbuffer[MASLogbuffer_Lim = 0] = 0;
-	}
-
-	return rc; 
+	MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, "exit.");
+	return rc;
 } 
 
 
@@ -1458,55 +1536,65 @@ bool MASCOT_IO::MASEvaluate1(MAS_Function action, const char* inpLayer_name, con
 } 
 
 bool MASCOT_IO::MASEvaluate2(MAS_Function action, const char** inpLayers, long inpLayers_count, const char* outLayer_name, int size_param, int log_graph, bool preserve_scale_factor) {
-	int Function = action; 
+	bool rc = false;
+	__try {
+		int Function = action;
 
-	if(inpLayers == 0 || inpLayers_count <= 0) {
-		MASLog("\nEVAL:No input Layers specified\n");
-		return false;
-	} 
-	if(inpLayers_count > 4) {
-		MASLog("\nEVAL:Too many input Layers\n");
-		return false;
-	} 
-	if (inpLayers_count > 1 && Function==MFunction_OverlapElim) {
-		MASLog("\nEVAL:Overlap elimination is only for one layer at a time\n");
-		return false;
-	}
-	if(Function==MFunction_5009)
-	{
-		MASLog("\nEVAL:5009 is not implemented\n");
-		return false;
-	}
+		if (inpLayers == 0 || inpLayers_count <= 0) {
+			MASLog("\nEVAL:No input Layers specified\n");
+			__leave;
+		}
+		if (inpLayers_count > 4) {
+			MASLog("\nEVAL:Too many input Layers\n");
+			__leave;
+		}
+		if (inpLayers_count > 1 && Function == MFunction_OverlapElim) {
+			MASLog("\nEVAL:Overlap elimination is only for one layer at a time\n");
+			__leave;
+		}
+		if (Function == MFunction_5009)
+		{
+			MASLog("\nEVAL:5009 is not implemented\n");
+			__leave;
+		}
 
-	if(outLayer_name == 0) { 
-		outLayer_name = inpLayers[0]; 
-	} 
-	if(inpLayers_count == 1 && Function == MFunction_And) {
-		Function = MFunction_AndOne;
-	}
-	if(inpLayers_count == 1 && Function==MFunction_Xor)
-	{
-		Function = MFunction_XorOne;
-	}
-	if(inpLayers_count == 1 && Function==MFunction_AndNot)
-	{
-		Function = MFunction_Not;
-	}
+		if (outLayer_name == 0) {
+			outLayer_name = inpLayers[0];
+		}
+		if (inpLayers_count == 1 && Function == MFunction_And) {
+			Function = MFunction_AndOne;
+		}
+		if (inpLayers_count == 1 && Function == MFunction_Xor)
+		{
+			Function = MFunction_XorOne;
+		}
+		if (inpLayers_count == 1 && Function == MFunction_AndNot)
+		{
+			Function = MFunction_Not;
+		}
 
-	for(int j = 0; j < inpLayers_count; ++j) { 
-		if(inpLayers[j] == 0) {
-			MASLog("\nEVAL:Bad layer name\n");
-			return false;
-		} 
-		memset(I_Layer[j].Name, 0, 20);
+		for (int j = 0; j < inpLayers_count; ++j) {
+			if (inpLayers[j] == 0) {
+				MASLog("\nEVAL:Bad layer name\n");
+				__leave;
+			}
+			memset(I_Layer[j].Name, 0, 20);
 #pragma warning(suppress : 4996)
-		strncpy(I_Layer[j].Name, inpLayers[j], sizeof(I_Layer[j].Name));
-	} 
-	ILayer_Cnt = (unsigned short)inpLayers_count;
+			strncpy(I_Layer[j].Name, inpLayers[j], sizeof(I_Layer[j].Name));
+		}
+		ILayer_Cnt = (unsigned short)inpLayers_count;
 
 
 
-	return MASEvaluateMain(Function, outLayer_name, size_param, log_graph, preserve_scale_factor);
+		rc = MASEvaluateMain(Function, outLayer_name, size_param, log_graph, preserve_scale_factor);
+	}
+	__finally {
+		if (MASLogbuffer && MASLogbuffer[0] != 0) {
+			printf(MASLogbuffer);
+			MASLogbuffer[MASLogbuffer_Lim = 0] = 0;
+		}
+	}
+	return rc;
 } 
 
 
@@ -1567,7 +1655,7 @@ long copy_inputXY(T& points_x, T& points_y, long points_count, long dx, long dy)
 	Otherwise the polygon number has to be known exactly. 
 */
 long MASCOT_IO::MASLayerGetRTPolygon(const char* layer_name, long polygon_number, long* points_x, long* points_y, long points_count, long& scale_factor) {
-	long n = Layer_Name2Pos(layer_name); 
+	long n = Layer_Name2Pos(layer_name);
 	if(n < 0) { 
 		return -1; 
 	} 
@@ -1590,7 +1678,7 @@ long MASCOT_IO::MASLayerGetRTPolygon(const char* layer_name, long polygon_number
 	LbBead*Lb = GetLbBead(polygon_number); 
 	if(Lb->ZLBLayer == L.Lcode) { 
 		if(Lb->ZLBFirstLvBead) { 
-			if(LbBead_Unload2InputXY(Lb, 0)) { 
+			if(LbBead_Unload2InputXY(Lb, 0, MaSCOT_IO._graphLog)) {
 				return copy_inputXY(points_x, points_y, points_count, dx, dy); 
 			} 
 		} 
@@ -1600,65 +1688,72 @@ long MASCOT_IO::MASLayerGetRTPolygon(const char* layer_name, long polygon_number
 } 
 
 long MASCOT_IO::MASLayerGetRTPolygon(const char* layer_name, long polygon_number, _sAlong& points_x, _sAlong& points_y, long& scale_factor) {
-	long n = Layer_Name2Pos(layer_name); 
-	if(n < 0) { 
-		return -1; 
+	MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, "enter.");
+	long n = Layer_Name2Pos(layer_name);
+	long rc = 0;
+	if(n < 0) {
+		rc = -1;
 	} 
-
-	if(polygon_number < 1 || ZLBLIM <= polygon_number) { 
-		return -1; 
+	if(polygon_number < 1 || ZLBLIM <= polygon_number) {
+		rc = -1;
 	} 
-
-	LayerDBHeader_Struct& L = n == 0? O_Layer: I_Layer[n - 1]; 
-
-	scale_factor = L._lIdentity.SCALE_FACTOR;
-
-	long dx = L.Delta_X; // -_header.CXMIN; // ANB: TO DO Offset
-	long dy = L.Delta_Y; // -_header.CYMIN;
-
-	LbBead*Lb = GetLbBead(polygon_number); 
-	if(Lb->ZLBLayer == L.Lcode) { 
-		if(Lb->ZLBFirstLvBead && Lb->ZLBFirstLvBead->ZLVMyVector) { 
-			if(LbBead_Unload2InputXY(Lb, 0)) { 
-				return copy_inputXY(points_x, points_y, ZLDLIM, dx, dy); 
-			} 
-		} 
-		else 
-		if(ZLDLIM > 3) { 
-			return copy_inputXY(points_x, points_y, ZLDLIM, dx, dy); 
-		} 
-	} 
-
-	return -1; 
-} 
-
-static std::string stringify_currentTime(bool file_mode) {
-	struct _timeb t;
-	_ftime(&t);
-	std::istringstream istrTime(ctime(&t.time));
-	std::string sWeekDay, sMonth;
-	int iDay, iHour, iMinutes, iSeconds, iYear;
-	char cSColmn;
-	istrTime >> sWeekDay >> sMonth >> iDay >> iHour >> cSColmn >> iMinutes >> cSColmn >> iSeconds >> iYear;
-	std::ostringstream ostr;
-	ostr.fill('0');
-	if (file_mode) {
-		ostr << std::setw(2) << iYear << sMonth << iDay << '_' << iHour << std::setw(2) << iMinutes << std::setw(2) << iSeconds << '_' << std::setw(3) << (int)t.millitm;
-	}
 	else {
-		ostr << std::setw(2) << iHour << ':' << std::setw(2) << iMinutes << ':' << std::setw(2) << iSeconds << '_' << std::setw(3) << (int)t.millitm;
+		LayerDBHeader_Struct& L = n <= 0 ? O_Layer : I_Layer[n - 1];
+
+		scale_factor = L._lIdentity.SCALE_FACTOR;
+
+		long dx = L.Delta_X; // -_header.CXMIN; // ANB: TO DO Offset
+		long dy = L.Delta_Y; // -_header.CYMIN;
+
+		LbBead* Lb = GetLbBead(polygon_number);
+		if (Lb->ZLBLayer == L.Lcode) {
+			if (Lb->ZLBFirstLvBead && Lb->ZLBFirstLvBead->ZLVMyVector) {
+				if (LbBead_Unload2InputXY(Lb, 0, MaSCOT_IO._graphLog)) {
+					rc = copy_inputXY(points_x, points_y, ZLDLIM, dx, dy);
+				}
+			}
+			else
+			if (ZLDLIM > 3) {
+				if (MaSCOT_IO._graphLog) {
+					graph_log_ZLDLIM("copy_inputXY", 0, 0);
+				}
+				rc = copy_inputXY(points_x, points_y, ZLDLIM, dx, dy);
+			}
+		}
+		else {
+			rc = -1;
+		}
 	}
 
-	return ostr.str();
-}
+	MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, "exit.");
+	return rc;
+} 
 
 void WriteStream2file(std::ostringstream* pOstr, const std::string &file_name) {
 	if (pOstr) {
 		HANDLE handle_file = (HANDLE)-1;
-		handle_file = OSWRONLYOpenFile("VSStatistics\\" + stringify_currentTime(true) + "_" + file_name + ".csv");
+		std::string full_file_name = "VSStatistics\\mas_" + file_name + "_" + stringify_currentTime(true);
+		handle_file = OSWRONLYOpenFile(full_file_name + ".csv");
 		if (handle_file != (HANDLE)-1) {
 			OSAppendStringToFile(handle_file, pOstr->str());
 			OSCloseFile(handle_file);
+
+			HANDLE index_file = (HANDLE)-1;
+			index_file = OSWRONLYOpenFile(MaSCOT_IO._strIndexFileName, 1);
+			if (index_file != (HANDLE)-1) {
+				OSAppendStringToFile(index_file, full_file_name + "\r\n");
+				OSCloseFile(index_file);
+			}
+		}
+
+		if (!MaSCOT_IO._ostrGraphLog.str().empty()) {
+			handle_file = OSWRONLYOpenFile(full_file_name + ".txt");
+			if (handle_file != (HANDLE)-1) {
+				OSAppendStringToFile(handle_file, MaSCOT_IO._ostrGraphLog.str());
+				OSCloseFile(handle_file);
+				MaSCOT_IO._ostrGraphLog.str("");
+				MaSCOT_IO._ostrGraphLog.str().clear();
+			}
 		}
 	}
 }

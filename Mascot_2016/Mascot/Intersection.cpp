@@ -867,7 +867,8 @@ void Lf_MergeChains() {
 
 void INTERSECTION_ANALYSIS(bool preloaded, int first_lb)
 {
-	if(!preloaded) { 
+	MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, "enter.");
+	if(!preloaded) {
 		Init_Vt_FindTree();
 	} 
 
@@ -907,5 +908,6 @@ void INTERSECTION_ANALYSIS(bool preloaded, int first_lb)
 		} 
 	} 
 
-//	FileLog(itostdstring(ZVTLIM) + "\r\n", true); 
+	MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, "exit.");
+	//FileLog(itostdstring(ZVTLIM) + "\r\n", true); 
 }

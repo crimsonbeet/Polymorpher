@@ -5,7 +5,7 @@
 
 #pragma once
 
-#pragma warning( disable:4996 )
+#pragma warning( disable:4996 4244 4267 4275)
 
 #pragma once
 
@@ -50,6 +50,7 @@
 #include <algorithm>
 #include <functional>
 #include <limits>
+#include <chrono>
 
 #include <stdio.h>
 #include <tchar.h>

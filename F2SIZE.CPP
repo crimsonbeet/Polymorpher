@@ -482,18 +482,17 @@ DEFINE_DISPLACE(long I, long K, double*X, double*Y)
 }
 void DEFINE_NORMALFROM(long I, long K)
 {
-	double SZ;
-	long DX;
-	long DY;
 	double NX;
 	double NY;
-	DX = ZLDCO4[K]-ZLDCO4[I];
-	DY = ZLDCO5[K]-ZLDCO5[I];
+	const long DX = ZLDCO4[K]-ZLDCO4[I];
+	const long DY = ZLDCO5[K]-ZLDCO5[I];
 	if(DX!=0&&DY!=0)
 	{
-		SZ = sqrt(DX*DX+DY*DY);
-		NX = (+DY)/SZ;
-		NY = (-DX)/SZ;
+		const double dx = DX;
+		const double dy = DY;
+		const double SZ = sqrt(dx*dx+dy*dy);
+		NX = (+dy)/SZ;
+		NY = (-dx)/SZ;
 	}
 	else
 	{
@@ -578,7 +577,7 @@ __UNLINTSTD__(std::ostringstream *ostr = 0)
 			if (cnt++ > 0) {
 				*ostr << ',';
 			}
-			*ostr << (offsX + (long)ZLDCO0[J]) << ',' << (offsY + (long)ZLDCO1[J]);
+			*ostr << (offsX + (long)ZLDCO0[J]) << ',' << (offsY + (long)ZLDCO1[J]) << ',' << "P" << J << ".LB" << ZLBLIM;
 			++J;
 		}
 		*ostr << std::endl;
@@ -595,8 +594,8 @@ UNL_TOINTLAYSTANDART(char NO_CONT_2, double*X, double*Y, std::ostringstream* ost
 	long J;
 	long I;
 	long L;
-	_sAlong x;
-	_sAlong y;
+	long x[9];
+	long y[9];
 	_sAlong*X0 = &ZLDCO0;
 	_sAlong*X1 = &ZLDCO2;
 	_sAlong*Y0 = &ZLDCO1;
@@ -610,9 +609,16 @@ UNL_TOINTLAYSTANDART(char NO_CONT_2, double*X, double*Y, std::ostringstream* ost
 	}
 	J = DETERMINE_CLOCKSTATUS(x, y, L);
 	if(J==0) {
-		//for (long j = 0; j < L; ++j) {
-		//	printf("x=%ld, y=%ld\r\n", (long)x[j], (long)y[j]);
-		//}
+		if (ostr) {
+			std::ostringstream str;
+			str << "problematic segement:";
+			std::string sep = "";
+			for (long j = 0; j < L; ++j) {
+				str << sep << x[j] << ',' << y[j];
+				sep = ",";
+			}
+			MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, str.str());
+		}
 		long x2 = x[2];
 		long y2 = y[2];
 		x[2] = x[3];
@@ -631,10 +637,10 @@ UNL_TOINTLAYSTANDART(char NO_CONT_2, double*X, double*Y, std::ostringstream* ost
 			J = DETERMINE_CLOCKSTATUS(x, y, L);
 		}
 		if (J == 0) {
-			printf("rejected segment\r\n\r\n");
+			MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, "rejected segment. exit function.");
 			return;
 		}
-		printf("fixed segment\r\n\r\n");
+		MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, "fixed segment");
 	}
 	if(J!=1)
 	{
@@ -695,6 +701,9 @@ DEFINE_SEGMENT(char isNotFirstSegment, long J, long I, long K, std::ostringstrea
 	double X2[3] = { 0 };
 	double Y1[9] = { 0 };
 	double Y2[3] = { 0 };
+
+	double segments_x[3] = {ZLDCO4[J], ZLDCO4[I], ZLDCO4[K]};
+	double segments_y[3] = {ZLDCO5[J], ZLDCO5[I], ZLDCO5[K] };
 
 	static double CAN_Prev = 0;
 	long CANLess180 = 0;
@@ -798,8 +807,8 @@ DEFINE_SEGMENT(char isNotFirstSegment, long J, long I, long K, std::ostringstrea
 		DEFINE_DISPLACE(I, K, X2, Y2);
 
 		/*Check For Cover Make up*/
-		if(!DEFINE_INTERSECTION(X1, Y1, X2, Y2, X1 + 3, Y1 + 3))
-			zabort(f2size,__LINE__);
+		//if(!DEFINE_INTERSECTION(X1, Y1, X2, Y2, X1 + 3, Y1 + 3))
+		//	zabort(f2size,__LINE__);
 
 		//{
 		//	double d = std::pow(X1[0] - X1[3], 2.0) + std::pow(Y1[0] - Y1[3], 2.0);
@@ -1036,7 +1045,7 @@ void Collar_Generator(int preserve_scaleFactor = 0, int log_graph = 0)
 		}
 
 		if (count == 0) {
-			printf("Shapes_Collar_Generator scaled unload failed\r\nrecovering\r\n");
+			MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, "Shapes_Collar_Generator scaled unload failed. Recovering.");
 			int mergeIterations = 0;
 			bool mergeIsDone = false;
 			while (!mergeIsDone) {
@@ -1074,7 +1083,7 @@ void Collar_Generator(int preserve_scaleFactor = 0, int log_graph = 0)
 			LbBead* Lb = GetLbBead(i);
 			if (Lb->ZLBFirstLvBead != 0) {
 				if (!LbBead_Unload2InputXY(Lb, 0, log_graph)) {
-					printf("Collar_Generator.LbBead_Unload2InputXY failed\r\n");
+					MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, "SCollar_Generator.LbBead_Unload2InputXY failed.");
 					continue;
 				}
 
@@ -1091,7 +1100,7 @@ void Collar_Generator(int preserve_scaleFactor = 0, int log_graph = 0)
 			}
 		}
 		if (count == 0) {
-			printf("Collar_Generator recovering on unload\r\n\r\n");
+			MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, "Collar_Generator recovering on unload.");
 			count = UnloadLbVectors(Xs, Ys, __iEx__ ? 2 : 1, true);
 			LoadLbVectors(Xs, Ys, count);
 			count = 0; 
@@ -1110,7 +1119,7 @@ void FinishedNormally(void);
 
 void
 F_SIZE_COLLARS(F_SIZE_JOB&JOB) {
-	fprintf(stderr, "\n!!! Collars Generater Started on %s !!!\n",JOB.Name);
+	MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, "Collars Generater Started on", JOB.Name);
 
 	OutDeltaX = 0;
 	OutDeltaY = 0;
@@ -1125,7 +1134,7 @@ F_SIZE_COLLARS(F_SIZE_JOB&JOB) {
 	memset(MaSCOT_IO.O_Layer.Name, 0, 20);
 	memcpy(MaSCOT_IO.O_Layer.Name, MaSCOT_IO._header.TempP, 3);
 
-	fprintf(stderr, "!!! Output Layer will be %s !!!\n", MaSCOT_IO.O_Layer.Name);
+	MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, "Output Layer will be", MaSCOT_IO.O_Layer.Name);
 	MaSCOT_IO.INIT_OLayer();
 
 
@@ -1141,6 +1150,11 @@ F_SIZE_COLLARS(F_SIZE_JOB&JOB) {
 
 	Total_Shapes = 0; 
 
+	IPOINT = IPOINT5; // Oct. 24. Fix for combined shapes having triangle junction
+	// 893856,2294237,LD106,903585,2315541,LD107,903584,2315541,LD108,893856,2294237,LD109
+	// in mas_LbBead_Unload_2024?10?05.01?10?22.501405.csv
+	// GraphSegments.2024-10-05.01-10-21.999840.pdf
+
 	for(READSHAPE_ANDSETUP_MINMAX(JOB); !feof(MaSCOT_IO.I_Layer[0].File); READSHAPE_ANDSETUP_MINMAX(JOB)) {
 		if(PLDLIM<2) {
 			continue;
@@ -1148,6 +1162,9 @@ F_SIZE_COLLARS(F_SIZE_JOB&JOB) {
 
 		Collar_Generator(JOB.Preserve_ScaleFactor, JOB.Do_log_graph);
 	}
+
+
+	IPOINT = IPOINT4;
 
 
 	ZPBLIM = 8191;
@@ -1189,4 +1206,6 @@ F_SIZE_COLLARS(F_SIZE_JOB&JOB) {
 	IEvaluater._ReleaseStorage();
 
 	FinishedNormally();
+
+	MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, "exit.");
 }

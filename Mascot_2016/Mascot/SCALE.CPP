@@ -12,7 +12,7 @@
 /**/
 void ScalePoints(long s_factor)
 {
-	register long p;
+	long p;
 	PtBead*Pt;
 	IPOINT = IPOINT5;
 	for(p = 1; p<ZPTLIM; ++p)
@@ -34,7 +34,7 @@ void ScalePoints(_sAlong& x, _sAlong& y, long lim, long s_factor) {
 void
 Back_Scale_1(long s_factor)
 {
-	register long p, l;
+	long p;
 	PtBead*Pt;
 
 	const double sf = ((int64_t)1L)<< s_factor;
@@ -49,9 +49,9 @@ Back_Scale_1(long s_factor)
 
 bool Back_Scale_2(void)
 {
-	register long X;
-	register long Y;
-	register long h;
+	long X;
+	long Y;
+	long h;
 
 	PtBead*Pt;
 	PtBead*PT;
@@ -106,7 +106,7 @@ void Back_Scale_3(void)
 	PtBead*Pt;
 	PtBead*P1;
 	PtBead*P2;
-	register char FA, FB;
+	char FA, FB;
 
 	long vt;
 	for(vt = 2; vt<ZVTLIM; vt+=2)

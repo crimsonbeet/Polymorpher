@@ -22,7 +22,8 @@ typedef enum {
 
 bool MASPreload_StaticLayers(long N, const char *Names[]); // N is the number of entries in Names; first entry in Names[] is empty and means nothing, so N is always > 1 if Names is not empty.
 
-bool MASInitialize(long blocks_count_x, long blocks_count_y); 
+bool MASInitializeStarttime(bool log_graph = false);
+bool MASInitialize(long blocks_count_x, long blocks_count_y);
 bool MASGrid(long blocks_count_x, long blocks_count_y); 
 
 bool MASLayerCreateDBStorage(const char* inpLayer_name, long scale_factor); 
@@ -46,6 +47,10 @@ long MASLayerGetRTPolygon(const char* outLayer_name, long polygon_number, long* 
 //long MASLayerRTPolygonLocate(const char* outLayer_name, long x, long y); /*returns polygon number or -1*/
 
 bool MASLogLayer(const char* layer_Name);
+
+bool MASAddLogGraphMessage(const char* func, int line, const std::string& msg, const std::string& qulifier = "");
+
+
 
 
 

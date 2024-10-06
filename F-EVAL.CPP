@@ -13,6 +13,11 @@
 #include "GridModule.hpp"
 #include "mgsort.hpp"
 
+
+extern long Delta_X_2;
+extern long Delta_Y_2;
+
+
 //#include "OleDate.h"
 /**/
 #define Isalpha(S) (isalpha((S))||(S)=='$')
@@ -76,7 +81,7 @@ bool graph_log_layer(const char* layer_Name, int lb/*optional 0*/, int layer_ind
 				if (n > 0) {
 					ostr << ','; 
 				}
-				ostr << (x[n] >> scale_factor) << ',' << (y[n] >> scale_factor);
+				ostr << (x[n] >> scale_factor) << ',' << (y[n] >> scale_factor) << ',' << 'P' << n << ".LB" << j;
 				++n;
 			}
 			ostr << std::endl; 
@@ -99,7 +104,7 @@ void graph_log_polygons(const char* file_name, long offsX, long offsY) {
 				if (j > 0) {
 					ostr << ',';
 				}
-				ostr << (offsX + (long)ZLDCO0[j]) << ',' << (offsY + (long)ZLDCO1[j]);
+				ostr << (offsX + (long)ZLDCO0[j]) << ',' << (offsY + (long)ZLDCO1[j]) << ',' << 'P' << j << ".LB" << i;
 			}
 			ostr << std::endl;
 		}
@@ -108,12 +113,17 @@ void graph_log_polygons(const char* file_name, long offsX, long offsY) {
 }
 
 void graph_log_ZLDLIM(const char* file_name, long offsX, long offsY) {
+	long sf = MaSCOT_IO.INITIAL_SCALE_FACTOR - S_FACTOR - LAYER_S_FACTOR;
+	if (sf < 0) {
+		sf = 0;
+	}
+
 	std::ostringstream ostr;
 	for (long j = 0; j < ZLDLIM; ++j) {
 		if (j > 0) {
 			ostr << ',';
 		}
-		ostr << (offsX + (long)ZLDCO0[j]) << ',' << (offsY + (long)ZLDCO1[j]);
+		ostr << ((offsX + (long)ZLDCO0[j]) << sf) << ',' << ((offsY + (long)ZLDCO1[j]) << sf) << ',' << "LD" << j;
 	}
 	ostr << std::endl;
 	WriteStream2file(&ostr, file_name);
@@ -146,7 +156,7 @@ void LFuInitialize_S_Factor() {
 	S_FACTOR--;
 	S_FACTOR--;
 	if(S_FACTOR<0)S_FACTOR = 0;
-	if(S_FACTOR>10)S_FACTOR = 10;
+	if(S_FACTOR>14)S_FACTOR = 14;
 }
 void LFuInitialize_OutLayer(const char*outLayer_name = 0) {
 	if(outLayer_name) { 
@@ -193,6 +203,8 @@ void LFuInitialize_ILayers() {
 	C_Fragment = 0; 
 }
 void LFuInitialize(const char*outLayer_name = 0) {
+	MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, "enter.", outLayer_name);
+
 	LFuInitialize_ILayers();
 
 	if (S_FACTOR == 0) {
@@ -200,6 +212,11 @@ void LFuInitialize(const char*outLayer_name = 0) {
 	}
 
 	LFuInitialize_OutLayer(outLayer_name); 
+
+	Delta_X_2 = 0;
+	Delta_Y_2 = 0;
+
+	MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, "exit.", outLayer_name);
 }
 
 
@@ -224,6 +241,7 @@ bool LFuEvaluaterLoop(long Function, int log_graph, char classifyType/*0 - main,
 
 bool __sizemain__(char Name[20], long Size, char Sign, int log_graph, bool preserve_scale_factor)
 {
+	MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, "enter.");
 	bool rc = false;
 
 	std::string O_name(MaSCOT_IO.O_Layer.Name, 20);
@@ -247,12 +265,18 @@ bool __sizemain__(char Name[20], long Size, char Sign, int log_graph, bool prese
 	MaSCOT_IO.ILayer_Cnt = 1;
 	memset(&MaSCOT_IO.I_Layer[0], 0, sizeof(LayerDBHeader_Struct));
 
+
+	IPOINT = IPOINT5; // Oct. 24. Fix for combined shapes having triangle junction
+
 	memcpy(MaSCOT_IO.I_Layer[0].Name, MaSCOT_IO.O_Layer.Name, 20);
 	MaSCOT_IO.Activate_ILayers();
 	if (MaSCOT_IO.I_Layer[0]._lIdentity.layer_STATUS == 0) {
 		LFuInitialize(MaSCOT_IO.O_Layer.Name);
 		LFuEvaluaterLoop(MAS_OverlapElim);
 	}
+
+	IPOINT = IPOINT4;
+
 
 
 	JOB.Preserve_ScaleFactor = preserve_scale_factor;
@@ -268,6 +292,7 @@ bool __sizemain__(char Name[20], long Size, char Sign, int log_graph, bool prese
 //Sign = -1;
 	rc = LFuEvaluaterLoop(Sign > 0 ? (long)MAS_Or : (long)MAS_AndNot, JOB.Do_log_graph, 0, JOB.Preserve_ScaleFactor);
 
+	MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, "exit.");
 	return rc;
 }
 
@@ -397,6 +422,10 @@ void LoadFragment(int log_graph) {
 	PYMAX = XBSIZ;
 	PXMAX = YBSIZ;
 
+	if (MaSCOT_IO.INITIAL_SCALE_FACTOR == 0) {
+		MaSCOT_IO.INITIAL_SCALE_FACTOR = S_FACTOR;
+	}
+
 	for(short n = 0; n < MaSCOT_IO.ILayer_Cnt; ++n) {
 
 		C_Layer = MaSCOT_IO.I_Layer[n].Lcode;
@@ -424,7 +453,7 @@ void LoadFragment(int log_graph) {
 						ScalePoints(ZLDCO0, ZLDCO1, ZLDLIM, additional_S_FACTOR);
 					}
 					if (log_graph) {
-						Sleep(1); 
+						//Sleep(1); 
 						graph_log_ZLDLIM("LoadFragment", 0, 0);
 					}
 					Loadmaster(1, open_shape);
@@ -464,7 +493,9 @@ int WRITE_C_POLYGONS() {
 	return cnt; 
 }
 
-void LFuActivateFirstFragment() {
+void LFuActivateFirstFragment(int log_graph) {
+	MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, "enter.");
+
 	Target_Function = MFunction_ActivateLayer;
 	ZLBLIM = 1;
 	ZLVLIM = 1;
@@ -477,9 +508,13 @@ void LFuActivateFirstFragment() {
 
 	CleanZPTHASH();
 	LFuInitialize_ILayers();
-	LoadFragment();
+
+	LoadFragment(log_graph);
+
 	INTERSECTION_ANALYSIS();
 	POINT_VECTOR_ANALYSIS();
+
+	MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, "exit.");
 }
 
 int LFuEvaluater(long Function, int log_graph, char classifyType/*0 - main, 1 - light*/, int preserve_scaleFactor) {
@@ -489,6 +524,9 @@ int LFuEvaluater(long Function, int log_graph, char classifyType/*0 - main, 1 - 
 	ZPTLIM = 1;
 	ZVTLIM = 2;
 	STATUS =+1;
+
+	MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, "enter.");
+
 
 	if (Function == MFunction_ActivateLayer) {
 		zabort();
@@ -525,10 +563,10 @@ int LFuEvaluater(long Function, int log_graph, char classifyType/*0 - main, 1 - 
 			DUMMYJUNCTIONANALYSIS(GetLbBead(I));
 		}
 
-		if(log_graph) {
-			graph_wait_for_user_action();
-			graph_log_layer(MaSCOT_IO.O_Layer.Name);
-		} 
+		//if(log_graph) {
+		//	graph_wait_for_user_action();
+		//	graph_log_layer(MaSCOT_IO.O_Layer.Name);
+		//} 
 	} 
 	else { 
 		ZLBLIM = 1;
@@ -536,13 +574,19 @@ int LFuEvaluater(long Function, int log_graph, char classifyType/*0 - main, 1 - 
 	} 
 
 	if (!preserve_scaleFactor) {
+		MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, "enter Back_ScalePoints.");
 		Back_ScalePoints(S_FACTOR);
+		MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, "exit Back_ScalePoints.");
 		S_FACTOR = 0;
 	}
 
 	MaSCOT_IO.O_Layer._lIdentity.SCALE_FACTOR = S_FACTOR;
 
 	int cnt = WRITE_C_POLYGONS();
+	char buf[16];
+
+	MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, "exit with polygons number", _itoa(cnt, buf, 10));
+
 	return cnt; 
 }
 void SetNxtFrag(long Function)
