@@ -54,6 +54,7 @@ long ZPBLIM = 8191;
 PtBead*IPOINT0(long& X, long &Y); // Gets a point from ZPtTBl; creates a new point if x,y does not exist. 
 PtBead*IPOINT4(long& X, long &Y); // Gets a point from ZPtTBl using hash table ZPTHASH. 
 PtBead*IPOINT5(long& X, long &Y);
+PtBead*IPOINT6(long& X, long& Y);
 typedef PtBead*ipoint(long&, long&);
 ipoint*IPOINT = IPOINT4;
 /**/
@@ -362,7 +363,7 @@ PtBead*IPOINT5(long& X, long& Y)
 	{
 		const long x = P->ZPTCO1;
 		const long y = P->ZPTCO2;
-		if((std::abs(x-X) > 1) || (std::abs(y-Y) > 1))P = P->ZPTNxt;
+		if(P->ZPTCO1!=X||P->ZPTCO2!=Y)P = P->ZPTNxt;
 		else
 		{
 			X = x;
@@ -373,6 +374,35 @@ PtBead*IPOINT5(long& X, long& Y)
 	P = GetPtBead(ZPTLIM);
 	P->ZPTNxt = ZPTHASH[h];
 	ZPTHASH[h] = P;
+	P->ZPTCO1 = X;
+	P->ZPTCO2 = Y;
+	P->ZPTPos = ZPTLIM;
+	++ZPTLIM;
+	P->ZPTFirstSortedVtBead = 0;
+	return(P);
+}
+PtBead* IPOINT6(long& X, long& Y)
+{
+	long x[9] = {X, X+1,   X, X-1, X-1, X-1,   X, X+1, X+1};
+	long y[9] = {Y, Y+1, Y+1, Y+1,   Y, Y-1, Y-1, Y-1,   Y};
+	long h[9];
+	PtBead* P;
+	for (int j = 0; j < 9; ++j) {
+		h[j] = GetPointHashNumber(x[j], y[j]);
+		P = ZPTHASH[h[j]];
+		while (P) {
+			if (P->ZPTCO1!=x[j] || P->ZPTCO2!=y[j])P = P->ZPTNxt;
+			else
+			{
+				X = x[j];
+				Y = y[j];
+				return(P);
+			}
+		}
+	}
+	P = GetPtBead(ZPTLIM);
+	P->ZPTNxt = ZPTHASH[h[0]];
+	ZPTHASH[h[0]] = P;
 	P->ZPTCO1 = X;
 	P->ZPTCO2 = Y;
 	P->ZPTPos = ZPTLIM;

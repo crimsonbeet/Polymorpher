@@ -197,6 +197,7 @@ extern ipoint*IPOINT;
 PtBead*IPOINT0(long& X, long& Y);
 PtBead*IPOINT4(long& X, long& Y);
 PtBead*IPOINT5(long& X, long& Y);
+PtBead*IPOINT6(long& X, long& Y);
 long int GetPointHashNumber(long int S);
 void l_swap(long&A, long&B);
 void COMBINE_C_POLYGONS(void);
@@ -240,8 +241,8 @@ void Set_Rstat(LbBead*I, char call_flavor);
 void F_AREA_MAIN(const char* Name);
 
 void LFuInitialize(const char*outLayer_name);
-int LFuEvaluater(long Function, int log_graph = 0, char classifyType = 0/*0 - main, 1 - light*/, int preserve_scaleFactor = 0);
-bool LFuEvaluaterLoop(long Function, int log_graph = 0, char classifyType = 0, int preserve_scaleFactor = 0);
+int LFuEvaluater(long Function, int log_graph = 0, char classifyType = 0/*0 - main, 1 - light*/, int preserve_scaleFactor = 0, PtBead* (*ipoint)(long& X, long& Y) = nullptr);
+bool LFuEvaluaterLoop(long Function, int log_graph = 0, char classifyType = 0, int preserve_scaleFactor = 0, PtBead* (*ipoint)(long& X, long& Y) = nullptr);
 void LFuActivateFirstFragment(int log_graph);
 void SetNxtFrag(long Function);
 void LoadFragment(int log_graph = 0);

@@ -1150,9 +1150,9 @@ F_SIZE_COLLARS(F_SIZE_JOB&JOB) {
 
 	Total_Shapes = 0; 
 
-	IPOINT = IPOINT5; // Oct. 24. Fix for combined shapes having triangle junction
+	IPOINT = IPOINT6; // Oct. 24. Fix for combined shapes having triangle junction
 	// 893856,2294237,LD106,903585,2315541,LD107,903584,2315541,LD108,893856,2294237,LD109
-	// in mas_LbBead_Unload_2024?10?05.01?10?22.501405.csv
+	// in mas_LbBead_Unload_2024-10-05.01-10-22.501405.csv
 	// GraphSegments.2024-10-05.01-10-21.999840.pdf
 
 	for(READSHAPE_ANDSETUP_MINMAX(JOB); !feof(MaSCOT_IO.I_Layer[0].File); READSHAPE_ANDSETUP_MINMAX(JOB)) {

@@ -220,14 +220,14 @@ void LFuInitialize(const char*outLayer_name = 0) {
 }
 
 
-bool LFuEvaluaterLoop(long Function, int log_graph, char classifyType/*0 - main, 1 - light*/, int preserve_scaleFactor)
+bool LFuEvaluaterLoop(long Function, int log_graph, char classifyType/*0 - main, 1 - light*/, int preserve_scaleFactor, PtBead* (*ipoint)(long& X, long& Y))
 {
 	int produced_polygons = 0;
 
 	while(C_Fragment!=LONG_MAX)
 	{
 		CleanZPTHASH();
-		produced_polygons += LFuEvaluater(Function, log_graph, classifyType, preserve_scaleFactor);
+		produced_polygons += LFuEvaluater(Function, log_graph, classifyType, preserve_scaleFactor, ipoint);
 		SetNxtFrag(Function);
 	}
 	S_FACTOR = 0;
@@ -266,14 +266,14 @@ bool __sizemain__(char Name[20], long Size, char Sign, int log_graph, bool prese
 	memset(&MaSCOT_IO.I_Layer[0], 0, sizeof(LayerDBHeader_Struct));
 
 
-	IPOINT = IPOINT5; // Oct. 24. Fix for combined shapes having triangle junction
-
 	memcpy(MaSCOT_IO.I_Layer[0].Name, MaSCOT_IO.O_Layer.Name, 20);
 	MaSCOT_IO.Activate_ILayers();
 	if (MaSCOT_IO.I_Layer[0]._lIdentity.layer_STATUS == 0) {
 		LFuInitialize(MaSCOT_IO.O_Layer.Name);
-		LFuEvaluaterLoop(MAS_OverlapElim);
+		LFuEvaluaterLoop(MAS_OverlapElim, 0, 0, 0, IPOINT6); // Oct. 24. Fix for combined shapes having triangle junction
 	}
+
+
 
 	IPOINT = IPOINT4;
 
@@ -517,7 +517,7 @@ void LFuActivateFirstFragment(int log_graph) {
 	MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, "exit.");
 }
 
-int LFuEvaluater(long Function, int log_graph, char classifyType/*0 - main, 1 - light*/, int preserve_scaleFactor) {
+int LFuEvaluater(long Function, int log_graph, char classifyType/*0 - main, 1 - light*/, int preserve_scaleFactor, PtBead* (*ipoint)(long& X, long& Y)) {
 	Target_Function = Function;
 	ZLBLIM = 1;
 	ZLVLIM = 1;
@@ -546,6 +546,10 @@ int LFuEvaluater(long Function, int log_graph, char classifyType/*0 - main, 1 - 
 		Load_Boundary();
 	}
 
+	if (ipoint != nullptr) {
+		IPOINT = ipoint;
+	}
+
 	ZVTLIM = 2;
 	STATUS =+1;
 	INTERSECTION_ANALYSIS();
@@ -572,6 +576,12 @@ int LFuEvaluater(long Function, int log_graph, char classifyType/*0 - main, 1 - 
 		ZLBLIM = 1;
 		ZLVLIM = 1;
 	} 
+
+
+	if (ipoint != nullptr) {
+		IPOINT = IPOINT4;
+	}
+
 
 	if (!preserve_scaleFactor) {
 		MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, "enter Back_ScalePoints.");
