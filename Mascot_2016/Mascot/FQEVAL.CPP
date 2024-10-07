@@ -13,7 +13,7 @@
 
 #include "QuickSort.h"
 
-#pragma warning(disable : 26451)
+#pragma warning(disable : 26451 6011)
 
 /**/
 extern void zabort(void);
@@ -556,11 +556,12 @@ LvBead*SPLITLV_M(LvBead*L3, PtBead*IP)
 	L4->ZLVMyVector = 0;
 	L4->ZLVNextConcident = 0;
 	L4->ZLVNextLvBead = L3->ZLVNextLvBead;
-	L3->ZLVNextLvBead = L4;
 	L4->ZLVMyLbBead = L3->ZLVMyLbBead;
 	L4->ZLVPoint2 = L3->ZLVPoint2;
-	L3->ZLVPoint2 = IP;
 	L4->ZLVPoint1 = IP;
+
+	L3->ZLVNextLvBead = L4;
+	L3->ZLVPoint2 = IP;
 	return(L4);
 }
 LvBead*COMPSPLITLV_M(LvBead*L3, VtBead*V3, VtBead*V4, PtBead*IP)
@@ -675,6 +676,7 @@ PVTable_MERGE_LVChain(VtBead*VT, VtBead*PV)
 	LvBead* Lvtail = nullptr;
 	for(LvBead* LQ = LH; LQ != nullptr; LQ = LQ->ZLVNextConcident)
 	{
+		PV->ZVTStatus |= LQ->ZLVMyVector->ZVTStatus; // Oct. 24.
 		LQ->ZLVMyVector = PV;
 		Lvtail = LQ;
 	}
@@ -814,7 +816,6 @@ POINT_VECTOR_ANALYSIS(long first, char F_EVAL_INPROGRESS, char F_FULLANALYSIS_IN
 	for(Vt=first; Vt<ZVTLIM; ++Vt)
 	{
 		VT = GetVtBead(Vt);
-#pragma warning(disable:6011)
 		if(!VT->ZVTMeInreverse)
 		{
 			continue;
@@ -1687,8 +1688,10 @@ char SET_INSIDE_ALL(VtBead*VtBegin, VtBead*VtEnd, LbBead*TopLb, long MaskCode)
 			break;
 		}
 
-		if(VectorBelongsToLb(TopLb, PV))return 1;
-		if(VectorBelongsToLb(TopLb, VR))return 1;
+		// Oct. 24. Fix for bad classification of inside junctions that cross several LBs.
+		// Fix was to comment out the next two lines.
+		//if(VectorBelongsToLb(TopLb, PV))return 1;
+		//if(VectorBelongsToLb(TopLb, VR))return 1;
 
 		if (LS == 0) {
 			LS = VR->ZVTFirstCoincident; // seems not to make difference
