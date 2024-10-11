@@ -85,16 +85,6 @@ inline LvBead* FetchReverseLv(LvBead* LV) {
 	return lvc;
 }
 
-struct Find_Intersections_Summary { 
-	long Xdir;
-	long Ydir;
-
-	VtBead*Vt;
-	PtBead*Ip;
-	PtBead*LowerLeftPt;
-	VtBead**Au;
-}; 
-long Classify_Iteration;
 /**/
 long STATUS;
 unsigned long C_Layer;
@@ -1396,6 +1386,7 @@ LbBead_Unload2InputXY(LbBead*LB, char run_linearizer, int log_graph)
 	V2 = LN->ZLVMyVector->ZVTMeInreverse;
 
 	if(V1 == nullptr || V2 == nullptr) { // ANB: july: error condition
+		MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, "error condition 1. exit function");
 		return 0; 
 	}
 
@@ -1454,7 +1445,7 @@ LbBead_Unload2InputXY(LbBead*LB, char run_linearizer, int log_graph)
 	while(LV!=LE&&c--); // ANB: july: error condition
 
 	if(c<0) {
-		MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, "error condition 1. exit function");
+		MaSCOT_IO.PRINT_LOG(__FUNCTION__, __LINE__, "error condition 2. exit function");
 		return 0;
 	}
 
@@ -1786,8 +1777,6 @@ POINT_VECTOR_CLASS_2(LbBead*LB, long LayerCode, long MaskCode) /*After DUMMYJUNC
 	VtBead*VtBegin; 
 	VtBead*VtEnd; 
 
-	char SI_Error; 
-
 	LV = LB->ZLBFirstLvBead;
 	LE = LV;
 
@@ -1830,7 +1819,7 @@ POINT_VECTOR_CLASS_2(LbBead*LB, long LayerCode, long MaskCode) /*After DUMMYJUNC
 		VtBegin = V4;
 		VtEnd = V5;
 
-		SI_Error = SET_INSIDE_ALL(VtBegin, VtEnd, LB, MaskCode);
+		SET_INSIDE_ALL(VtBegin, VtEnd, LB, MaskCode);
 
 		if(!V4->ZVTFirstCoincident&&!V6->ZVTFirstCoincident) { 
 			/*in reverse direction for SET_INSIDE_ALL.*/
@@ -1851,18 +1840,10 @@ POINT_VECTOR_CLASS_2(LbBead*LB, long LayerCode, long MaskCode) /*After DUMMYJUNC
 			V4->ZVTStatus |= LayerCode;
 		}
 
-		if(SI_Error)
-		{
-			do
-			{
-				LV = LN;
-				LN = LV->ZLVNextLvBead;
-
-				V3 = LV->ZLVMyVector;
-				V4 = V3->ZVTMeInreverse;
-			} while (VectorBelongsToLb(LB, V4));
-		}
-		else V3 = V5, V4 = V6, LV = LN, LN = LV->ZLVNextLvBead;
+		V3 = V5;
+		V4 = V6;
+		LV = LN;
+		LN = LV->ZLVNextLvBead;
 	}
 	while(LV!=LE && c--); // ANB: july: error condition
 
@@ -1976,303 +1957,6 @@ vtPointsUp(VtBead*Vt)
 	return 1;
 }
 void
-iniFiXVt_1(void)
-{
-	long i;
-	long m;
-	PTRAux_1Lim = 1;
-	for(i = 2, m = 3; i<ZVTLIM; i+=2, m+=2)
-	{
-		VtBead*Vt = GetVtBead(i);
-		VtBead*Vr = GetVtBead(m);
-
-		if (Vt != nullptr && Vt->ZVTCO1 != nullptr) {
-			VtBead* VT = vtPointsUp(Vt) ? Vt : Vr;
-			if (VT != nullptr && VT->ZVTMeInreverse)
-			{
-				PTRAux_1[(PTRAux_1Lim++)] = (void*)VT;
-			}
-		}
-
-		if (Vt != nullptr) {
-			Vt->ZVTAux = 0;
-		}
-		if (Vr != nullptr) {
-			Vr->ZVTAux = 0;
-		}
-	}
-}
-void
-iniFiXVt_2(void)
-{
-	long i;
-	PTRAux_1Lim = 1;
-	for(i = 2; i<ZVTLIM; ++i)
-	{
-		VtBead*Vt = GetVtBead(i);
-		if(Vt->ZVTAux)
-		{
-			PTRAux_1[PTRAux_1Lim++] = (void*)Vt;
-			Vt->ZVTAux = 0;
-		}
-	}
-}
-inline bool IsOdd(long k) { 
-	return (k&1) != 0; 
-} 
-void
-Init_Find_Intersections(void)
-{
-	size_t i;
-	if(Classify_Iteration==1)
-	{
-		iniFiXVt_1();
-	}
-	else
-	{
-		iniFiXVt_2();
-	}
-
-	Gt = IsOdd(Classify_Iteration)? GtyVt: GtYVt;
-	GtGetVal = GtGetVt;
-	GtSwap = GtSwapVt;
-
-	if(PTRAux_1Lim>2)Quick_Sort(1, PTRAux_1Lim-1);
-
-	for(i = 1; i<PTRAux_1Lim; ++i)
-	{
-		INDAux_3[i-1] = i;
-	}
-	INDAux_3[i-1] = 0;
-	PTRAux_2Lim = 1;
-	for(i = 1; i<ZLBLIM; ++i)
-	{
-		LbBead*Lb = GetLbBead(i);
-		if(Lb==Lb->ZLBGrp)
-		{
-			PTRAux_2[PTRAux_2Lim++] = (void*)(Lb = LbGrp_FiMin(Lb->ZLBGrp));
-		}
-	}
-
-	Gt = IsOdd(Classify_Iteration)? GtyLb: GtYLb;
-	GtGetVal = GtGetLb;
-	GtSwap = GtSwapLb;
-
-	if(PTRAux_2Lim>2)Quick_Sort(1, PTRAux_2Lim-1);
-}
-void
-Find_Intersections(LbBead*Lb, Find_Intersections_Summary*rval)
-{
-	long XO, XM, XI, YM;
-	long X3, X4, Y3, Y4, YMIN, YMAX;
-	VtBead*VT;
-	PtBead*IP;
-	VtBead*V3;
-	PtBead*P3;
-	PtBead*P4;
-
-	double xo;
-	double xi;
-
-	VtBead**au;
-	long* vp;
-	long* vn;
-	long  v3;
-
-	char  Up = IsOdd(Classify_Iteration);
-
-	rval->LowerLeftPt = Lb->ZLBXym;
-	rval->Ydir = rval->LowerLeftPt->ZPTCO2;
-
-	VT = 0;
-	IP = 0;
-	xo = XO = rval->Xdir = 0;
-
-	XM = (rval->LowerLeftPt->ZPTCO1);
-	YM = (rval->Ydir);
-
-	vp = &INDAux_3[0];
-	for(v3 = (*vp); v3; vp = vn, v3 = (*vn))
-	{
-		vn = &INDAux_3[v3];
-		au = (VtBead**)&PTRAux_1[v3];
-
-		V3 = *au;
-
-		if(V3->ZVTPos!=((V3->ZVTPos>>1)<<1))
-		{
-			V3 = V3->ZVTMeInreverse;
-		}
-		P3 = V3->ZVTCO1;
-		P4 = V3->ZVTCO2;
-
-		Y3 = P3->ZPTCO2;
-		Y4 = P4->ZPTCO2;
-
-		YMIN = Y3>Y4? (YMAX=Y3, Y4): (YMAX=Y4, Y3);
-
-		if(Up? YMAX<YM: YMIN>YM)
-		{
-			(*vp) = (*vn);
-			vn = vp;
-			continue;
-		}
-		if(Up? YMIN>YM: YMAX<YM)break;
-
-		X3 = P3->ZPTCO1;
-		X4 = P4->ZPTCO1;
-
-		if(X4<XO||X3>=XM)continue;
-
-		if(YMIN==YMAX) XO = X4, VT = 0, IP = P4;
-		else if(Y3==YM&&X3>=XO) VT = 0, xo = XO = X3, IP = P3;
-		else if(Y4==YM&&X4>=XO) VT = 0, xo = XO = X4, IP = P4;
-		else if(X3==X4) VT = V3, xo = XO = X3, IP = 0;
-		else
-		{
-			xi = ((double)(YM-Y3)*(X4-X3))/(Y4-Y3)+X3;
-			XI = (long)floor(xi+0.5);
-			if(xo<xi&&XM>XI) VT = V3, XO = (long)(xo = xi), IP = 0;
-			else
-			if(XM==XI)
-			{
-				rval->Au = au;
-				VT = V3, XO = XM-1, IP = 0;
-				break;
-			}
-			else 
-			{
-				continue;
-			}
-		}
-		rval->Au = au;
-		if(XO>=XM)
-		{
-			zabort("Find_Intersections",__LINE__);
-		}
-	}
-	rval->Vt = VT;
-	rval->Ip = IP;
-	rval->Xdir = XO;
-}
-long
-MAKE_MASK(long S)
-{
-	long I;
-	for(I = 0; I < MaSCOT_IO.ILayer_Cnt; ++I)
-	{
-		if(S&LYMASK[I]) S |= LYCODE[I]<<1;
-		if(S&LYCODE[I]) S ^= LYCODE[I];
-	}
-	return(S);
-}
-char
-Class_Intersection_Status(LbBead*LB, long S_Factor = 0)
-{
-	VtBead*V3;
-	VtBead*V5;
-	LvBead*Lv;
-	LvBead*Le;
-	LbBead*Gr;
-	LbBead*Nx;
-	LbBead*Gr_Com;
-	long mask;
-	long PVAStart;
-
-	char Up = IsOdd(Classify_Iteration); 
-
-	Find_Intersections_Summary rval{};
-
-	Find_Intersections(LB, &rval);
-
-	if(rval.Vt)
-	{
-		V3 = vtPointsUp(rval.Vt)? rval.Vt: rval.Vt->ZVTMeInreverse;
-	}
-	else
-	{
-		if(!rval.Ip)
-		{
-			return 1;
-		}
-		V5 = rval.Ip->ZPTFirstSortedVtBead;
-		if(!vtPointsUp(V5))
-		{
-			do
-				V3 = V5, V5 = V5->ZVTNextSortedVtBead;
-			while(V5);
-			V3 = V3->ZVTMeInreverse;
-		}
-		else V3 = V5;
-	}
-
-	V3->ZVTAux = 1;
-
-	if(!V3->ZVTStatus)
-	{
-		return 0;
-	}
-
-
-
-	for(V5 = V3; 1; V5 = FETCHSUCCESSOR(V5))
-	{
-		Lv = V5->ZVTFirstCoincident;
-		if(!Lv)
-		{
-			V5 = V5->ZVTMeInreverse;
-			Lv = V5->ZVTFirstCoincident;
-		}
-		if (Lv) {
-			break;
-		}
-	}
-	Gr_Com = Lv->ZLVMyLbBead->ZLBGrp;
-
-	mask = MAKE_MASK(V3->ZVTStatus);
-
-	if(Target_Function == MFunction_Or || Target_Function==MFunction_And || Target_Function==MFunction_AndOne) // buildSLine
-	{
-		long s_div = 1L << S_Factor;
-		rval.Xdir = (long)floor((double)rval.Xdir  / s_div + 0.5);
-		if(rval.Vt)
-		{
-			PVAStart = ZVTLIM;
-			V5 = SPLITVT(V3, (rval.Ip=IPOINT(rval.Xdir, rval.Ydir)));
-			(*rval.Au) = Up? V5: V3;
-			POINT_VECTOR_ANALYSIS(PVAStart);
-		}
-		PVAStart = ZVTLIM;
-		V3 = INSERTV(rval.Ip, rval.LowerLeftPt, 0);
-		POINT_VECTOR_ANALYSIS(PVAStart);
-	}
-
-	Gr = LB->ZLBGrp;
-	Nx = Gr;
-	do
-	{
-		LB = Nx;
-		Nx = Nx->ZLBNxt;
-
-		LB->ZLBGrp = Gr_Com;
-		Lv = LB->ZLBFirstLvBead;
-		if (Lv != nullptr) {
-			Le = Lv;
-			do
-			{
-				(V3 = Lv->ZLVMyVector)->ZVTStatus |= mask;
-				(V3 = V3->ZVTMeInreverse)->ZVTStatus |= mask;
-
-				Lv = Lv->ZLVNextLvBead;
-			} while (Lv != Le);
-		}
-	}
-	while(Nx);
-	LB->ZLBNxt = Gr_Com->ZLBNxt;
-	Gr_Com->ZLBNxt = Gr;
-	return 2;
-}
-void
 Classify_Light(void)
 {
 	for(long i = 1; i<ZLBLIM; ++i)
@@ -2305,29 +1989,6 @@ Classify_Main(bool traceClassification)
 		POINT_VECTOR_CLASS_2(LB, L, M);
 	}
 
-	Classify_Iteration = 1;
-	char notDone;
-	do {
-		notDone = 0;
-
-		Init_Find_Intersections();
-		for(long Lb = 1; Lb<PTRAux_2Lim; ++Lb)
-		{
-			void*&Au = PTRAux_2[Lb];
-			if(Au)
-			{
-				if(Class_Intersection_Status((LbBead*)Au)==2)
-				{ 
-					notDone = 1;
-				} 
-			}
-		}
-
-		++Classify_Iteration;
-
-	} while(notDone);
-
-	--Classify_Iteration;
 
 	if (!traceClassification) {
 		return;
